@@ -1,0 +1,206 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_SalarySetting>
+    @{
+    ViewBag.Title = "SettingSalary";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Convert.ToInt32(Session["UID"].ToString()));
+    }
+    <style>
+        .btn-delete{
+            background-color:red;
+            color:white;
+        }
+    </style>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+            <li class="breadcrumb-item active" aria-current="page">Cấu hình lương doanh thu</li>
+        </ol>
+    </nav>
+    <!-- End breadcrumb -->
+    @using (Html.BeginForm("SettingSalary", "Option", FormMethod.Get, new { id = "form-search" }))
+    {
+    if (aclog.RoleID == 1)
+    {
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="#div-add-district" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+        </div>
+    </div>
+    }
+
+    }
+    <div class="customer-table mg-t-30">
+        <div class="table-responsive">
+            <table class="table table-striped table-vcenter table-bordered">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Cấp bậc</th>
+                        <th>Phần trăm thưởng</th>
+                        <th>Mức doanh thu cần đạt</th>
+                        <th>Mức doanh thu tối thiểu trong tháng</th>
+                        <th>Chỉnh sửa</th>
+                        <th>Thời gian sửa</th>
+                        <th class="text-center">@ViewBag.Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                    <tr>
+                        <td>@item.PositionName</td>
+                        <td>@item.PercentSalary %</td>
+                        <td>@String.Format("{0:0,0}", item.Million)</td>
+                        <td>@String.Format("{0:0,0}", item.MinimumMonthlyRevenue)</td>
+                        <td>@item.ModifiedBy</td>
+                        <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-center">
+                            @if (aclog.RoleID == 1)
+                            {
+                                <a href="#edit-provincial" data-toggle="modal" data-name="@item.PositionName" data-id="@item.ID" data-percent="@item.PercentSalary" data-salarytype="@item.SalaryType" data-revenue="@String.Format(" {0:0,0}", item.Million)" data-revenue-down="@String.Format(" {0:0,0}", item.MinimumMonthlyRevenue)" class="btn btn-primary btn-icon btn-sm edit-supplier">
+                                    <i data-feather="rotate-ccw"></i> Cập nhật
+                                </a>
+                                <a href="#" data-id="@item.ID" class="btn btn-delete btn-icon btn-sm">
+                                    <i data-feather="rotate-ccw"></i> Xóa
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        @Html.PagedListPager(Model, page => Url.Action("SettingSalary", new
+        {
+        page,
+        search = ViewBag.Search,
+        }),
+        new PagedListRenderOptions
+        {
+        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+        })
+    </nav>
+
+    <div class="modal" id="div-add-district" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+            <div class="modal-content">
+                @using (Html.BeginForm("AddSettingSalary", "Option", FormMethod.Post))
+                {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Thêm cấu hình thưởng</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-8">
+                                    <label for="txt-positionname">Cấp bậc:</label>
+                                    <input id="txt-positionname" name="txt-positionname" type="text" required class="form-control" placeholder="SM" autocomplete="off" />
+                                </div>
+
+                                <div class="col-sm-4">
+                                    <label for="txt-percent">Phần trăm:</label>
+                                    <input id="txt-percent" name="txt-percent" required class="form-control" placeholder="4.2" autocomplete="off" />
+                                </div>
+
+                                <div class="col-sm-12">
+                                    <label>Mức doanh thu cần đạt:</label>
+                                    <input name="txt-revenue" required class="form-control" data-type="currency" autocomplete="off" />
+                                </div>
+
+                                <div class="col-sm-12">
+                                    <label>Mức doanh thu đối chiếu xuống rank:</label>
+                                    <input name="txt-revenue-down" required class="form-control" data-type="currency" autocomplete="off" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-provincial" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+            <div class="modal-content">
+                @using (Html.BeginForm("EditSettingSalary", "Option", FormMethod.Post))
+                {
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="hdfID" name="hdfID" required />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Thêm cấu hình thưởng</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-8">
+                                    <label for="txt-positionname-edit">Cấp bậc:</label>
+                                    <input type="text" id="txt-positionname-edit" name="txt-positionname-edit" required class="form-control" />
+                                </div>
+
+                                <div class="col-sm-4">
+                                    <label>Phần trăm:</label>
+                                    <input type="text" min="0" name="txt-percent-edit" required class="form-control" placeholder="4.2" />
+                                </div>
+
+                                <div class="col-sm-12">
+                                    <label>Mức doanh thu cần đạt:</label>
+                                    <input name="txt-revenue-edit" required class="form-control" data-type="currency" autocomplete="off" />
+                                </div>
+
+                                <div class="col-sm-12">
+                                    <label>Mức doanh thu đối chiếu xuống rank:</label>
+                                    <input name="txt-revenue-down-edit" required class="form-control" data-type="currency" autocomplete="off" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Cập nhật</button>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    @section myScripts
+    {
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).on("click", ".edit-supplier", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('#txt-positionname-edit').val($(this).attr('data-name'));
+            $('input[name=txt-percent-edit]').val($(this).attr('data-percent'));
+            $('input[name=txt-revenue-edit]').val($(this).attr('data-revenue'));
+            $('input[name=txt-revenue-down-edit]').val($(this).attr('data-revenue-down'));
+
+        });
+
+        $(document).on("click", ".btn-delete", function () {
+            if (confirm('Bạn có chắc muốn xóa dữ liệu này ?')) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Option/DeleteSettingSalary",
+                    data: '{id: ' + $(this).attr('data-id') + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(xmlhttprequest);
+                    }
+                });
+            }
+        });
+    </script>
+    }

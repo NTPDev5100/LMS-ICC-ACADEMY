@@ -1,0 +1,656 @@
+﻿@using AppZim.ZIM;
+@using AppZim.Models;
+@using AppZim.TableSql;
+@{
+    ViewBag.Title = "List Topic";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<style>
+    img {
+        width: unset;
+    }
+</style>
+<div class="exam__wrap">
+    <!-- Breadcrumb -->
+    <div class="row mg-b-30">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item active" aria-current="page">Danh sách chủ đề</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <!-- End breadcrumb -->
+    <div class="ready-for-test">
+        <div class="card mg-b-30">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <h4 class="mg-b-5">Dữ liệu chủ đề</h4>
+                </div>
+                <div>
+                    <a href="javascript:;" id="btn-group-new" class="btn btn-primary btn-icon add-new-topic" data-toggle="modal" data-target="#js-edit-group"><i data-feather="plus" class="left"></i> Chủ đề mới</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-group-question table-vcenter" id="datatable-topic">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="wd-50"></th>
+                                <th class="th-name">Tên chủ đề</th>
+                                <th class="th-description">Mô tả</th>
+                                <th>Trạng thái</th>
+                                <th class="wd-50"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tb-list-topic">
+                            @foreach (var item in Model)
+                            {
+                                string description = AssetCRM.RemoveHTMLTags(item.TopicDescription);
+                                <tr data-id="@item.ID" id="tr-topic-@item.ID" class="tr-row">
+                                    <td class="text-center"><a href="javascript:;" data-id="@item.ID" class="collapse-toggle topic-details"><i class="fas fa-plus-square"></i></a></td>
+                                    <td>@item.TopicName</td>
+                                    <td>@(description.Length > 100 ? description.Substring(0, 100) : description)</td>
+                                    <td>
+                                        <div class="custom-control custom-switch">
+                                            @if (item.Status == 2)
+                                            {
+                                                <input type="checkbox" class="custom-control-input chk-status" id="chk-show-@item.ID" data-id="@item.ID">
+                                            }
+                                            else
+                                            {
+                                                <input type="checkbox" checked class="custom-control-input chk-status" id="chk-show-@item.ID" data-id="@item.ID">
+                                            }
+
+                                            <label class="custom-control-label" for="chk-show-@item.ID">Hoạt động</label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="dropdown dropdown-icon">
+                                            <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                               data-toggle="dropdown" aria-haspopup="true"
+                                               aria-expanded="false">more_vert</a>
+                                            <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                                <a class="dropdown-item btn-icon edit-topic" href="javascript:;" data-id="@item.ID"><i data-feather="edit"></i> Chỉnh sửa</a>
+                                                <a class="dropdown-item btn-icon delete-topic" href="javascript:;" data-id="@item.ID"><i data-feather="trash"></i> Xóa</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr class="collapse-row">
+                                    <td colspan="6">
+                                        <div class="collapse-content pd-y-15-f">
+                                            <div>
+                                                <h5 class="mg-b-15 mg-t-10">Danh sách câu hỏi</h5>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-question">
+                                                    <thead class="thead-dark">
+                                                        <tr>
+                                                            <th class="text-center wd-50">STT</th>
+                                                            <th><span class="nowrap">Part/Task</span></th>
+                                                            <th class="quest-title">Câu hỏi</th>
+                                                            <th class="wd-50"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tbody-question-@item.ID">
+                                                        @{
+                                                            int i = 0;
+                                                            List<tbl_Exercise> le = ExerciseTable.getListTopicQuestion(item.ID);
+                                                            foreach (var e in le)
+                                                            {
+                                                                i++;
+                                                                string partname = "";
+                                                                if (e.PartNumber == 1)
+                                                                {
+                                                                    partname = "Part 1";
+                                                                }
+                                                                if (e.PartNumber == 2)
+                                                                {
+                                                                    partname = "Part 2";
+                                                                }
+                                                                if (e.PartNumber == 3)
+                                                                {
+                                                                    partname = "Part 3";
+                                                                }
+                                                                if (e.PartNumber == 4)
+                                                                {
+                                                                    partname = "Task One";
+                                                                }
+                                                                if (e.PartNumber == 5)
+                                                                {
+                                                                    partname = "Task Two";
+                                                                }
+                                                                string question = AssetCRM.RemoveHTMLTags(e.ExerciseTitle);
+                                                                <tr id="question-@e.ID" data-id="@e.ID">
+                                                                    <td class="text-center wd-50">@i</td>
+                                                                    <td>@partname</td>
+                                                                    <td>@(question.Length > 150 ? question.Substring(0, 150) : question)</td>
+                                                                    <td class="wd-50">
+                                                                        <div class="dropdown dropdown-icon">
+                                                                            <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                                                               data-toggle="dropdown" aria-haspopup="true"
+                                                                               aria-expanded="false">more_vert</a>
+                                                                            <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                                                                <a class="dropdown-item btn-icon edit-question" href="javascript:;" data-topicID="@item.ID" data-id="@e.ID"><i data-feather="edit"></i> Sửa</a>
+                                                                                <a class="dropdown-item btn-icon delete-question" href="javascript:;" data-id="@e.ID"><i data-feather="trash"></i> Xóa</a>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="mg-t-15">
+                                                <a data-id="@item.ID" href="javascript:;" class="btn btn-icon btn-info add-question"><i data-feather="plus" class="left"></i> Thêm câu hỏi</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" tabindex="-1" role="dialog" id="js-edit-group">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tạo mới chủ đề</h5>
+                <input type="hidden" name="hdfTopicID" value="0" />
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="form-group col-md-8">
+                        <label>Tên chủ đề:</label>
+                        <input type="text" class="form-control" name="txt-topic-name" placeholder="..." required>
+                    </div>
+                    <div class="form-group col-12">
+                        <label for="">Mô tả:</label>
+                        <textarea rows="3" id="txt-description" class="form-control drag-editor" placeholder="Topic description"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="javascript:;" class="btn btn-primary add-topic">Lưu lại</a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" tabindex="-1" role="dialog" id="js-edit-question">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <input type="hidden" name="hdfQuestionID" value="0" />
+                <h5 class="modal-title">Tạo câu hỏi</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label name="lb-part">Part/Task:</label>
+                        <select name="ddl-part-number" class="form-control">
+                            <option value="1">Part 1</option>
+                            <option value="2">Part 2</option>
+                            <option value="3">Part 3</option>
+                            <option value="4">Task One</option>
+                            <option value="5">Task Two</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-12">
+                        <label for="">Nội dung câu hỏi:</label>
+                        <textarea rows="5" id="txt-question" class="form-control question-editor" placeholder="Topic description"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="javascript:;" class="btn btn-primary btn-add-question">Lưu lại</a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+    <script>
+
+        function uploadImage() {
+            var editor = tinymce.activeEditor;
+            // create input element, call modal dialog w
+            var fileInput = document.createElement('input');
+            fileInput.setAttribute('type', 'file');
+            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+            // if file is submitted run our key code
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files != null && fileInput.files[0] != null) {
+                    // create instance of FileReader()
+                    var formData = new FormData();
+                    formData.append("FileUpload", fileInput.files[0]);
+                    $.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: '/Admin/SetPackage/UploadFilePost',
+                        data: formData,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (msg) {
+                            console.log(msg.l);
+                            editor.insertContent('<img src="' + msg.l + '" style="width: unset;" />');
+                        },
+                        error: function (error) {
+                            console.log('error upload file audio');
+                        }
+                    });
+                }
+            });
+            fileInput.click()
+        }
+        let dragEditor = {
+            selector: '.drag-editor',
+            menubar: false,
+            inline: false,
+            min_height: 300,
+            auto_focus: false,
+            body_class: 'drop-answer',
+            plugins: [
+                'lists',
+                'autolink',
+                'paste',
+                'autoresize',
+                'stickytoolbar',
+                'link',
+                'media',
+                'table'
+            ],
+            paste_as_text: true,
+            autoresize_bottom_margin: 30,
+            toolbar: 'undo redo | formatselect | fontsizeselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | removeformat emptySpace | UploadImage link media | table tabledelete | tableprops tablerowprops tablecellprops | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                '/app-assets/zimv2/assets/css/custom.css?v=' + new Date().getTime()
+            ],
+            setup: (editor) => {
+                //Add custom button
+                editor.ui.registry.addButton('UploadImage', {
+                    text: 'Image',
+                    icon: 'image',
+                    onAction: uploadImage
+                });
+            },
+            fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt"
+
+        }
+        let questioneditor = {
+            selector: '.question-editor',
+            menubar: false,
+            inline: false,
+            min_height: 300,
+            auto_focus: false,
+            body_class: 'drop-answer',
+            plugins: [
+                'lists',
+                'autolink',
+                'paste',
+                'autoresize',
+                'stickytoolbar',
+                'link',
+                'media',
+                'table'
+            ],
+            paste_as_text: true,
+            autoresize_bottom_margin: 30,
+            toolbar: 'undo redo | formatselect | fontsizeselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | removeformat emptySpace | UploadImage link media | table tabledelete | tableprops tablerowprops tablecellprops | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                '/app-assets/zimv2/assets/css/custom.css?v=' + new Date().getTime()
+            ],
+            setup: (editor) => {
+                //Add custom button
+                editor.ui.registry.addButton('UploadImage', {
+                    text: 'Image',
+                    icon: 'image',
+                    onAction: uploadImage
+                });
+            },
+            fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt"
+
+        }
+
+        //Init editor
+        tinymce.init(dragEditor); tinymce.init(questioneditor);
+        $(document).on('click', '.add-question', function () {
+            let id = $(this).attr('data-id');
+            $('input[name="hdfQuestionID"]').val(0);
+            $('input[name="hdfTopicID"]').val(id);
+
+            $('#js-edit-question').modal();
+        });
+        $(document).on('click', '.edit-question', function () {
+            let id = $(this).attr('data-id');
+            let tpID = $(this).attr('data-topicID');
+            let type = $(this).attr('data-type');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Topic/LoadQuestionDetail",
+                data: '{id:' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('input[name="hdfQuestionID"]').val(id);
+                        $('input[name="hdfTopicID"]').val(tpID);
+                        tinymce.get('txt-question').getBody().innerHTML = msg.ex.ExerciseTitle;
+                        $('select[name="ddl-part-number"]').val(msg.ex.PartNumber);
+                        $('#js-edit-question').modal();
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("some thing error");
+                }
+            });
+        });
+        $('.table').on('click', '.collapse-toggle', function () {
+            $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+            $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content').stop()
+                .slideToggle(
+                    200);
+        });
+        $('.add-topic').click(function () {
+            let id = $('input[name="hdfTopicID"]').val();
+            let tn = $('input[name="txt-topic-name"]').val();
+            let td = "";
+            var content = tinymce.get('txt-description').contentDocument.activeElement.innerHTML;
+            var text = tinymce.get('txt-description').contentDocument.activeElement.innerText;
+            if (text.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập mô tả!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                return;
+            } else {
+                td = content;
+            }
+         
+            let data = {
+                id: id,
+                tn: tn, 
+                td: td,
+            }
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Topic/AddTopic",
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        });
+                        if (id == 0) {
+                            $('#tb-list-topic').append(msg.html);
+                            feather.replace();
+                        }
+                        else {
+                            $('#tr-topic-' + id + '').empty();
+                            $('#tr-topic-' + id + '').append(msg.html);
+                            feather.replace();
+                        }
+                        $('#js-edit-group').modal("hide");
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("some thing error");
+                }
+            });
+        });
+        $(document).on('click', '.edit-topic', function () {
+            let id = $(this).attr('data-id');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Topic/LoadTopicDetail",
+                data: '{id:' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('input[name="hdfTopicID"]').val(id);
+                        $('input[name="txt-topic-name"]').val(msg.tp.TopicName);
+                        tinymce.get('txt-description').getBody().innerHTML = msg.tp.TopicDescription;
+                        $('#js-edit-group').modal();
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("some thing error");
+                }
+            });
+        });
+        $(document).on('click', '.delete-topic', function () {
+            let id = $(this).attr('data-id');
+            let $this = this;
+            let rs = confirm('Are you sure to delete this topic?');
+            if (rs) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Topic/DeleteTopic",
+                    data: '{id:' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.message,
+                                icon: 'error_outline',
+                                classBackground: 'noti-success',
+                                timeout: 3000
+                            });
+                            $($this).closest('tr.tr-row').next().find('.collapse-content').closest('tr.collapse-row').remove();
+                            $($this).closest('tr.tr-row').remove();
+                        } else {
+                            toast.create({
+                                title: 'Notification!',
+                                text: msg.message,
+                                icon: 'error_outline',
+                                classBackground: 'noti-error',
+                                timeout: 3000
+                            });
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("some thing error");
+                    }
+                });
+            }
+
+        });
+        $(document).on('click', '.delete-question', function () {
+            let $this = this;
+            let id = $(this).attr('data-id');
+            let rs = confirm('Are you sure to delete this question?');
+            if (rs) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Topic/DeleteQuestion",
+                    data: '{id:' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.message,
+                                icon: 'error_outline',
+                                classBackground: 'noti-success',
+                                timeout: 3000
+                            });
+                            $($this).closest('tr').remove();
+                        } else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.message,
+                                icon: 'error_outline',
+                                classBackground: 'noti-error',
+                                timeout: 3000
+                            });
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("some thing error");
+                    }
+                });
+            }
+
+        });
+
+        $('.add-new-topic').click(function () {
+            $('input[name="hdfTopicID"]').val(0);
+            $('input[name="txt-topic-name"]').val("");
+            $('select[name="ddl-topic-type"]').val(1);
+            tinymce.get('txt-description').getBody().innerHTML = "";
+        });
+        $(document).on('click','.btn-add-question',function () {
+            let tpID = $('input[name="hdfTopicID"]').val();
+            let QuestionID = $('input[name="hdfQuestionID"]').val();
+            let Part = $('select[name="ddl-part-number"]').val();
+            let question = "";
+            var content = tinymce.get('txt-question').contentDocument.activeElement.innerHTML;
+            var text = tinymce.get('txt-question').contentDocument.activeElement.innerText;
+            if (text.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập câu hỏi!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                return;
+            } else {
+                question = content;
+            }
+            let data = {
+                tpid: tpID,
+                qid: QuestionID,
+                part: Part,
+                question: question
+            }
+            //console.log(data);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Topic/AddQuestion",
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        });
+                        if (QuestionID == 0) {
+                            $('#tbody-question-' + tpID + '').append(msg.html);
+                            feather.replace();
+                        } else {
+                            $('#question-' + QuestionID + '').empty();
+                            $('#question-' + QuestionID + '').append(msg.html);
+                        }
+                        $('#js-edit-question').modal("hide");
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("some thing error");
+                }
+            });
+        });
+        $('.chk-status').click(function () {
+            let id = $(this).attr('data-id');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Topic/ActiveTopic",
+                data: '{id:' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        });
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("some thing error");
+                }
+            });
+        });
+
+
+    </script>
+}
+

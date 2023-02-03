@@ -1,0 +1,1040 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions;
+@{
+    ViewBag.Title = "ExrciseDetailEssayFix";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    int ExaddonId = Model.ID;
+}
+<style>
+    .feedback {
+        max-width: 270px;
+        width: 100%;
+        border-radius: 8px;
+        display: inline-block;
+        flex-direction: column;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .modal-footer {
+        border-top: none;
+    }
+
+    .content {
+        overflow: initial;
+    }
+
+    .question {
+        align-items: center;
+    }
+
+        .question h6 {
+            margin: 0;
+            padding: 0;
+        }
+
+        .question p {
+            margin: 0;
+            padding: 0;
+        }
+</style>
+
+<!-- Breadcrumb -->
+@if (ViewBag.Course != null)
+{
+    <div class="row mg-b-30">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item"><a href="@Url.Action("CourseDetail", "StudentCourse", new { area = "", ViewBag.Course.ID })">@ViewBag.Course.CourseName</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("CourseExrcise", "StudentCourse", new { area = "", ViewBag.Course.ID })">Bài tập</a></li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+}
+<!-- End breadcrumb -->
+<div class="row">
+    <div class="col-12 col-md-8">
+        <div class="exc-info">
+            <div class="question-wrap">
+                @{
+                    if (Model.ExerciseID != 0)
+                    {
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mg-b-5">Câu hỏi</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="raw-txt">
+
+                                    @Html.Raw(Model.ExerciseQuestion)
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                @if (!string.IsNullOrEmpty(Model.ParagraphAnswerFix))
+                {
+                    <div class="card mg-t-10">
+                        <div class="card-header">
+                            <h6 class="mg-b-5">Trả lời</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="raw-txt" id="student-raw-text">
+                                <div class="student-answer">
+                                    @Html.Raw(Model.ParagraphAnswerFix)
+                                </div>
+                                @{
+                                    if (Model.Type == 3 && Model.ExerciseID != 0)
+                                    {
+                                        List<tbl_ExerciseAddonStudentFileAudio> laudio = ExerciseAddonStudentFileAudioTable.getbyexerciseaddonstudentID(Model.ID);
+
+                                        if (!string.IsNullOrEmpty(Model.FileAudio))
+                                        {
+                                            <audio controls>
+                                                <source src="@Model.FileAudio" type="audio/ogg">
+                                                <source src="@Model.FileAudio" type="audio/mpeg">
+                                            </audio>
+                                        }
+                                        foreach (var item in laudio)
+                                        {
+                                            <audio controls>
+                                                <source src="@item.LinkFile" type="audio/ogg">
+                                                <source src="@item.LinkFile" type="audio/mpeg">
+                                            </audio>
+                                            <br />
+                                        }
+                                    }
+
+                                }
+                            </div>
+
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    List<tbl_ExerciseAddonStudentOnSetPackage> lexon_part1 = ExerciseAddonStudentOnSetPackageTable.getbyexaddid(ExaddonId).Where(n => n.Part == 1).ToList();
+                    List<tbl_ExerciseAddonStudentOnSetPackage> lexon_part2 = ExerciseAddonStudentOnSetPackageTable.getbyexaddid(ExaddonId).Where(n => n.Part == 2).ToList();
+                    List<tbl_ExerciseAddonStudentOnSetPackage> lexon_part3 = ExerciseAddonStudentOnSetPackageTable.getbyexaddid(ExaddonId).Where(n => n.Part == 3).ToList();
+                    var laudio = ExerciseAddonStudentFileAudioTable.getbyexerciseaddonstudentID(ExaddonId);
+                    <div class="raw-txt" id="student-raw-text">
+                        <div class="card mg-t-10">
+                            <div class="card-header">
+                                <h6 class="mg-b-5">Part 1: @lexon_part1.Count câu hỏi</h6>
+                            </div>
+                            <div class="card-body">
+                                @for (int i = 0; i < lexon_part1.Count; i++)
+                                {
+                                    <div class="question">
+                                        <h6>Câu hỏi @(i + 1):</h6>&nbsp;@Html.Raw(lexon_part1[i].ExerciseQuestion)
+                                    </div>
+                                    List<tbl_ExerciseAddonStudentFileAudio> files = laudio.Where(n => n.ExerciseAddonStudentOnSetPackageID.Value == lexon_part1[i].ID).ToList();
+                                    foreach (var item in files)
+                                    {
+                                        <audio controls>
+                                            <source src="@item.LinkFile" type="audio/ogg">
+                                            <source src="@item.LinkFile" type="audio/mpeg">
+                                        </audio>
+                                        <br />
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="card mg-t-10">
+                            <div class="card-header">
+                                <h6 class="mg-b-5">Part 2: @lexon_part2.Count Câu hỏi</h6>
+                            </div>
+                            <div class="card-body">
+                                @for (int i = 0; i < lexon_part2.Count; i++)
+                                {
+                                    <div class="question"><h6>Câu hỏi @(i + 1):</h6>&nbsp;@Html.Raw(lexon_part2[i].ExerciseQuestion)</div>
+                                    List<tbl_ExerciseAddonStudentFileAudio> files = laudio.Where(n => n.ExerciseAddonStudentOnSetPackageID.Value == lexon_part2[i].ID).ToList();
+                                    foreach (var item in files)
+                                    {
+                                        <audio controls>
+                                            <source src="@item.LinkFile" type="audio/ogg">
+                                            <source src="@item.LinkFile" type="audio/mpeg">
+                                        </audio>
+                                        <br />
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="card mg-t-10">
+                            <div class="card-header">
+                                <h6 class="mg-b-5">Part 3: @lexon_part3.Count Câu hỏi</h6>
+                            </div>
+                            <div class="card-body">
+                                @for (int i = 0; i < lexon_part3.Count; i++)
+                                {
+                                    <div class="question"><h6>Câu hỏi @(i + 1):</h6>&nbsp;@Html.Raw(lexon_part3[i].ExerciseQuestion)</div>
+                                    List<tbl_ExerciseAddonStudentFileAudio> files = laudio.Where(n => n.ExerciseAddonStudentOnSetPackageID.Value == lexon_part3[i].ID).ToList();
+                                    foreach (var item in files)
+                                    {
+                                        <audio controls>
+                                            <source src="@item.LinkFile" type="audio/ogg">
+                                            <source src="@item.LinkFile" type="audio/mpeg">
+                                        </audio>
+                                        <br />
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="card mg-t-10">
+                    <div class="card-header">
+                        <h6 class="mg-b-5">Nhận xét</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="teacher-comment">
+                            @Html.Raw(Model.NoteFix)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mg-b-0">Thông tin</h6>
+            </div>
+            <div class="card-body">
+                <div class="information-block">
+                    <div class="student-info">
+                        <div class="student-course">
+                            @{
+                                if (Model.CourseID != null)
+                                {
+                                    tbl_Courses course = CoursesTable.getbyid(Model.CourseID);
+                                    if (course != null)
+                                    {
+                                        <p class="txt"><span class="lb">Trung tâm:</span> <span class="value">@course.SchoolName</span></p>
+                                        <p class="txt"><span class="lb">Khóa học:</span> <span class="value">@course.ClassName</span></p>
+                                        <p class="txt"><span class="lb">Ngày mở:</span> <span class="value">@course.OpeningDate.Value.ToString("dd/MM/yyyy")</span></p>
+                                    }
+                                }
+                                if (Model.SetPackageID != null)
+                                {
+                                    tbl_SetPackage set = SetPackageTable.getbyid(Model.SetPackageID);
+                                    if (set != null)
+                                    {
+                                        <p class="txt"><span class="lb">Tên gói:</span> <span class="value">@set.PackageName</span></p>
+                                        <p class="txt"><span class="lb">Mô tả:</span> <span class="value">@Model.CourseName</span></p>
+                                    }
+                                }
+                            }
+                            <p class="txt"><span class="lb">Học viên:</span> <span class="value">@Model.StudentName</span></p>
+                        </div>
+                        <div class="w-100 mg-t-10 d-flex justify-content-between" style="  border-top: none;">
+                            @{
+                                if (ViewBag.Exercise != null)
+                                {
+                                    if (!string.IsNullOrEmpty(ViewBag.Exercise.LinkFile))
+                                    {
+                                        <p>
+                                            <span class="title lb-fixed font-weight-600 black-text">
+                                                Tệp tin:
+                                            </span>
+                                            <a href="@ViewBag.Exercise.LinkFile" download="download">@ViewBag.Exercise.FileName<span class="material-icons ml-1 cyan-text" style="vertical-align:bottom;">cloud_download</span></a>
+                                        </p>
+                                    }
+
+                                }
+                                if (Model.RateExercise != null)
+                                {
+                                    <p>
+                                        <span class="title lb-fixed font-weight-600 black-text">
+                                            Đánh giá của bạn:
+                                        </span>
+                                        @{
+                                            for (int i = 0; i < Model.RateExercise; i++)
+                                            {
+                                                <span class="material-icons" style="vertical-align:bottom; color:#FFEB3B!important;">sao</span>
+                                            }
+                                        }
+                                    </p>
+                                }
+                                if (Model.StatusDone == 3)
+                                {
+                                    <a href="#accept-fix" data-toggle="modal" class="btn btn-success btn-accept mg-r-10 modal-trigger">Đánh giá</a>
+                                    <a href="#redo-fix" data-toggle="modal" class="btn btn-danger mg-r-10 btn-redo modal-trigger">Đánh giá lại</a>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="left-sticky">
+            <div class="card mg-t-10">
+                <div class="card-header">
+                    <h6 class="mg-b-0 d-flex align-items-end justify-content-between"><span>Lịch sử</span><span id="number-note">(@ViewBag.Fix.Count nhận xét)</span></h6>
+                </div>
+                <div class="card-body note-ps">
+                    <div id="list-note-wrap">
+                        @{
+                            foreach (var jtem in ViewBag.Fix)
+                            {
+                                tbl_ExerciseAddonStudentFix item = jtem;
+                                <div class="note-block" data-cmt="@item.DataCMT">
+                                    <div class="note-content">
+                                        @{
+                                            tbl_Account acif = AccountTable.getbyusername(item.CreatedBy);
+                                            <div class="comment-info d-flex">
+                                                <div class="avatar">
+                                                    @if (!string.IsNullOrEmpty(acif.Avatar))
+                                                    {
+                                                        <img src="@acif.Avatar" class="rounded-circle" alt="avatar">
+                                                    }
+                                                    else
+                                                    {
+                                                        <img src="/app-assets/zimv2/images/invis-user.png" class="rounded-circle" alt="avatar">
+                                                    }
+                                                </div>
+                                                <div class="meta mg-l-10 flex-grow-1 pd-r-30">
+                                                    <p class="name mg-b-0">@acif.FullName</p>
+                                                    <p class="date-time mg-b-10 tx-12 tx-color-03 mg-b-0">@AccountTable.getrolehtml(acif.RoleID.Value)</p>
+                                                </div>
+                                            </div>
+                                        }
+                                        <div class="comment-content" id="area-@item.ID">
+                                            @item.FixNote
+                                        </div>
+                                        @{
+                                            List<tbl_ExerciseAddonStudentFixLinkAudio> laudio = ExerciseAddonStudentFixLinkAudioTable.getbycmtid(item.ID);
+                                            if (!string.IsNullOrEmpty(item.LinkAudio))
+                                            {
+                                                tbl_ExerciseAddonStudentFixLinkAudio t = new tbl_ExerciseAddonStudentFixLinkAudio();
+                                                t.LinkFile = item.LinkAudio;
+                                                laudio.Add(t);
+                                            }
+                                            foreach (var link in laudio)
+                                            {
+                                                <div class="record-list">
+                                                    <div class="audio-result mg-t-10" data-index="0">
+                                                        <audio controls="" class="valign-center" style="display: block; width: 100%;">
+                                                            <source src="@link.LinkFile" type="audio/webm">
+                                                        </audio>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="card teacher-score mg-t-10">
+                <div class="card-header">
+                    <h6 class="mg-b-5">Điểm: @Model.Scores</h6>
+                </div>
+                @if (Model.StatusDone == 3)
+                {
+                    <div class="card-body d-flex flex-column-reverse">
+                        <div class="row-flex d-flex pd-r-40 align-items-center mg-t-10" style=" font-size: 30px; font-weight: 600;">
+                            <div class="label w-50">
+                                <span class="txt">Tổng điểm</span>
+                            </div>
+                            <div class="value w-50 ">
+                                @Model.Scores
+                            </div>
+                        </div>
+                        @{
+                            foreach (var item in ViewBag.Score)
+                            {
+
+                                <div class="row-flex d-flex pd-r-40 align-items-center mg-t-10">
+                                    <div class="label w-50 pd-r-5">
+                                        @item.ScoreName
+                                    </div>
+                                    <div class="value w-50">
+                                        @item.Score
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+                else
+                {
+                    // 1 mới nộp, 2 đã nhận chấm, 3 đã chấm, 4 chấm lại, 5 xong
+                    <div class="card-body d-flex flex-column-reverse">
+                        <div class="row-flex d-flex pd-r-40 align-items-center mg-t-10" style=" font-size: 30px; font-weight: 600;">
+                            <div class="label ">
+                                @{
+                                    if (Model.StatusDone == 1)
+                                    {
+                                        <span class="txt">Mới nộp</span>
+                                    }
+                                    else if (Model.StatusDone == 2)
+                                    {
+                                        <span class="txt">Đã nhận chấm</span>
+                                    }
+                                    else if (Model.StatusDone == 4)
+                                    {
+                                        <span class="txt">Chấm lại</span>
+                                    }
+                                    else if (Model.StatusDone == 5)
+                                    {
+                                        <span class="txt">Xong</span>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="redo-fix" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="nav-wrapper mg-b-20 tx-13">
+                    <div>
+                        <h5 style="text-align: center;">MARK AGAIN</h5>
+                    </div>
+                </div><!-- nav-wrapper -->
+                <div class="tab-content">
+                    <div class="input-field col s12">
+                        <div class="input-group">
+                            <textarea class="inputControl form-control" style="width:100%;height:100px" rows="1" id="txt-note" placeholder="Note..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer clear">
+                        <a id="btn-redo" href="javascript:;" class="btn btn-danger" style="margin:0 auto;">Submit</a>
+                    </div>
+                </div><!-- tab-content -->
+            </div><!-- modal-body -->
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="accept-fix" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body pd-x-25 pd-sm-x-30 pd-t-40 pd-sm-t-20 pd-b-15 pd-sm-b-20">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="nav-wrapper mg-b-20 tx-13">
+                    <div>
+                        <h5 style="text-align: center;">Đánh giá</h5>
+                    </div>
+                </div><!-- nav-wrapper -->
+                <div class="tab-content">
+
+                    <div class="rating">
+                        <input type="radio" name="rating" id="rating-5" data-rate="5">
+                        <label for="rating-5"></label>
+                        <input type="radio" name="rating" id="rating-4" data-rate="4">
+                        <label for="rating-4"></label>
+                        <input type="radio" name="rating" id="rating-3" data-rate="3">
+                        <label for="rating-3"></label>
+                        <input type="radio" name="rating" id="rating-2" data-rate="2">
+                        <label for="rating-2"></label>
+                        <input type="radio" name="rating" id="rating-1" data-rate="1">
+                        <label for="rating-1"></label>
+                        <div class="emoji-wrapper">
+                            <div class="emoji">
+                                <svg class="rating-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                    <circle cx="256" cy="256" r="256" fill="#ffd93b"></circle>
+                                    <path d="M512 256c0 141.44-114.64 256-256 256-80.48 0-152.32-37.12-199.28-95.28 43.92 35.52 99.84 56.72 160.72 56.72 141.36 0 256-114.56 256-256 0-60.88-21.2-116.8-56.72-160.72C474.8 103.68 512 175.52 512 256z" fill="#f4c534"></path>
+                                    <ellipse transform="scale(-1) rotate(31.21 715.433 -595.455)" cx="166.318" cy="199.829" rx="56.146" ry="56.13" fill="#fff"></ellipse>
+                                    <ellipse transform="rotate(-148.804 180.87 175.82)" cx="180.871" cy="175.822" rx="28.048" ry="28.08" fill="#3e4347"></ellipse>
+                                    <ellipse transform="rotate(-113.778 194.434 165.995)" cx="194.433" cy="165.993" rx="8.016" ry="5.296" fill="#5a5f63"></ellipse>
+                                    <ellipse transform="scale(-1) rotate(31.21 715.397 -1237.664)" cx="345.695" cy="199.819" rx="56.146" ry="56.13" fill="#fff"></ellipse>
+                                    <ellipse transform="rotate(-148.804 360.25 175.837)" cx="360.252" cy="175.84" rx="28.048" ry="28.08" fill="#3e4347"></ellipse>
+                                    <ellipse transform="scale(-1) rotate(66.227 254.508 -573.138)" cx="373.794" cy="165.987" rx="8.016" ry="5.296" fill="#5a5f63"></ellipse>
+                                    <path d="M370.56 344.4c0 7.696-6.224 13.92-13.92 13.92H155.36c-7.616 0-13.92-6.224-13.92-13.92s6.304-13.92 13.92-13.92h201.296c7.696.016 13.904 6.224 13.904 13.92z" fill="#3e4347"></path>
+                                </svg>
+                                <svg class="rating-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                    <circle cx="256" cy="256" r="256" fill="#ffd93b"></circle>
+                                    <path d="M512 256A256 256 0 0 1 56.7 416.7a256 256 0 0 0 360-360c58.1 47 95.3 118.8 95.3 199.3z" fill="#f4c534"></path>
+                                    <path d="M328.4 428a92.8 92.8 0 0 0-145-.1 6.8 6.8 0 0 1-12-5.8 86.6 86.6 0 0 1 84.5-69 86.6 86.6 0 0 1 84.7 69.8c1.3 6.9-7.7 10.6-12.2 5.1z" fill="#3e4347"></path>
+                                    <path d="M269.2 222.3c5.3 62.8 52 113.9 104.8 113.9 52.3 0 90.8-51.1 85.6-113.9-2-25-10.8-47.9-23.7-66.7-4.1-6.1-12.2-8-18.5-4.2a111.8 111.8 0 0 1-60.1 16.2c-22.8 0-42.1-5.6-57.8-14.8-6.8-4-15.4-1.5-18.9 5.4-9 18.2-13.2 40.3-11.4 64.1z" fill="#f4c534"></path>
+                                    <path d="M357 189.5c25.8 0 47-7.1 63.7-18.7 10 14.6 17 32.1 18.7 51.6 4 49.6-26.1 89.7-67.5 89.7-41.6 0-78.4-40.1-82.5-89.7A95 95 0 0 1 298 174c16 9.7 35.6 15.5 59 15.5z" fill="#fff"></path>
+                                    <path d="M396.2 246.1a38.5 38.5 0 0 1-38.7 38.6 38.5 38.5 0 0 1-38.6-38.6 38.6 38.6 0 1 1 77.3 0z" fill="#3e4347"></path>
+                                    <path d="M380.4 241.1c-3.2 3.2-9.9 1.7-14.9-3.2-4.8-4.8-6.2-11.5-3-14.7 3.3-3.4 10-2 14.9 2.9 4.9 5 6.4 11.7 3 15z" fill="#fff"></path>
+                                    <path d="M242.8 222.3c-5.3 62.8-52 113.9-104.8 113.9-52.3 0-90.8-51.1-85.6-113.9 2-25 10.8-47.9 23.7-66.7 4.1-6.1 12.2-8 18.5-4.2 16.2 10.1 36.2 16.2 60.1 16.2 22.8 0 42.1-5.6 57.8-14.8 6.8-4 15.4-1.5 18.9 5.4 9 18.2 13.2 40.3 11.4 64.1z" fill="#f4c534"></path>
+                                    <path d="M155 189.5c-25.8 0-47-7.1-63.7-18.7-10 14.6-17 32.1-18.7 51.6-4 49.6 26.1 89.7 67.5 89.7 41.6 0 78.4-40.1 82.5-89.7A95 95 0 0 0 214 174c-16 9.7-35.6 15.5-59 15.5z" fill="#fff"></path>
+                                    <path d="M115.8 246.1a38.5 38.5 0 0 0 38.7 38.6 38.5 38.5 0 0 0 38.6-38.6 38.6 38.6 0 1 0-77.3 0z" fill="#3e4347"></path>
+                                    <path d="M131.6 241.1c3.2 3.2 9.9 1.7 14.9-3.2 4.8-4.8 6.2-11.5 3-14.7-3.3-3.4-10-2-14.9 2.9-4.9 5-6.4 11.7-3 15z" fill="#fff"></path>
+                                </svg>
+                                <svg class="rating-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                    <circle cx="256" cy="256" r="256" fill="#ffd93b"></circle>
+                                    <path d="M512 256A256 256 0 0 1 56.7 416.7a256 256 0 0 0 360-360c58.1 47 95.3 118.8 95.3 199.3z" fill="#f4c534"></path>
+                                    <path d="M336.6 403.2c-6.5 8-16 10-25.5 5.2a117.6 117.6 0 0 0-110.2 0c-9.4 4.9-19 3.3-25.6-4.6-6.5-7.7-4.7-21.1 8.4-28 45.1-24 99.5-24 144.6 0 13 7 14.8 19.7 8.3 27.4z" fill="#3e4347"></path>
+                                    <path d="M276.6 244.3a79.3 79.3 0 1 1 158.8 0 79.5 79.5 0 1 1-158.8 0z" fill="#fff"></path>
+                                    <circle cx="340" cy="260.4" r="36.2" fill="#3e4347"></circle>
+                                    <g fill="#fff">
+                                        <ellipse transform="rotate(-135 326.4 246.6)" cx="326.4" cy="246.6" rx="6.5" ry="10"></ellipse>
+                                        <path d="M231.9 244.3a79.3 79.3 0 1 0-158.8 0 79.5 79.5 0 1 0 158.8 0z"></path>
+                                    </g>
+                                    <circle cx="168.5" cy="260.4" r="36.2" fill="#3e4347"></circle>
+                                    <ellipse transform="rotate(-135 182.1 246.7)" cx="182.1" cy="246.7" rx="10" ry="6.5" fill="#fff"></ellipse>
+                                </svg>
+                                <svg class="rating-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                    <circle cx="256" cy="256" r="256" fill="#ffd93b"></circle>
+                                    <path d="M407.7 352.8a163.9 163.9 0 0 1-303.5 0c-2.3-5.5 1.5-12 7.5-13.2a780.8 780.8 0 0 1 288.4 0c6 1.2 9.9 7.7 7.6 13.2z" fill="#3e4347"></path>
+                                    <path d="M512 256A256 256 0 0 1 56.7 416.7a256 256 0 0 0 360-360c58.1 47 95.3 118.8 95.3 199.3z" fill="#f4c534"></path>
+                                    <g fill="#fff">
+                                        <path d="M115.3 339c18.2 29.6 75.1 32.8 143.1 32.8 67.1 0 124.2-3.2 143.2-31.6l-1.5-.6a780.6 780.6 0 0 0-284.8-.6z"></path>
+                                        <ellipse cx="356.4" cy="205.3" rx="81.1" ry="81"></ellipse>
+                                    </g>
+                                    <ellipse cx="356.4" cy="205.3" rx="44.2" ry="44.2" fill="#3e4347"></ellipse>
+                                    <g fill="#fff">
+                                        <ellipse transform="scale(-1) rotate(45 454 -906)" cx="375.3" cy="188.1" rx="12" ry="8.1"></ellipse>
+                                        <ellipse cx="155.6" cy="205.3" rx="81.1" ry="81"></ellipse>
+                                    </g>
+                                    <ellipse cx="155.6" cy="205.3" rx="44.2" ry="44.2" fill="#3e4347"></ellipse>
+                                    <ellipse transform="scale(-1) rotate(45 454 -421.3)" cx="174.5" cy="188" rx="12" ry="8.1" fill="#fff"></ellipse>
+                                </svg>
+                                <svg class="rating-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                    <circle cx="256" cy="256" r="256" fill="#ffd93b"></circle>
+                                    <path d="M512 256A256 256 0 0 1 56.7 416.7a256 256 0 0 0 360-360c58.1 47 95.3 118.8 95.3 199.3z" fill="#f4c534"></path>
+                                    <path d="M232.3 201.3c0 49.2-74.3 94.2-74.3 94.2s-74.4-45-74.4-94.2a38 38 0 0 1 74.4-11.1 38 38 0 0 1 74.3 11.1z" fill="#e24b4b"></path>
+                                    <path d="M96.1 173.3a37.7 37.7 0 0 0-12.4 28c0 49.2 74.3 94.2 74.3 94.2C80.2 229.8 95.6 175.2 96 173.3z" fill="#d03f3f"></path>
+                                    <path d="M215.2 200c-3.6 3-9.8 1-13.8-4.1-4.2-5.2-4.6-11.5-1.2-14.1 3.6-2.8 9.7-.7 13.9 4.4 4 5.2 4.6 11.4 1.1 13.8z" fill="#fff"></path>
+                                    <path d="M428.4 201.3c0 49.2-74.4 94.2-74.4 94.2s-74.3-45-74.3-94.2a38 38 0 0 1 74.4-11.1 38 38 0 0 1 74.3 11.1z" fill="#e24b4b"></path>
+                                    <path d="M292.2 173.3a37.7 37.7 0 0 0-12.4 28c0 49.2 74.3 94.2 74.3 94.2-77.8-65.7-62.4-120.3-61.9-122.2z" fill="#d03f3f"></path>
+                                    <path d="M411.3 200c-3.6 3-9.8 1-13.8-4.1-4.2-5.2-4.6-11.5-1.2-14.1 3.6-2.8 9.7-.7 13.9 4.4 4 5.2 4.6 11.4 1.1 13.8z" fill="#fff"></path>
+                                    <path d="M381.7 374.1c-30.2 35.9-75.3 64.4-125.7 64.4s-95.4-28.5-125.8-64.2a17.6 17.6 0 0 1 16.5-28.7 627.7 627.7 0 0 0 218.7-.1c16.2-2.7 27 16.1 16.3 28.6z" fill="#3e4347"></path>
+                                    <path d="M256 438.5c25.7 0 50-7.5 71.7-19.5-9-33.7-40.7-43.3-62.6-31.7-29.7 15.8-62.8-4.7-75.6 34.3 20.3 10.4 42.8 17 66.5 17z" fill="#e24b4b"></path>
+                                </svg>
+                                <svg class="rating-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                    <g fill="#ffd93b">
+                                        <circle cx="256" cy="256" r="256"></circle>
+                                        <path d="M512 256A256 256 0 0 1 56.8 416.7a256 256 0 0 0 360-360c58 47 95.2 118.8 95.2 199.3z"></path>
+                                    </g>
+                                    <path d="M512 99.4v165.1c0 11-8.9 19.9-19.7 19.9h-187c-13 0-23.5-10.5-23.5-23.5v-21.3c0-12.9-8.9-24.8-21.6-26.7-16.2-2.5-30 10-30 25.5V261c0 13-10.5 23.5-23.5 23.5h-187A19.7 19.7 0 0 1 0 264.7V99.4c0-10.9 8.8-19.7 19.7-19.7h472.6c10.8 0 19.7 8.7 19.7 19.7z" fill="#e9eff4"></path>
+                                    <path d="M204.6 138v88.2a23 23 0 0 1-23 23H58.2a23 23 0 0 1-23-23v-88.3a23 23 0 0 1 23-23h123.4a23 23 0 0 1 23 23z" fill="#45cbea"></path>
+                                    <path d="M476.9 138v88.2a23 23 0 0 1-23 23H330.3a23 23 0 0 1-23-23v-88.3a23 23 0 0 1 23-23h123.4a23 23 0 0 1 23 23z" fill="#e84d88"></path>
+                                    <g fill="#38c0dc">
+                                        <path d="M95.2 114.9l-60 60v15.2l75.2-75.2zM123.3 114.9L35.1 203v23.2c0 1.8.3 3.7.7 5.4l116.8-116.7h-29.3z"></path>
+                                    </g>
+                                    <g fill="#d23f77">
+                                        <path d="M373.3 114.9l-66 66V196l81.3-81.2zM401.5 114.9l-94.1 94v17.3c0 3.5.8 6.8 2.2 9.8l121.1-121.1h-29.2z"></path>
+                                    </g>
+                                    <path d="M329.5 395.2c0 44.7-33 81-73.4 81-40.7 0-73.5-36.3-73.5-81s32.8-81 73.5-81c40.5 0 73.4 36.3 73.4 81z" fill="#3e4347"></path>
+                                    <path d="M256 476.2a70 70 0 0 0 53.3-25.5 34.6 34.6 0 0 0-58-25 34.4 34.4 0 0 0-47.8 26 69.9 69.9 0 0 0 52.6 24.5z" fill="#e24b4b"></path>
+                                    <path d="M290.3 434.8c-1 3.4-5.8 5.2-11 3.9s-8.4-5.1-7.4-8.7c.8-3.3 5.7-5 10.7-3.8 5.1 1.4 8.5 5.3 7.7 8.6z" fill="#fff" opacity=".2"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer clear">
+                        <a id="btn-accept-rate" href="javascript:;" class="btn btn-success" style="margin:0 auto;">Xác nhận</a>
+                    </div>
+                </div><!-- tab-content -->
+            </div><!-- modal-body -->
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+
+@using (Html.BeginForm("SumitAcceptRedo", "StudentExrcise", FormMethod.Post, new { id = "form-done-redo" }))
+{
+    <input type="hidden" name="hdfExID" value="@Model.ID" required />
+    <input type="hidden" name="hdfRedo" required />
+    <input type="hidden" name="hdfRate" id="hdfRate" value="5" />
+    <input type="hidden" name="hdfNote" required />
+}
+@section myScripts{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/jquery.scrollTo.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            hoverhighline();
+            // $('.quiz-group').each(function(){
+            //     let $this = $(this);
+            //     let quizId = $(this).attr('id');
+
+            //     $this.on('change','input',function(input){
+            //         $this.find('input').each(function(i,el){
+            //             $('#quiz-index').find('.index-link[href="#'+quizId+'"]').addClass('checked');
+            //         });
+            //     });
+            // });
+            // $("a[href*='#']:not([href='#])").click(function() {
+            //     let target = $(this).attr("href");
+            //     $('html,body').stop().animate({
+            //         scrollTop: $(target).offset().top - ($(target).height() / 2)
+            //     }, 1000);
+            //     event.preventDefault();
+            //     });
+
+            const ps = new PerfectScrollbar(".note-ps", {
+                wheelSpeed: 2,
+                wheelPropagation: true,
+                minScrollbarLength: 20
+            });
+
+
+            var teacherComment = {
+                selector: '#teacher-comment',
+                menubar: false,
+                inline: false,
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste'
+                ],
+
+                mobile: {
+                    theme: 'silver',
+
+                },
+                readonly: 1,
+                paste_as_text: true,
+                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+            };
+            //tinymce.init(rawTextInline);
+            tinymce.init(teacherComment);
+            // Editor TinyMCE
+            var dem = 0;
+            var currentCmt = [];
+            function addComment() {
+                dem += 1;
+                var selectedText = tinyMCE.activeEditor.selection.getContent({ format: 'html' });
+                var selecteddivobj = $('<div>').append(selectedText);
+                //selecteddivobj.find('.ct-comment').each(function (i, item) {
+                //    $(item).contents().unwrap();
+                //});
+                var $ctComt = $('<span class="ct-comment">' + selecteddivobj.html() + '</span>');
+
+                //console.log($ctComt.html());
+
+                var indexNode = $ctComt[0];
+                currentCmt.push(indexNode);
+                // console.log(currentCmt);
+                $ctComt.attr('id', 'cmt-' + dem);
+                // console.log($ctComt);
+                //console.log($ctComt.html());
+                tinyMCE.activeEditor.selection.setContent($ctComt[0].outerHTML);
+                var htmlObj = $(`    <div class="note-block active" data-cmt="cmt-${dem}">
+                                                                                    <div class="note-content">
+                                                                                        <div class="comment-info d-flex">
+                                                                                            <div class="avatar">
+                                                                                                <img src="assets/img/teacher.jpg" class="rounded-circle" alt="avatar">
+                                                                                            </div>
+                                                                                            <div class="meta mg-l-10 flex-grow-1 pd-r-30">
+                                                                                                <p class="name mg-b-0">Trương Văn Lam</p>
+                                                                                                <p class="date-time mg-b-10 tx-12 tx-color-03 mg-b-0">27/04/2019</p>
+                                                                                                <div class="dropdown dropdown-icon">
+                                                                                                    <a href="javascript:;" class="material-icons" id="dropdown-id-1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">more_vert</a>
+                                                                                                    <div class="dropdown-menu" aria-labelledby="dropdown-id-1">
+                                                                                                        <a class="dropdown-item edit-cmt" href="#">Sửa</a>
+                                                                                                        <a class="dropdown-item delete" href="#">Xoá</a>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div class="comment-content">
+                                                                                            <p class="txt-content"></p>
+                                                                                            <textarea class="form-control inline-edit" id="area-${dem}" placeholder="Nội dung"></textarea>
+                                                                                        </div>
+                                                                                        <div class="record-block">
+                                                                                            <div class="record-action">
+                                                                                                <button class="btn-record js-start btn btn-dark mg-r-5"><i data-feather="mic"></i> <span class="record-time mg-l-5"><span class="minutes">00</span>:<span class="seconds">00</span></span></button>
+                                                                                                <button class="btn-record js-stop btn btn-danger mg-r-5"><i data-feather="stop-circle"></i></button>
+                                                                                                <button class="btn-save-cmt btn btn-primary">Lưu ghi chú</button>
+                                                                                            </div>
+                                                                                            <div class="record-list">
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>`);
+
+                console.log(htmlObj);
+
+                $('#list-note-wrap').append(htmlObj);
+                feather.replace();
+                document.getElementById('area-' + dem + '').focus();
+
+                htmlObj.on('click', '.delete', function () {
+                    var dataId = $(this).closest('.note-block').attr('data-cmt');
+                    //  console.log(dataId);
+                    var cmt = $('#student-raw-text #' + dataId);
+                    cmt.contents().unwrap();
+
+                    $(this).closest('.note-block').fadeOut(500, function () {
+                        $(this).closest('.note-block').remove();
+                    })
+                });
+
+                $('#list-note-wrap').on('click', '.js-stop', stopRecord);
+                $('#list-note-wrap').on('click', '.js-start', startRecord);
+
+                // check old cmt after add new cmt
+                var currentCommentID = [];
+                $('#student-raw-text').find('.ct-comment').each(function (i, item) {
+                    var idcmtString = item.getAttribute('id');
+                    currentCommentID.push(idcmtString);
+
+                });
+
+                $('#list-note-wrap').children('.note-block').each(function (i, item) {
+                    var dataID = $(item).attr('data-cmt');
+                    if (!currentCommentID.includes(dataID)) {
+                        $(item).remove();
+                    };
+                });
+            };
+
+
+            var recorder;
+            var recordButtons = document.querySelectorAll('.js-start');
+            var stopButtons = document.querySelectorAll('.js-stop');
+            //Start button click
+            function startRecord(e) {
+                recordButtons = document.querySelectorAll('.js-start');
+                stopButtons = document.querySelectorAll('.js-stop');
+                //start recording with 1 second time between receiving 'ondataavailable' events
+                recordButtons.forEach(function (ele) {
+                    ele.disabled = true;
+                    ele.classList.add('disabled');
+                });
+                stopButtons.forEach(function (ele) {
+                    ele.disabled = false;
+                    ele.classList.remove('disabled');
+                });
+                recorder.start();
+                recordTime('start', $(e.target).closest('.btn-record'));
+                //   console.log(recorder);
+            }
+            var closestByClass = function (el, clazz) {
+                // Traverse the DOM up with a while loop
+                while (el.className != clazz) {
+                    // Increment the loop to the parent node
+                    el = el.parentNode;
+                    if (!el) {
+                        return null;
+                    }
+                }
+                // At this point, the while loop has stopped and `el` represents the element that has
+                // the class you specified in the second parameter of the function `clazz`
+
+                // Then return the matched element
+                return el;
+            }
+            //Stop button click
+            function stopRecord(e) {
+                recordButtons = document.querySelectorAll('.js-start');
+                stopButtons = document.querySelectorAll('.js-stop');
+                // this will trigger one final 'ondataavailable' event and set recorder state to 'inactive'
+                recordButtons.forEach(function (ele) {
+                    ele.disabled = false;
+                    ele.classList.remove('disabled');
+                });
+                stopButtons.forEach(function (ele) {
+                    ele.disabled = true;
+                    ele.classList.add('disabled');
+                });
+
+                recorder.stop();
+                recorder.stopElementBtn = e.target;
+                recordTime('stop', $(e.target).closest('.btn-record'));
+                //  console.log(recorder.state);
+            }
+
+            // Add Audio js
+            function replaceAudioElement(blobUrl, targetPr, indexof) {
+                try {
+                    // while(targetPr.lastChild){
+                    // targetPr.removeChild(targetPr.lastChild);
+                    // }
+                    //  console.log(targetPr);
+                    targetPr = targetPr.querySelector('.record-list');
+
+                    const resultEl = document.createElement('div');
+                    resultEl.classList = 'audio-result mg-t-10';
+                    resultEl.setAttribute('data-index', '' + indexof + '');
+                    targetPr.appendChild(resultEl);
+                    const audioEl = document.createElement('audio');
+                    audioEl.controls = true;
+                    audioEl.style = 'display:block; width:100%;';
+                    audioEl.classList = "valign-center";
+                    const sourceEl = document.createElement('source');
+                    sourceEl.src = blobUrl;
+                    sourceEl.type = 'audio/webm';
+                    targetPr.appendChild(sourceEl);
+                    audioEl.appendChild(sourceEl);
+                    const downloadEl = document.createElement('a');
+                    downloadEl.style = 'display: inline-block';
+                    downloadEl.innerHTML = '<i class="fas fa-download"></i> Download';
+                    downloadEl.download = 'audio.webm';
+                    downloadEl.classList = "mg-t-10";
+                    downloadEl.href = blobUrl;
+                    const deleteEl = document.createElement('a');
+                    deleteEl.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+                    deleteEl.style = 'display: inline-block; cursor:pointer;';
+                    deleteEl.classList = "mg-t-10 mg-l-15";
+                    deleteEl.href = 'javascript:;';
+                    deleteEl.addEventListener('click', function () {
+                        this.parentNode.parentNode.removeChild(this.parentNode);
+                    }); resultEl.appendChild(audioEl);
+                    resultEl.appendChild(downloadEl);
+                    resultEl.appendChild(deleteEl);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+
+            }
+            if (window.MediaRecorder !== undefined) {
+                recordButtons.forEach(function (ele) {
+                    ele.disabled = true;
+                });
+                // request permission to access audio stream
+                // console.log('ok');
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    recordButtons.forEach(function (ele) {
+                        ele.disabled = false;
+                        ele.classList.remove('disabled');
+                    });
+                    stopButtons.forEach(function (ele) {
+                        ele.disabled = true;
+                        ele.classList.add('disabled');
+                    });
+                    // for notice
+
+                    // store streaming data chunks in array
+                    var chunks = [];
+
+                    // function to be called when data is received
+                    recordButtons.forEach(function (ele) {
+                        ele.addEventListener('click', startRecord);
+                    });
+                    stopButtons.forEach(function (ele) {
+                        ele.addEventListener('click', stopRecord);
+                    });
+                    // create media recorder instance to initialize recording
+                    recorder = new MediaRecorder(stream);
+                    var blobData = [];
+                    recorder.ondataavailable = (e) => {
+                        // add stream data to chunks
+                        // console.log(recorder);
+                        chunks.push(e.data);
+                        blobData.push(e.data);
+                    };
+                    recorder.onstop = function (e) {
+                        // if recorder is 'inactive' then recording has finished
+                        if (recorder.state == 'inactive') {
+                            // convert stream data chunks to a 'webm' audio format as a blob
+                            const blob = new Blob(blobData, { type: 'audio/webm' });
+                            // convert blob to URL so it can be assigned to a audio src attribute
+                            //   console.log(recorder.stopElementBtn);
+                            replaceAudioElement(URL.createObjectURL(blob), recorder.stopElementBtn.parentElement.parentElement, chunks.length - 1);
+                            blobData.length = 0;
+                        }
+                    }
+                }).catch(function () {
+                    swal({
+                        title: "Trình ghi âm đang tắt !",
+                        text: "Vui lòng cung cấp quyền truy cập microphone để sử dụng chức năng ghi âm.",
+                        icon: 'warning',
+                        dangerMode: true,
+                        buttons: {
+                            confirm: 'Hướng dẫn bật',
+                            cancel: 'Không, tôi không cần!'
+                        }
+                    }).then(function (result) {
+                        if (result) {
+                            $('#guide-chrome').modal('open');
+                        }
+                    });
+                });
+            } else {
+                document.getElementById('status') = 'browser not support Media Recorder';
+            }
+
+            $('.note-list-wrap').on('click', '.js-stop', stopRecord);
+            $('.note-list-wrap').on('click', '.js-start', startRecord);
+
+            function hoverhighline() {
+                $('body').on('click', '.ct-comment', function (e) {
+                    e.preventDefault();
+                    var id = $(this).attr('id');
+                    var $blockControl = $('[data-cmt="' + id + '"]');
+                    //   console.log($blockControl);
+                    $(this).css({
+                        'background': ' #FAE168',
+                        'padding': '5px', 'transform': 'scale(1.4)',
+                        'color': '#000'
+                    });
+                    $('.ct-comment').not($(this)).attr('style', '');
+                    $('.note-ps').scrollTo($blockControl, 500, { offset: -50 });
+
+
+                    $('.note-block').each(function () {
+                        var idIn = $(this).attr("data-cmt");
+
+                        if (idIn == id) {
+                            $(this).css({
+                                'webkit-box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                                'box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                                'border-color': 'transparent',
+                                'background': 'rgba(255, 255, 255, 1)',
+                                'transform': 'scale(1.02) translate(-10px,-5px)'
+                            });
+                        } else {
+                            $(this).attr('style', '');
+                        }
+                    });
+                });
+
+                $('body').on('click', '.note-block', function (e) {
+                    var id = $(this).attr('data-cmt');
+                    $(this).css({
+                        'webkit-box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                        'box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                        'border-color': 'transparent',
+                        'background': 'rgba(255, 255, 255, 1)',
+                        'transform': 'scale(1.02) translate(-10px,-5px)'
+
+                    });
+                    $('.note-block').not($(this)).attr('style', '');
+                    $('.ct-comment').each(function () {
+                        var idIn = $(this).attr("id");
+                        if (idIn == id) {
+                            $(this).css({
+                                'background': ' #FAE168',
+                                'padding': '5px', 'transform': 'scale(1.4)',
+                                'color': '#000'
+                            });
+                        }
+                        else {
+                            $(this).attr('style', '');
+                        }
+                    });
+                })
+            }
+            var startTime;
+            function recordTime(action, ele) {
+                var $parent = ele.parent().find('.record-time');
+                var sec = 0;
+                switch (action) {
+                    case 'start': {
+                        startTime = setInterval(function () {
+                            $parent.find('.seconds').html(pad(++sec % 60));
+                            $parent.find('.minutes').html(pad(parseInt(sec / 60, 10)));
+                        }, 1000);
+                        break;
+                    }
+                    case 'stop': {
+                        $parent.find('.seconds').text('00');
+                        $parent.find('.minutes').text('00');
+                        clearInterval(startTime);
+                        break;
+                    }
+                }
+            }
+            function pad(val) {
+                return val > 9 ? val : "0" + val;
+            };
+
+            //Auto resize textarea
+            $('body').on('keydown', 'textarea', autosize);
+            function autosize() {
+                var el = this;
+                setTimeout(function () {
+                    el.style.cssText = 'height:auto; padding:10px';
+                    el.style.cssText = '-moz-box-sizing:content-box';
+                    el.style.cssText = 'height:' + el.scrollHeight + 'px';
+                }, 0);
+            }
+
+            $('body').on('click', '.btn-save-cmt', function () {
+                var $this = $(this);
+                var value = $this.closest('.note-content').find('textarea').val().replace(/<br\s*\/?>/mg, "\n");
+                $this.closest('.note-content').find('.txt-content').text(value);
+                $this.closest('.note-block').removeClass('active');
+            });
+
+            $('body').on('click', '.edit-cmt', function (e) {
+                e.preventDefault();
+                var $this = $(this);
+                $this.closest('.note-block').addClass('active');
+                var value = $this.closest('.note-content').find('.txt-content').html();
+                $this.closest('.note-content').find('textarea').html(value);
+            });
+
+            $('.add-score').on('click', function () {
+                var html = ` <div class="row-flex d-flex pd-r-40 align-items-center mg-t-10">
+                                                                                                                <div class="label w-50 pd-r-5">
+                                                                                                                     <input type="text" class="form-control" placeholder="Mục chấm">
+                                                                                                                </div>
+                                                                                                                <div class="value w-50">
+                                                                                                                    <input type="number" class="form-control" placeholder="0">
+                                                                                                                </div>
+                                                                                                                <div class="action">
+                                                                                                                    <a href="javascript:;" class="delete-score"><i data-feather="minus"></i></a>
+                                                                                                                </div>
+                                                                                                            </div>`;
+                $(this).closest('.card-body').append(html);
+                feather.replace();
+            });
+            $('.teacher-score').on('click', '.delete-score', function () {
+                $(this).closest('.row-flex').remove();
+            });
+            //$('textarea[name="question"]').val($('#questions').eq(1).html()
+            $('.btn-accept').click(function () {
+                $('input[name=hdfRedo]').val(0);
+            })
+
+            $('#btn-accept-rate').click(function () {
+                var choise = false;
+                var s = $('#accept-fix').find('input');
+                $.each(s, function (index, e) {
+                    if ($(e).prop('checked')) {
+                        var a = $(e).attr('data-rate');
+                        $('#hdfRate').val(a);
+                        choise = true;
+                    }
+                });
+                if (choise) {
+
+                    $('#form-done-redo').submit();
+                }
+                else {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng đánh giá bài chấm',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                }
+            })
+
+            $('#btn-redo').click(function () {
+                $('input[name=hdfRedo]').val(1);
+                console.log($('#txt-note').val());
+                $('input[name=hdfNote]').val($('#txt-note').val());
+                if (confirm('Yêu cầu chấm lại?')) {
+                    $('#form-done-redo').submit();
+                }
+            })
+        });
+    </script>
+}

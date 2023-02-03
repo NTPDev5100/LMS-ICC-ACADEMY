@@ -1,0 +1,308 @@
+﻿
+@{
+    ViewBag.Title = "CreateSet";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<style>
+    /*.box__select input[type="radio"] {
+        display: none;
+    }
+
+    input[type="radio"], input[type="radio"] {
+        box-sizing: border-box;
+        padding: 0;
+    }
+
+    .box__select input[type="radio"]:checked + .set__pack {
+        background: rgba(52, 98, 200, 0.17);
+        box-shadow: 0px 0px 6px 0px rgba(52, 98, 200, 0.1);
+    }
+
+        .box__select input[type="radio"]:checked + .set__pack .option-icon {
+            color: rgba(52, 98, 200, 0.56);
+        }
+
+        .box__select input[type="radio"]:checked + .set__pack .option-name {
+            color: rgba(52, 98, 200, 0.86);
+        }*/
+</style>
+<div class="exam__wrap">
+    <!-- Breadcrumb -->
+    <div class="row mg-b-30">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item"><a href="/Admin/SetPackage/ListSetPackage">Danh sách bài tập</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Tạo bài tập mới </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <!-- End breadcrumb -->
+    <div class="ready-for-test">
+        <h3 class="mg-b-30">Tạo mới</h3>
+        <div class="card">
+            @using (Html.BeginForm("AddSet", "SetPackage", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdf-type" />
+                <input type="hidden" name="hdfcontent" id="hdfcontent" />
+                <input type="hidden" name="setType" value="1" />
+                <div class="card-body pd-30">
+                    <div class="box-wrap ">
+                        <h5 class="mg-b-15 tx-medium"><i class="fas fa-info-circle mg-r-5"></i> Chi tiết:</h5>
+                        <div class="box mg-b-30">
+                            <div class="form-group row">
+                                <div class="col-sm-4 col-md-2 col-form-label">
+                                    <strong class="lb">Tên bài tập:</strong>
+                                </div>
+                                <div class="col-sm-8 col-md-10">
+                                    <input type="text" name="txt-package-name" class="form-control" placeholder="Nhập tên bài tập vào đây..." required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-sm-4 col-md-2 ">
+                                    <strong class="lb">Loại:</strong>
+                                </div>
+                                <div class="col-sm-8 col-md-10 ">
+                                    <div class="d-flex align-items-center">
+                                        <div class="custom-control custom-radio mg-r-30">
+                                            <input style="cursor:pointer" type="radio" id="typeFree" name="typeSet" class="custom-control-input" checked>
+                                            <label style="cursor:pointer" class="custom-control-label" for="typeFree">Miễn phí</label>
+                                        </div>
+                                        <div class="custom-control custom-radio">
+                                            <input style="cursor:pointer" type="radio" id="typePremium" name="typeSet" class="custom-control-input">
+                                            <label style="cursor:pointer" class="custom-control-label" for="typePremium"><i class="fas fa-crown tx-warning pd-r-5"></i> Cao cấp</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row blockprice" style="display:none">
+                                <div class="col-sm-4 col-md-2 col-form-label">
+                                    <strong class="lb">Số tiền:</strong>
+                                </div>
+                                <div class="col-sm-8 col-md-10">
+                                    <input type="text" name="txt-price" class="form-control tx-danger tx-medium" data-type="currency" placeholder="0.0" value="0" required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-sm-4 col-md-2 col-form-label">
+                                    <strong class="lb">Hình ảnh:</strong>
+                                </div>
+                                <div class="col-sm-8 col-md-10">
+                                    <label class="thumbnail-upload ">
+                                        <input type="file" name="setThumbnail" class="form-control d-none file-upload" accept="image/*" required>
+                                        <div class="thumbnail-preview pos-relative rounded-5 overflow-hidden "
+                                             data-toggle="tooltip" data-placement="right"
+                                             title="Click to change image">
+                                            <img src="~/app-assets/zimv2/assets/img/interface-2.jpg" alt="image" class="wd-150 ht-150">
+                                            <i class="fas fa-upload pos-absolute"></i>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-row row mg-b-0">
+                                <div class="col-sm-4 col-md-2 ">
+                                    <strong class="lb">Mô tả:</strong>
+                                </div>
+                                <div class="col-sm-8 col-md-10 ">
+                                    <textarea name="txt-content" class="raw-txt" id="test-description"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <h5 class="mg-b-15 tx-medium">
+                            <i class="fas fa-cubes mg-r-5 mg-t-30"></i> Tùy chọn:
+                        </h5>
+                        <div class="box pd-t-15">
+                            <div class="row mg-b-5 ">
+                                <div class="col-md-6 col-lg-6 mg-b-20">
+                                    <label class="box__select">
+                                        <input type="checkbox" class="hidden question-type" name="rd-lis">
+                                        <div class="set__pack" style="cursor:pointer">
+                                            <span class="option-icon">
+                                                <i class="fas fa-headphones-alt"></i>
+                                            </span>
+                                            <span class="option-name">Listening</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6 col-lg-6 mg-b-20">
+                                    <label class="box__select">
+                                        <input type="checkbox" class="hidden question-type" name="rd-read">
+                                        <div class="set__pack" style="cursor:pointer">
+                                            <span class="option-icon">
+                                                <i class="fas fa-book-open"></i>
+                                            </span>
+                                            <span class="option-name">Reading</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                @*<div class="col-md-6 col-lg-3 mg-b-20">
+                                    <label class="box__select">
+                                        <input type="checkbox" class="hidden question-type" name="rd-write">
+                                        <div class="set__pack" style="cursor:pointer">
+                                            <span class="option-icon">
+                                                <i class="fas fa-edit"></i>
+                                            </span>
+                                            <span class="option-name">Writing</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6 col-lg-3 mg-b-20">
+                                    <label class="box__select">
+                                        <input type="checkbox" class="hidden question-type" name="rd-speak">
+                                        <div class="set__pack" style="cursor:pointer">
+                                            <span class="option-icon">
+                                                <i class="fas fa-microphone-alt"></i>
+                                            </span>
+                                            <span class="option-name">Speaking</span>
+                                        </div>
+                                    </label>
+                                </div>*@
+                            </div>
+                        </div>
+                        <div class="tx-center mg-b-0">
+                            <a onclick="CreateSet()" class="btn btn-primary" style="color: #fff;">Tạo bài tập</a>
+                            <button type="submit" class="btn btn-primary create-set" hidden>Tạo bài tập</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts{
+    @*<script src="~/app-assets/vendors/tinymce/tinymce.min.js"></script>*@
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+            const readURL = function (input) {
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        if (e.target.result !== null)
+                            $('.thumbnail-preview img').attr('src', e.target.result);
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+            $(".file-upload").on('change', function () {
+                readURL(this);
+            });
+        });
+        $("#typePremium").click(() => {
+            $('input[name=setType]').val(2);
+            $('input[name=txt-price]').val("")
+            $('.blockprice').show();
+        });
+        $("#typeFree").click(() => {
+            $('input[name=setType]').val(1);
+            $('input[name=txt-price]').val(0)
+            $('.blockprice').hide();
+        });
+        function uploadImage() {
+            var editor = tinymce.activeEditor;
+            // create input element, call modal dialog w
+            var fileInput = document.createElement('input');
+            fileInput.setAttribute('type', 'file');
+            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+            // if file is submitted run our key code
+            fileInput.addEventListener('change', () => {
+
+                if (fileInput.files != null && fileInput.files[0] != null) {
+                    // create instance of FileReader()
+                    var formData = new FormData();
+                    formData.append("FileUpload", fileInput.files[0]);
+                    $.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: '/Admin/SetPackage/UploadFilePost',
+                        data: formData,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (msg) {
+                            console.log(msg.l);
+                            editor.insertContent('<img src="' + msg.l + '" />');
+                        },
+                        error: function (error) {
+                            console.log('error upload file audio');
+                        }
+                    });
+                }
+            });
+            fileInput.click()
+        }
+        tinymce.init({
+            selector: '#test-description',
+            oninit: "setPlainText",
+            plugins: 'paste autoresize stickytoolbar print autolink autosave save directionality fullscreen image link media charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern help charmap emoticons',
+            paste_as_text: true,
+            inline: false,
+            menubar: false,
+            toolbar: 'formatselect | fontsizeselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+            ],
+            height: 250,
+            images_dataimg_filter: function (img) {
+                return img.hasAttribute('internal-blob');
+            },
+            setup: (editor) => {
+                editor.ui.registry.addButton('UploadImage', {
+                    text: 'Image',
+                    icon: 'image',
+                    onAction: uploadImage
+                });
+            },
+            fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt"
+        });
+        function CreateSet() {
+            var counttext = tinymce.editors[0].contentDocument.activeElement.innerText;
+            var content = tinymce.editors[0].contentDocument.activeElement.innerHTML;
+            $("#hdfcontent").val(content);
+            var count = 0;
+            //var vl = 0;
+            $('.question-type').each(function () {
+                if ($(this).is(":checked")) {
+                    count++;
+                    //vl = $(this).attr('data-value');
+                }
+            });
+            //$('input[name=hdf-type]').val(vl);
+            if ($('input[name="setThumbnail"]').val() == "") {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng thêm hình ảnh!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                return;
+            }
+            if (counttext.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập mô tả!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                return;
+            }
+            if (count > 0) {
+                $(".create-set").click();
+            }
+            else {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng tùy chọn bài tập!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                })
+            }
+        }
+    </script>
+}

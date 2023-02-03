@@ -1,0 +1,275 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@model List<Admin_Student_3LessonsLeftList_Result>
+@{
+    ViewBag.Title = "CustomerAboutToExpire";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+}
+<style>
+    .table-striped tbody tr:nth-of-type(2n+1).bg-red {
+        color: white;
+        background-color: red !important;
+    }
+    .table-striped .bg-red {
+        color: white;
+        background-color: red !important;
+    }
+</style>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách học viên còn 3 buổi học</li>
+    </ol>
+</nav>
+@using (Html.BeginForm("CustomerAboutToExpire", "Customer", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between" style="float:right;">
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="custom-control mg-l-5 mg-r-5">
+                    <select id="searchMail" name="searchMail" class="form-control">
+                        <option value="-1" @(ViewBag.SearchMail == -1 ? "selected" : "")>Tất cả</option>
+                        <option value="0" @(ViewBag.SearchMail == 0 ? "selected" : "")>Chưa gửi mail</option>
+                        <option value="1" @(ViewBag.SearchMail == 1 ? "selected" : "")>Đã gửi mail</option>
+                    </select>
+                </div>
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Trung tâm</th>
+                    <th>Họ và tên</th>
+                    <th>Email</th>
+                    <th>Khóa học</th>
+                    <th>Ngày kết thúc</th>
+                    <th>Buổi học còn lại</th>
+                    <th>Gói cam kết</th>
+                    <th>Tư vấn viên</th>
+                    <th>Đã gửi mail</th>
+                    <th class="no-wrap text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        var hidden = "";
+                        <tr class="tr-row @(item.TotalLesson == 0 ? "bg-red" : "")">
+                            <td>@item.SchoolName</td>
+                            <td>@item.FullName</td>
+                            <td>@item.Email</td>
+                            <td><a class="btn" style="color:#01a42f;" href="@Url.Action("ScheduleCourse","CourseDetail",new { area = "Admin", id = item.CourseID})">@item.CourseName</a></td>
+                            <td>
+                                @if (item.EndingDate != null)
+                                {
+                                    item.EndingDate.Value.ToString("dd/MM/yyyy");
+                                }
+                            </td>
+                            <td>@item.TotalLesson</td>
+                            <td>@item.CommitmentName</td>
+                            <td>@item.SupportName</td>
+                            <td class="text-center">
+                                @if (item.SendMail == true)
+                                {
+                                    hidden = "hidden";
+                                    <i data-feather="check-circle" style="color: #00b700;"></i>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (item.TotalLesson == 0)
+                                {
+                                    <a href="@Url.Action("RegisterCourseCustom", "Cashier", new { area = "Admin", studentEmail = item.Email })" data-toggle="tooltip" data-placement="left" title="Đăng ký học"><i class="fas fa-plus-circle"></i></a>
+                                    <a href="#" data-id="@item.ID" data-toggle="tooltip" data-placement="left" title="Không học tiếp" class="btn-delete btn-update-hide-exprixed"><i class="fas fa-window-close"></i></a>
+                                }
+
+                                <a href="@Url.Action("CustomerDetai", "Customer", new { area = "Admin", id = item.StudentID })" data-toggle="tooltip" data-placement="left" title="Chi tiết"><i class="fas fa-user-shield"></i></a>
+                                <a href="javascript:;" title="Gửi mail cho học viên" data-toggle="modal" data-target="#exampleModal" onclick="showPOP(@item.StudentID, '@item.FullName', @item.CourseID, @item.ID);" @hidden><i class="fas fa-mail-bulk"></i></a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+
+
+    </nav>
+</div>
+
+<!-- Modal Gửi mail -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="/Admin/Customer/GuiMail" method="post">
+                    <input id="studentID" name="studentID" hidden />
+                    <input id="courseID" name="courseID" hidden />
+                    <label>Tiêu đề:</label>
+                    <input class="form-control" id="tieude" name="tieude" />
+                    <label>Nội dung:</label>
+                    <textarea class="form-control" id="noidung" name="noidung" placeholder="Nội dung mail"></textarea>
+                    <input hidden id="submit" type="submit" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                <button type="button" class="btn btn-primary" onclick="Gui();">Gửi Mail</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+
+    <script>
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        $('#searchMail').change(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        function showPOP(uid, name, cousreID, coursestudentid) {
+            $("#exampleModalLabel").text("Đến: " + name);
+            $("#studentID").val(uid);
+            $("#courseID").val(cousreID);
+            $.ajax({
+                async: false,
+                type: 'POST',
+                url: '/Admin/Email/loadEmailTemplateEnd?id=6&coursestudentid=' + coursestudentid,
+                dataType: 'json',
+                contentType: false,
+                processData: false,
+                success: function (msg) {
+                    $("#tieude").val(msg.title);
+                    tinymce.get('noidung').getBody().innerHTML = msg.content;
+                },
+                error: function (error) {
+                    console.log('ShowSendMailDone');
+                }
+            });
+        }
+        function Gui() {
+            var tieude = $("#tieude").val();
+            var noidung = $("#noidung").val();
+            if (tieude == "" || noidung == "") {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập đủ tiêu đề + nội dung',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                });
+                return false;
+            }
+            $("#submit").click();
+        }
+        $(document).ready(function () {
+            var x = $('opton[value="1"]');
+            console.log(x);
+        });
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#noidung',
+                height: 450,
+                width: '100%',
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            });
+        });
+
+        $('.btn-update-hide-exprixed').click(function () {
+            let id = $(this).attr('data-id');
+            if (confirm('Bạn có chắc muốn thực hiện thao tác này')) {
+                $.ajax({
+                    async: false,
+                    type: 'PUT',
+                    url: '/Admin/Customer/UpdateCourseStudent?id=' + id,
+                    dataType: 'json',
+                    contentType: false,
+                    processData: false,
+                    success: function (msg) {
+                        if (msg.rs) {
+                            window.location.reload();
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+                });
+            }
+        });
+    </script>
+}

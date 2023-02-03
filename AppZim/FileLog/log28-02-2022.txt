@@ -1,0 +1,1 @@
+PageError: CourseController    FunctionError: AssignCusAppointmentToCourse    loginUID: 0    MessageError: Nullable object must have a value.||    28/02/2022 15:21

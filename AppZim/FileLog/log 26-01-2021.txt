@@ -1,0 +1,1 @@
+PageError: CustomerController    FunctionError: CourseStudent    loginUID: 1    MessageError: An error occurred while preparing the command definition. See the inner exception for details.    26/01/2021 17:12

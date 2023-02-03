@@ -1,0 +1,3 @@
+PageError: CustomerController    FunctionError: RevenueDetail    loginUID: 1    MessageError: The data reader is incompatible with the specified 'Zim.RevenueDetail_GetList_Result'. A member of the type, 'TotalPrice', does not have a corresponding column in the data reader with the same name.||    14/02/2022 09:38
+PageError: CustomerController    FunctionError: RevenueDetail    loginUID: 1    MessageError: The 'TotalPrice' property on 'RevenueDetail_GetList_Result' could not be set to a 'System.Int32' value. You must set this property to a non-null value of type 'System.Double'. ||    14/02/2022 09:40
+PageError: GetTestHistory    FunctionError: Cashier    loginUID: 0    MessageError: Object reference not set to an instance of an object.    14/02/2022 13:58

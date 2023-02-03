@@ -1,0 +1,148 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    ViewBag.Title = "ListStudent";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    List<tbl_CoursesStudent> lstudent = CoursesStudentTable.getListStudentInCourse(Model.ID);
+    tbl_Courses course = CoursesTable.getbyid(Model.ID);
+    var totalLesson = CoursesScheduleTable.getbycourseid(course.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(course.ID, 1).Count;// số buổi đã học
+    int remainLesson = totalLesson - learnedLesson - course.DifferenceSchedule.Value;
+}
+@section myStyles{
+    <link href="~/app-assets/zimv2/lib/fullcalendar/fullcalendar.min.css" rel="stylesheet">
+    <style>
+        .fc-time-grid .fc-slats td {
+            height: 3.5em;
+        }
+    </style>
+}
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-9">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mg-b-0">Danh sách học viên</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-student-course">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter table-hover">
+
+                            <thead>
+                                <tr>
+                                    <th>Học viên</th>
+                                    <th>Số điện thoại</th>
+                                    <th>Hỗ trợ</th>
+                                    <th class="text-center">Ngày nghỉ</th>
+                                    <th class="text-center">Cảnh báo</th>
+                                    @if (aclog.RoleID != 4 && aclog.RoleID != 5)
+                                    {
+                                        <th>Đã thanh toán</th>
+                                        <th>Còn thiếu</th>
+                                    }
+
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (var item in lstudent)
+                                    {
+                                        tbl_Account ac = AccountTable.getbyID(item.StudentUID.Value);
+                                        int vang = CoursesAttendanceStudentTable.getbyuidcourseid(ac.ID, course.ID).Where(n => n.AttendanceID == 2 || n.AttendanceID == 3).ToList().Count;
+                                        int cb = CoursesAttendanceStudentTable.getbyuidcourseid(ac.ID, course.ID).Where(n => n.Warning == true).ToList().Count;
+                                        tbl_Account tvv = new tbl_Account();
+                                        if (ac.SupportUID != null)
+                                        {
+                                            tvv = AccountTable.getbyID(item.SupportUID.Value);
+                                            if (tvv == null)
+                                            {
+                                                tvv = new tbl_Account();
+                                                tvv.ID = 0;
+                                                tvv.FullName = "";
+                                            }
+                                        }
+                                        else
+                                        {
+                                            tvv.ID = 0;
+                                            tvv.FullName = "";
+                                        }
+                                        <tr>
+                                            <td><span>@ac.FullName</span></td>
+                                            <td><span><a href="tel:@ac.Phone">@ac.Phone</a></span></td>
+                                            <td><span>@tvv.FullName</span></td>
+                                            <td class="text-center"><span>@vang</span></td>
+                                            <td class="text-center"><span>@cb</span></td>
+                                            @if (aclog.RoleID != 4 && aclog.RoleID != 5)
+                                            {
+                                                <td><span>@String.Format("{0:0,0}", item.TotalPaid.Value)</span></td>
+                                                <td><span>@String.Format("{0:0,0}", item.PriceLeft.Value)</span></td>
+                                            }
+
+                                            <td class="text-center">
+                                                <a href="/Admin/Customer/CustomerDetai/@ac.ID" class="btn btn-primary btn-icon btn-sm" data-toggle="tooltip" title="Chi tiết"><i data-feather="eye"></i> </a>
+                                                @*<a href="/Admin/Certificatce/Certificatce?CourseStudentId=@item.ID" class="btn btn-info btn-icon btn-sm" data-toggle="tooltip" title="Soạn chứng chỉ"><i data-feather="file-text"></i> </a>*@
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-xl-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@Model.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Số buổi học chênh lệch">@course.DifferenceSchedule</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item">
+                        <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", Model.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 4 || aclog.RoleID == 7)
+                    {
+                        <li class="menu-item">
+                            <a href="@Url.Action("EditCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="edit"></i>Chỉnh sửa</a>
+                        </li>
+                    }
+                    <li class="menu-item active">
+                        <a href="@Url.Action("ListStudent", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="book"></i>Học viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("AttendanceCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="check-circle"></i>Điểm danh</a>
+                    </li>
+                    @*<li class="menu-item">
+                        <a href="@Url.Action("CourseExam", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="activity"></i>Điểm số</a>
+                    </li>
+                    @if (aclog.RoleID != 6)
+                    {
+                        <li class="menu-item">
+                            <a href="@Url.Action("ExerciseCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="book-open"></i>Bài tập</a>
+                        </li>
+                    }*@
+                    @if (aclog.RoleID != 6)
+                    {
+                        <li class="menu-item">
+                            <a href="@Url.Action("DocumentCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="file-text"></i>Tài liệu</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("NoteCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="flag"></i>Đánh giá</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("NotificationCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("VideoOfSchedule","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="video"></i>Video bài giảng</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

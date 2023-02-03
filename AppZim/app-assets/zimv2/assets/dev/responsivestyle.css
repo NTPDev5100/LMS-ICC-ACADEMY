@@ -1,0 +1,128 @@
+.content .content-body .media .profile-sidebar {
+    position: relative;
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(72, 94, 144, 0.16);
+    border-radius: 0.25rem;
+    padding: 25px;
+}
+
+@media screen and (min-width: 992px) {
+    .content .content-body .media .profile-sidebar {
+        padding: 15px;
+    }
+}
+
+.avatar-xl img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.table-ranking-teacher tbody tr:nth-child(n+4) td .avatar img {
+    object-fit: cover;
+}
+
+.content .content-body .row-xs .col-sm-6 {
+    height: auto;
+    margin: 5px 0;
+}
+
+.row-xs .col-sm-6 .card {
+    height: 100%;
+}
+
+.post-img-cover img {
+    object-fit: cover;
+}
+
+.content-blog {
+    border-radius: 0.25rem;
+}
+
+#changeHistory .card .card-body > div:not(.table-history) {
+    margin-top: 10px;
+}
+
+#test-register .select2-container {
+    width: 100% !important;
+}
+
+#form-search .d-xl-block > .d-flex > *, #form-search > .d-flex > * {
+    margin-right: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 0;
+}
+
+    #form-search .d-xl-block > .d-flex > *:last-child, #form-search > .d-flex > *:last-child {
+        margin-right: 0;
+    }
+
+.table-striped tbody tr td a {
+    margin: 0.1em 0;
+}
+
+.filemgr-content .filemgr-content-header .search-form input {
+    padding-left: 10px;
+}
+
+
+.course-horizental .list-wrap .cr-item .media .media-body h5 {
+    line-height: 1.5;
+}
+
+@media screen and (max-width: 400px) {
+    .course-horizental .list-wrap .cr-item .media {
+        flex-wrap: wrap;
+    }
+
+        .course-horizental .list-wrap .cr-item .media > img, .course-horizental .list-wrap .cr-item .media > a {
+            width: 100%;
+        }
+
+        .course-horizental .list-wrap .cr-item .media .media-body {
+            margin-top: 10px;
+        }
+}
+
+input:-webkit-autofill:focus,
+input:-webkit-autofill:hover:focus,
+input:-webkit-autofill:focus:focus,
+input:-webkit-autofill:active:focus {
+    box-shadow: 0 0 0px 1000px #fff inset !important;
+    -webkit-text-fill-color: #1b2e4b;
+    transition: none;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    box-shadow: 0 0 0px 1000px #fff inset !important;
+    -webkit-text-fill-color: #1b2e4b;
+    transition: none;
+}
+
+.table-course .actions-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+    .table-course .actions-group a {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+        .table-course .actions-group a svg {
+            margin-right: 3px;
+        }

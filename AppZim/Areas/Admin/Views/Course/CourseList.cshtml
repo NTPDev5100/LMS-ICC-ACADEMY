@@ -1,0 +1,584 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using MB.Extensions
+@model List<get_list_of_course_Result>
+@{
+    ViewBag.Title = "CourseList";
+    //Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_Account aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_Account> teachers = AccountTable.getbyrole(4);
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+}
+<style>
+    p {
+        margin-bottom: 0px;
+    }
+
+    .bold {
+        font-weight: bold;
+    }
+</style>
+
+@using (Html.BeginForm("CourseList", "Course", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    @if (aclog.RoleID != 4)
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">Danh sách khoá học</li>
+                    }
+                    else
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">Lớp đang phụ trách</li>
+                    }
+                </ol>
+            </nav>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })" class="btn btn-info">Kiểm tra lịch giáo viên</a>
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Nhập tên khóa học..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                @*<div class="sort-by mg-l-5 mg-r-5">
+                        <select name="sort" id="ddl-sort" class="custom-select" onchange="pagesearch()">
+                            <option value="0">-- Sắp xếp --</option>
+                            @{
+                                if (ViewBag.Sort == 3)
+                                {
+                                    <option value="3" selected>Ngày mở (Tăng)</option>
+                                }
+                                else
+                                {
+                                    <option value="3">Ngày mở (Tăng)</option>
+                                }
+                                if (ViewBag.Sort == 4)
+                                {
+                                    <option value="4" selected>Ngày mở (Giảm)</option>
+                                }
+                                else
+                                {
+                                    <option value="4">Ngày mở (Giảm)</option>
+                                }
+                                if (ViewBag.Sort == 5)
+                                {
+                                    <option value="5" selected>Giá tiền (Tăng)</option>
+                                }
+                                else
+                                {
+                                    <option value="5">Giá tiền (Tăng)</option>
+                                }
+                                if (ViewBag.Sort == 6)
+                                {
+                                    <option value="6" selected>Giá tiền (Giảm)</option>
+                                }
+                                else
+                                {
+                                    <option value="6">Giá tiền (Giảm)</option>
+                                }
+                            }
+                        </select>
+                    </div>*@
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    <div class="form-group col-md-3">
+                        <label class="form-control-label">Lớp:</label>
+                        <select class="form-control select2" name="lop">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                var clas = ClassTable.getall();
+                                foreach (var item in clas)
+                                {
+                                    if (ViewBag.Lop != null)
+                                    {
+                                        if (ViewBag.Lop == item.ID)
+                                        {
+                                            <option value="@item.ID" selected>@item.ClassName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@item.ID">@item.ClassName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.ID">@item.ClassName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label class="form-control-label">Giáo viên:</label>
+                        <select class="form-control select2" name="slTeacher">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                foreach (var item in teachers)
+                                {
+                                    if (ViewBag.Teacher != null)
+                                    {
+                                        if (ViewBag.Teacher == item.ID)
+                                        {
+                                            <option value="@item.ID" selected>@item.FullName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@item.ID">@item.FullName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.ID">@item.FullName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label class="form-control-label">Bắt đầu từ:</label>
+                        <input type="text" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label class="form-control-label">Đến:</label>
+                        <input type="text" name="to" class="form-control datetimepicker to-date date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-2 text-center">
+                        <label class="form-control-label">Thao tác:</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary mg-r-10"><i data-feather="search"></i></button>
+                            <a href="javascript:;" class="btn btn-success export-excel" data-toggle="tooltip" data-placement="left" title="Xuất Excel"><i class="far fa-file-excel"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="course-horizental mg-t-30">
+    <ul class="list-wrap">
+        @{
+            foreach (var item in Model)
+            {
+                <li class="cr-item" style="background-color:white">
+
+                    <div class="row">
+                        <div class="col-12 col-md-8">
+                            <div class="media-body">
+                                <h5 class="mg-b-5">
+                                    <button type="button" class="btn btn-status" data-toggle="modal" data-target="#div-status" data-id="@item.ID" data-status="@item.Status">
+                                        @{
+                                            if (item.Status == 1)
+                                            {
+                                                <span class="badge badge-warning">Sắp mở</span>
+                                            }
+                                            if (item.Status == 2)
+                                            {
+                                                <span class="badge badge-success">Đang mở</span>
+                                            }
+                                            if (item.Status == 3)
+                                            {
+                                                <span class="badge badge-danger">Đã đóng</span>
+                                            }
+                                        }
+                                    </button>
+
+                                    <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", id = item.ID  })" class="course-name">@item.CourseName</a>
+                                </h5>
+                                @{
+                                    var gv = TeacherCourseTable.getbycourseid(item.ID).Where(n => n.isHide != true).ToList();
+                                    string gvs = "";
+                                    for (int i = 0; i < gv.Count; i++)
+                                    {
+                                        var te = AccountTable.getbyID(gv[i].TeacherUID.Value);
+                                        if (i != gv.Count - 1)
+                                        {
+                                            gvs += te.FullName + ", ";
+                                        }
+                                        else
+                                        {
+                                            gvs += te.FullName;
+                                        }
+                                    }
+                                    var cs = CourseSalaryTable.getbycourse(item.ID).Where(n => n.IsHide != true).ToList();
+                                    string css = "";
+                                    for (int i = 0; i < cs.Count; i++)
+                                    {
+                                        //var te = AccountTable.getbyID(css[i].TeacherUID.Value);
+                                        if (i != cs.Count - 1)
+                                        {
+                                            css += "Số buổi:" + cs[i].NumberOfLesson + "-" + "Lương:" + String.Format("{0:0,0}", cs[i].SalaryOfLesson) + "VND" + ". ";
+                                        }
+                                        else
+                                        {
+                                            css += "Số buổi:" + cs[i].NumberOfLesson + "-" + "Lương:" + String.Format("{0:0,0}", cs[i].SalaryOfLesson) + "VND";
+                                        }
+                                    }
+
+                                    var studys = CoursesScheduleTable.getbycourseid(item.ID).Select(n => n.StudyTimeID).Distinct();
+                                    var stu = "";
+                                    foreach (var st in studys)
+                                    {
+                                        var stud = StudyTimeTable.getbyid(st.Value);
+                                        stu += stud.sTime + " - " + stud.eTime + "   ";
+                                    }
+                                }
+                                @*<p class="">Chủ nhiệm: @item.TeacherLeaderName</p>*@
+                                <p class="summary">Giáo viên: @gvs</p>
+                                <div class="course-information tx-12">
+                                    @{
+                                        IEnumerable<tbl_CoursesSchedule> l = CoursesScheduleTable.getbycourseid(item.ID);
+                                        var ll = from t in l
+                                                 group t by t.Date;
+                                        int dem = 0;
+                                        foreach (var ageGroup in ll)
+                                        {
+                                            var ne = from t in ageGroup
+                                                     group t by t.StudyTimeID;
+                                            dem += ne.GroupBy(n => n.Key).Count();
+                                        }
+                                    }
+                                    <span class="mg-r-30">@dem buổi học</span>
+                                    <span class="mg-r-30">Bắt đầu: @item.OpeningDate.Value.ToString("dd/MM/yyyy")</span>
+                                    <span class="mg-r-30">Kết thúc: @CoursesScheduleTable.getbycourseid(item.ID).OrderByDescending(n => n.Date).FirstOrDefault().Date.Value.ToString("dd/MM/yyyy")</span>
+                                    <span class="mg-r-30">Học viên: @CoursesStudentTable.getbycourseid(item.ID).Count</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-5 col-md-3">
+                            <h5 class="mg-b-5">Lương</h5>
+                            <div class="no-wrap">@Html.Raw(css.Replace(".", "<br/>"))</div>
+                        </div>
+                        <div class="col-1 col-md-1">
+                            @{
+                                if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7)
+                                {
+                                    <a href="#div-teacher-leader" data-id="@item.ID" data-name="@item.CourseName" data-status="@item.Status" class="tx-info load-teacher-lead" data-toggle="modal"><i data-feather="user-check" data-toggle="tooltip" data-placement="left" title="Chỉnh sửa"></i></a>
+                                }
+                            }
+                        </div>
+                    </div>
+
+
+
+                </li>
+            }
+        }
+    </ul>
+</div>
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </ul>
+</nav>
+
+@{
+    if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7 || aclog.RoleID == 8)
+    {
+        <div class="modal fade" id="div-teacher-leader" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+                <div class="modal-content">
+                    @using (Html.BeginForm("UpdateTeacherByCourse", "Course", FormMethod.Post, new { id = "form-edit" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="hdfID" id="hdfID" />
+                        <input type="hidden" name="hdf-url" />
+                        <div class="modal-body pd-20 pd-sm-40">
+                            <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </a>
+                            <div>
+                                <h4>Cập nhật</h4>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <label>Tên khóa học:</label>
+                                            <input name="txt-coursename" type="text" class="form-control" required />
+                                        </div>
+                                    </div>
+                                </div>
+                                @{
+                                    if (aclog.RoleID != 7)
+                                    {
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <label for="txt-grade">Học vụ:</label>
+
+                                                    <select name="ddl-acdemic-officer" id="ddl-acdemic-officer" class="form-control select2" required></select>
+
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    }
+                                    else
+                                    {
+                                        <div class="form-group" style="display:none">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <label for="txt-grade">Học vụ:</label>
+                                                    <select name="ddl-acdemic-officer" id="ddl-acdemic-officer" class="form-control select2" required></select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                <div class="form-group" hidden>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <label for="txt-grade">Chủ nhiệm:</label>
+                                            <select name="ddl-teacher-lead" id="ddl-teacher-lead" class="form-control select2" required></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <label>Số buổi học chênh lệch: <i class="far fa-question-circle" data-toggle="tooltip" data-placement="left" title="thiếu buổi học điền số âm, thừa buổi học điền số dương"></i></label>
+                                            <input name="txt-lesson" placeholder="thiếu điền số âm, thừa điền số dương" type="number" class="form-control" required value="0" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <label>Giáo viên mới:</label>
+                                            <select class="form-control select2" name="slTeacher" id="slTeacher">
+                                                <option value="0">--Không thay đổi--</option>
+                                                @*@foreach (var item in teachers)
+                                                    {
+                                                        <option value="@item.ID">@item.FullName</option>
+                                                    }*@
+
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label>Số buổi áp dụng:</label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label>Lương/ buổi:</label>
+                                    </div>
+                                </div>
+                                <div class="form-group text-center">
+                                    <a href="javascript:;" onclick="add_salary()" style="font-size:20px;"><i class="fas fa-plus-circle"></i> Lương theo buổi học</a>
+                                </div>
+                                <div class="form-group" id="div-salary">
+                                </div>
+                                <input type="hidden" name="hd-salary" />
+                                <div class="form-group">
+                                    <select class="select2 form-control" name="slStatus-field">
+                                        <option value="1">Sắp mở</option>
+                                        <option value="2">Đang mở</option>
+                                        <option value="3">Đã đóng</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-block btn-save">Lưu lại</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@{
+    if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7 || aclog.RoleID == 8)
+    {
+        <div class="modal fade" id="div-status" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+                <div class="modal-content">
+                    @using (Html.BeginForm("UpdateStatusCourse", "Course", FormMethod.Post, new { id = "form-status" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <div class="modal-body pd-20 pd-sm-40">
+                            <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </a>
+                            <div>
+                                <h4>Cập nhật trạng thái khóa học</h4>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <input type="hidden" name="hdCourseId" value="0" />
+                                        <div class="col-sm-12">
+                                            <label>Trạng thái:</label>
+                                            <select name="slStatus" class="form-control select2" required>
+                                                <option value="1">Sắp mở</option>
+                                                <option value="2">Đang mở</option>
+                                                <option value="3">Đã đóng</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@section myScripts
+    {
+    <script>
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).on("click", ".load-teacher-lead", function () {
+            var id = $(this).attr('data-id');
+            $('#hdfID').val(id);
+            $('input[name=txt-coursename]').val($(this).attr('data-name'));
+            $('select[name=slStatus-field]').val($(this).attr('data-status'));
+            $('select[name=slStatus-field]').trigger('change');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Course/LoadTeacherByCourse",
+                data: '{courseid: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#ddl-acdemic-officer').empty();
+                    $('#ddl-acdemic-officer').append(msg.rs2).trigger('change');
+                    $('#slTeacher').empty();
+                    $('#slTeacher').append(msg.rs3).trigger('change');
+                    $('input[name=txt-lesson]').empty();
+                    $('input[name=txt-lesson]').val(msg.lesson);
+                    $('#div-salary').html(msg.rs);
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        })
+
+        //Xuất excel
+        $('.export-excel').click(function () {
+            var search = $('input[name=search]').val();
+            var sort = $('select[name=sort]').val();
+            var schoolID = $('select[name=school]').val();
+            var classID = $('select[name=lop]').val();
+            var fdate = $('input[name=from]').val();
+            var tdate = $('input[name=to]').val();
+            $.ajax({
+                type: "POST",
+                url: "/Course/ExportExcelCourseList",
+                data: '{search: "' + search + '",sort:"' + sort + '",schoolID:"' + schoolID + '",classID:"' + classID + '",fdate:"' + fdate + '",tdate:"' + tdate + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        fnExcelReport(msg.data, msg.f); //hàm này ở layout
+                    }
+                    else {
+                        alert(msg.noti);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        });
+
+        $(document).ready(function () {
+            $('.btn-delete').on('click', function () {
+                let id = $(this).attr('data-id');
+                let fullname = $(this).attr('data-name');
+                let $this = $(this);
+                if (confirm("Bạn có chắc chắn muốn xóa khóa học " + fullname + "?")) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/Course/DeleteCourse?id=' + id,
+                        success: function (msg) {
+                            if (msg.rs) {
+                                $this.closest('li').remove();
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'check',
+                                    classBackground: 'noti-success',
+                                    timeout: 3000
+                                })
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                })
+                            }
+                        }
+                    })
+
+                }
+                else {
+                    return false;
+                }
+            });
+        })
+
+        var numberSalary = 1;
+        function remove_salary(id) {
+            var div_id = 'numberSalary-' + id;
+            $('#' + div_id).remove();
+        }
+
+        function add_salary() {
+            var html = '<div class="form-row" id="numberSalary-' + numberSalary + '" > ' +
+                '<div class="form-group col-sm-6">' +
+                '<input name="txt-numberoflessontemp" data-type="number" class="form-control" placeholder="Số buổi áp dụng" />' +
+                '</div>' +
+                '<div class="col-sm-5 form-group">' +
+                '<input name="txt-salarytemp" data-type="currency" class="form-control" placeholder="Lương/ buổi" />' +
+                '</div>' +
+                '<div class="col-sm-1 form-group" style="padding:4px">' +
+                '<a href="javascript:;" onclick="remove_salary(' + numberSalary + ')" style="float:left;font-size:20px;color:red"><i class="far fa-times-circle"></i></a>' +
+                '</div>' +
+                '</div>';
+            $('#div-salary').append(html);
+        }
+
+        $('.btn-save').click(function () {
+            $('input[name=hd-salary]').val($('input[name=txt-salarytemp]').map(function () {
+                return this.value.replace(/,/g, '');
+            }).get());
+            $('#form-edit').submit();
+        });
+
+        $('.btn-status').click(function () {
+            $('input[name=hdCourseId]').val($(this).attr('data-id'));
+            $('select[name=slStatus]').val($(this).attr('data-status'));
+            $('select[name=slStatus]').trigger('change');
+        });
+    </script>
+}

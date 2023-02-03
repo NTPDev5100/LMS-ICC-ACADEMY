@@ -1,0 +1,94 @@
+﻿@using AppZim.Models;
+@using AppZim.TableSql;
+@model List<tbl_Reason>
+@{
+    ViewBag.Title = "Reason";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item active" aria-current="page">Danh sách lý do test</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<br />
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" onclick="ThemMoi();">
+    Thêm lý do
+</button>
+<br />
+<br />
+<table class="table table-striped" id="dataTable">
+    <thead>
+        <tr class="text-center">
+            <th scope="col">Loại</th>
+            <th scope="col">Lý do</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr class="text-center">
+                <td>@item.TypeName</td>
+                <td>@item.Name</td>
+                <td>
+                    <a href="javascript:;" onclick="Edit(@item.Type, '@item.Name', @item.ID)" data-toggle="modal" data-target="#exampleModal"><i class="far fa-edit"></i></a>
+                    <a href="javascript:;" onclick="Delete(@item.ID);"><i class="far fa-trash-alt" style="color:red"></i></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="/Admin/Reason/AddEditReason" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Thêm lý do</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input name="id" value="" hidden/>
+                    <label>Loại:</label>
+                    <select class="form-control" name="type">
+                        <option value="1">Học</option>
+                        <option value="2">Không học</option>
+                    </select>
+                    <label>Lý do:</label>
+                    <input required name="name" placeholder="Nhập lý do..." class="form-control"/>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $("#dataTable").DataTable();
+    });
+    function Delete(id) {
+        if (confirm("Bạn chắc muốn xóa?")) {
+            window.location.href = "/Admin/Reason/Delete?id=" + id;
+        }
+    }
+    function Edit(type, name, id) {
+        $("input[name=name]").val(name);
+        $("input[name=id]").val(id);
+        $("select[name=type]").val(type);
+    }
+    function ThemMoi() {
+        $("input[name=name]").val();
+        $("input[name=id]").val(0);
+        $("select[name=type]").val(1);
+    }
+</script>

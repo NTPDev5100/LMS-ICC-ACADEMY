@@ -1,0 +1,434 @@
+﻿
+@{
+    ViewBag.Title = "DayOffTeacher";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+
+<style>
+    .tb__schedule {
+        padding: 0 0px;
+        position: relative;
+    }
+
+        .tb__schedule .table {
+            border-collapse: collapse;
+        }
+
+            .tb__schedule .table tr td, .tb__schedule .table tr th {
+                text-align: center;
+                padding: 10px 0;
+                border: 1px solid #ccc;
+            }
+
+            .tb__schedule .table tr th {
+                color: #fff;
+                font-weight: bold;
+                font-size: 1.15rem;
+            }
+
+            .tb__schedule .table tr td:first-child {
+                color: #000;
+                font-weight: bold;
+                font-size: 1.15rem;
+                padding: 5px;
+            }
+
+            .tb__schedule .table tr td.red {
+            }
+
+            .tb__schedule .table tr td:hover, .tb__schedule .table tr th:hover {
+                border: 3px solid #000;
+            }
+
+    .table__wrapper .top-table {
+        justify-content: space-evenly;
+        display: flex;
+    }
+
+    .tb__schedule .arrow {
+        background: #5f5f5f;
+        display: inline-block;
+        border-radius: 50%;
+        width: 50px;
+        color: #fff;
+        height: 50px;
+        text-align: center;
+        cursor: pointer;
+        transition: background .2s ease;
+        -webkit-transition: background .2s ease;
+    }
+
+        .tb__schedule .arrow:hover {
+            background: #919090;
+        }
+
+        .tb__schedule .arrow i {
+            display: inline-block;
+            line-height: 50px;
+        }
+
+    .table-responsive table tbody tr td:nth-child(odd) {
+        background: #fff;
+    }
+
+    .tb__schedule .left-arrow {
+        position: absolute;
+        right: 100%;
+        margin-right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .tb__schedule .right-arrow {
+        position: absolute;
+        left: 100%;
+        margin-left: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .table-responsive {
+        overflow-x: unset;
+    }
+
+    table#customers tr td, table#customers tr th {
+        border: 1px solid #ddd !important;
+    }
+
+    #customers {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        background: white;
+    }
+
+        #customers td, #customers th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #customers th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: left;
+            background-color: #f5f6fa;
+            color: black;
+        }
+
+    th {
+        text-align: center !important;
+    }
+
+    td {
+        text-align: center;
+    }
+
+    .cl-sub {
+        background: #806b6b;
+        color: white;
+        padding: 0px 10px;
+    }
+
+    .label-mg-t {
+        margin-top: 0.5em;
+    }
+
+    .btn {
+        cursor: pointer;
+        -webkit-transition: background-color .2s ease-out;
+        -moz-transition: background-color .2s ease-out;
+        -o-transition: background-color .2s ease-out;
+        transition: background-color .2s ease-out;
+        text-align: center;
+        text-decoration: none;
+        letter-spacing: .5px;
+        color: black;
+        background: #ddd;
+        text-transform: uppercase;
+    }
+
+        .btn:hover {
+            background: #2196F3;
+            color: white;
+        }
+    /* Customize the label (the container) */
+    .lb-contrainer {
+        position: relative;
+        padding: 5px 10px;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+        .lb-contrainer input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #eee;
+    }
+
+
+    .lb-contrainer:hover input ~ .checkmark {
+        background-color: #ccc;
+    }
+
+
+    .lb-contrainer input:checked ~ .checkmark {
+        background-color: #2196F3;
+    }
+
+
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+
+    .lb-contrainer input:checked ~ .checkmark:after {
+        display: block;
+    }
+
+
+    .lb-contrainer .checkmark:after {
+        left: 8px;
+        top: 5px;
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+    }
+
+    #customers tr:not(.hd) th {
+        font-size: 15px;
+    }
+
+    #customers tr:not(.hd) td, #customers tr:not(.hd) th {
+        height: unset;
+    }
+
+    .content-body {
+        padding: 30px 60px;
+    }
+</style>
+<div class="row">
+
+    <div class="col-12 ">
+        @using (Html.BeginForm("CopyDayOff", "TeacherCourse", FormMethod.Post, new { id = "form-dayOffteacher" }))
+        {
+            <div class="row">
+                <div class="col-6" style="line-height: 40px;">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                            <li class="breadcrumb-item"><a href="javascript:;">Ngày nghỉ </a></li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-2">
+                    <input id="txt-date" name="txt-date" required type="text" class="datetimepicker date-only form-control" value="@GetDateTime.Now.ToString("dd/MM/yyyy")" placeholder="Ngày" />
+                </div>
+                <div class="col-2">
+                    <input id="txt-week-copy" name="txt-week-copy" required type="number" min="0" max="4" class="form-control" placeholder="Số tuần muốn nghỉ..." value="0" />
+                </div>
+                <div class="col-2" style="text-align:right;">
+                    <button type="button" class="btn btn-add mb-2 gradient-45deg-indigo-light-blue waves-light" onclick="copyDayOffTeacher()">Sao chép lịch nghỉ</button>
+                </div>
+            </div>
+        }
+        @using (Html.BeginForm("DayOffTeacher", "TeacherCourse", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="row">
+                <div class="col-2">
+                    <select class="select2 custom-select" name="slTime" onchange="Search()">
+                        <option value="0">Tất cả</option>
+                        <option value="1">Sáng</option>
+                        <option value="2">Chiều</option>
+                        <option value="3">Tối</option>
+                    </select>
+                    <script>$('select[name=slTime]').val(@ViewBag.Time)</script>
+                </div>
+            </div>
+        }
+        <div class="table-responsive tb__schedule">
+            <table id="customers" class="center-align">
+
+                @Html.Raw(ViewBag.html)
+            </table>
+
+            <div class="left-arrow arrow">
+                <i class="material-icons">arrow_back</i>
+            </div>
+            <div class="right-arrow arrow">
+                <i class="material-icons">arrow_forward</i>
+            </div>
+        </div>
+        @*<div id="schedule-calendar" class="schedule-calendar"></div>*@
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+        function Search() {
+            $('#form-search').submit();
+        }
+        function copyDayOffTeacher() {
+            const quantityWeek = $('#txt-week-copy').val();
+            if (confirm('Xác nhận đăng ký nghỉ tương tự cho ' + quantityWeek + ' tuần tiếp theo?')) {
+                $('#form-dayOffteacher').submit();
+            }
+        }
+
+        function loaddata(t) {
+            //t = 0 load ngày hiện tại, 1 trừ, 2 cộng
+            if (!ckstring($('#txt-date').val())) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/TeacherCourse/LoadDayOff",
+                    data: '{month: "' + $('#txt-date').val() + '", type: ' + t + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#txt-date').val(msg.m);
+                        $('#customers').empty();
+                        $('#customers').append(msg.l);
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: loaddata");
+                    }
+                });
+            }
+            else {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn nhập ngày cần xem',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 2500
+                })
+            }
+        }
+        $('.left-arrow').click(function () {
+            loaddata(1);
+        })
+        $('.right-arrow').click(function () {
+            loaddata(2);
+        })
+
+        $(document).on("change", ".dayoff-checked", function () {
+            var studyid = $(this).attr('data-studyid');
+            var date = $(this).attr('data-date');
+            var e = $(this);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/TeacherCourse/TeacherOff",
+                data: '{studyid: ' + studyid + ', dateoff: "' + date + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == 1) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Đăng ký nghỉ thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        })
+                    }
+                    if (msg.rs == 2) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Bạn đã có lịch, không thể nghỉ',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        })
+                        $(e).prop("checked", false);
+                    }
+                    if (msg.rs == 3) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Hủy lịch nghỉ thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        })
+                    }
+                    if (msg.reload == 1) {
+                        loaddata(0);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error :) ");
+                }
+            });
+        })
+        /*Date picker*/
+        $('.datepickers').datepicker({
+            format: 'dd/mm/yyyy',
+            container: "body",
+            //onSelect: function (date) {
+            //    loaddata(0);
+            //}
+        });
+        $('.datepicker-done').click(function () {
+            loaddata(0);
+        });
+        $(document).on("click", ".timeofday", function () {
+            var timeofday = $(this).attr('data-timeofday');
+            var check = $(this).is(":checked") == true ? 0 : 1;
+            var monday = $(this).attr('data-monday');
+            //console.log(timeofday);
+            //console.log(check);
+            $.ajax({
+                url: "/Admin/TeacherCourse/TeacherOffInTimeOfDay",
+                method: "post",
+                data: { timeofday: timeofday, checkoff: check, strMonday: monday },
+                success: function (msg) {
+                    if (msg.rs == 1) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        })
+                        loaddata(0);
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Lỗi',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        })
+                        loaddata(0);
+                    }
+                }
+            })
+        })
+    </script>
+}

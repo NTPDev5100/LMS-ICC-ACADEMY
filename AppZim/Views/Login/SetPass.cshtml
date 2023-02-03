@@ -1,0 +1,79 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Twitter -->
+    <meta name="twitter:site" content="ICC ACADEMY">
+    <meta name="twitter:creator" content="ICC ACADEMY">
+    <meta name="twitter:card" content="ICC ACADEMY">
+    <meta name="twitter:title" content="ICC ACADEMY">
+    <meta name="twitter:description" content="ICC ACADEMY">
+    <meta name="twitter:image" content="ICC ACADEMY">
+    <!-- Facebook -->
+    <meta property="og:url" content="ICC ACADEMY">
+    <meta property="og:title" content="ICC ACADEMY">
+    <meta property="og:description" content="ICC ACADEMY">
+    <meta property="og:image" content="ICC ACADEMY">
+    <meta property="og:image:secure_url" content="ICC ACADEMY">
+    <meta property="og:image:type" content="ICC ACADEMY">
+    <meta property="og:image:width" content="ICC ACADEMY">
+    <meta property="og:image:height" content="ICC ACADEMY">
+    <!-- Meta -->
+    <meta name="description" content="ICC ACADEMY">
+    <meta name="author" content="ICC ACADEMY">
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico">
+    <title>ICC ACADEMY || Set password</title>
+    <!-- vendor css -->
+    <link href="~/app-assets/zimv2/lib/@("@fortawesome")/fontawesome-free/css/all.min.css" rel="stylesheet">
+    <link href="~/app-assets/zimv2/lib/ionicons/css/ionicons.min.css" rel="stylesheet">
+    <!-- DashForge CSS -->
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/dashforge.css">
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/dashforge.auth.css">
+</head>
+<body>
+    <header>
+        <style>
+            ul {
+                list-style: none;
+                padding: 0px;
+            }
+        </style>
+    </header><!-- navbar -->
+    <div class="content content-fixed content-auth-alt">
+        @using (Html.BeginForm("SetPass", "Login", FormMethod.Post))
+        {
+            <input type="hidden" name="hdfid" value="@ViewBag.DataID" />
+            <div class="container d-flex justify-content-center ht-100p">
+                <div class="mx-wd-300 wd-sm-450 ht-100p d-flex flex-column align-items-center justify-content-center">
+                    <div class="wd-80p wd-sm-300 mg-b-15"><img src="~/app-assets/zimv2/images/forgot-password.png" class="img-fluid" alt=""></div>
+                    <h4 class="tx-20 tx-sm-24">Mật khẩu mới. <a href="@Url.Action("Signin", "Login", new { area = "" })">Đăng nhập</a></h4>
+
+                    <div class="wd-100p d-flex flex-column flex-sm-row mg-b-40">
+                        <input type="password" name="txt-pass-new" class="form-control wd-sm-250 flex-fill" required placeholder="******">
+                        <button type="submit" class="btn btn-brand-02 mg-sm-l-10 mg-t-10 mg-sm-t-0">Cập nhật mật khẩu</button>
+                    </div>
+                    @Html.ValidationSummary(true, "", new { @class = "text-danger", @style = "text-align: center; color:red;" })
+                </div>
+            </div><!-- container -->
+        }
+    </div><!-- content -->
+    <footer></footer>
+    @*<footer class="footer">
+            <div>
+                <span>&copy; 2019 ZIM v2.0.0. </span>
+                <span>Created by <a href="http://mona.media" target="_blank">Mona Media</a></span>
+            </div>
+        </footer>*@
+    <script src="~/app-assets/zimv2/lib/jquery/jquery.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/feather-icons/feather.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/dashforge.js"></script>
+    <!-- append theme customizer -->
+    <script src="~/app-assets/zimv2/lib/js-cookie/js.cookie.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/dashforge.settings.js"></script>
+</body>
+</html>

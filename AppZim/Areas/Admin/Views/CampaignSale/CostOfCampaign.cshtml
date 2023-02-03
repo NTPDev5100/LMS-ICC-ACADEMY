@@ -1,0 +1,183 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@model List<Admin_PlatformCampaign_GetList_Result>
+@{
+    ViewBag.Title = "CostOfCampaign";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Cấu hình chi phí chiến dịch</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("CostOfCampaign", "CampaignSale", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="#div-add" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+        </div>
+        <div class="row" style="margin-right:-5px;">
+            <div class="search-form mg-l-5 mg-r-5">
+                <input type="text" name="txt-search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                <button class="btn" type="button" onclick="pagesearch()"><i data-feather="search"></i></button>
+            </div>
+        </div>
+    </div>
+}
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Chiến dịch</th>
+                    <th>Tên chi phí</th>
+                    <th>Chi phí dự kiến</th>
+                    <th>Chi phí thực tế</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.CampaignName</td>
+                        <td>@item.PlatformName</td>
+                        <td>@String.Format("{0:0,0}", item.ExpectedCost)</td>
+                        <td>@String.Format("{0:0,0}", item.ActualCosts)</td>
+                        <td class="text-center">
+                            <a href="#div-edit" data-toggle="modal" data-id="@item.ID" data-platform="@item.PlatformName" data-expected="@String.Format("{0:0,0}", item.ExpectedCost)" data-actual="@String.Format("{0:0,0}", item.ActualCosts)" class="btn btn-primary btn-icon btn-sm btn-edit">
+                                <i data-feather="rotate-ccw"></i> Cập nhật
+                            </a>
+                            <button type="button" onclick="DeleteCost(@item.ID)" class="btn btn-primary btn-icon btn-sm btn-delete">
+                                <i class="fas fa-trash"></i> Xoá
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    <div class="pagination-container">
+        @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+    </div>
+</nav>
+
+<div class="modal" id="div-add" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddCost", "CampaignSale", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Thêm chi phí</h4>
+                        <div class="form-group">
+                            <input type="hidden" name="slPeriod" value="@ViewBag.Campaign" />
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-name">Tên chi phí:</label>
+                                    <input id="txt-name" name="txt-name" type="text" required class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-expected">Chi phí dự kiến:</label>
+                                    <input id="txt-expected" name="txt-expected" type="text" class="form-control" oninput="moneyfm(this)" value="0" />
+                                </div>
+                            </div>
+
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-actual">Chi phí thực tế:</label>
+                                    <input id="txt-actual" name="txt-actual" type="text" required class="form-control" oninput="moneyfm(this)" value="0" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div id="div-edit" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditCost", "CampaignSale", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="hdfID" name="hdfID" required />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>chỉnh sửa</h4>
+                        <div class="form-group">
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-name-edit">Tên chi phí:</label>
+                                    <input id="txt-name-edit" name="txt-name-edit" type="text" required class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-expected-edit">Chi phí dự kiến:</label>
+                                    <input id="txt-expected-edit" name="txt-expected-edit" type="text" class="form-control" oninput="moneyfm(this)" value="0" />
+                                </div>
+                            </div>
+
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-actual-edit">Chi phí thực tế:</label>
+                                    <input id="txt-actual-edit" name="txt-actual-edit" type="text" required class="form-control" oninput="moneyfm(this)" value="0" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Cập nhật</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).on("click", ".btn-edit", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('#txt-name-edit').val($(this).attr('data-platform'));
+            $('#txt-expected-edit').val($(this).attr('data-expected'));
+            $('#txt-actual-edit').val($(this).attr('data-actual'));
+        });
+
+        function DeleteCost(e) {
+            var c = confirm("Bạn có chắc muốn xoá chi phí này ?");
+            if (c) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/CampaignSale/DeleteCost",
+                    data: '{id: ' + e + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        window.location.reload();
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(xmlhttprequest);
+                    }
+                });
+            }
+        }
+    </script>
+}

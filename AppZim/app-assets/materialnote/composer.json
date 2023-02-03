@@ -1,0 +1,20 @@
+{
+    "name": "materialnote/materialnote",
+    "description": "Super Simple WYSIWYG Editor on Materialize.",
+    "type": "library",
+    "keywords": [
+        "wysiwyg"
+    ],
+    "homepage": "http://materialnote.org/",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "CK",
+            "email": "cerealkillerway@gmail.com",
+            "role": "lead"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/Cerealkillerway/materialNote/issues"
+    }
+}

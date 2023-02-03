@@ -1,0 +1,107 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@model List<Admin_VideoSchedule_GetList_Result>
+@{
+    ViewBag.Title = "VideoCourse";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_Courses course = CoursesTable.getbyid(ViewBag.Course.ID);
+    var totalLesson = CoursesScheduleTable.getbycourseid(ViewBag.Course.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(ViewBag.Course.ID, 1).Count;// số buổi đã học
+    int remainLesson = totalLesson - learnedLesson;
+}
+@section myStyles{
+}
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-4 col-lg-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@ViewBag.Course.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Tổng số buổi học">@totalLesson</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseDetail", "StudentCourse", new { area = "", ViewBag.Course.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseDocument", "StudentCourse", new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="book"></i>Tài liệu</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("NoteCourse", "StudentCourse", new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="flag"></i>TimeLine</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseNotification","StudentCourse",  new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item active">
+                        <a href="@Url.Action("VideoCourse","StudentCourse",  new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="video"></i>Video buổi học</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","StudentCourse",  new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        @{Html.RenderAction("PartialNextLession", "StudentCourse", new { id = ViewBag.Course.ID });}
+
+    </div>
+    <div class="col-12 colsm-12 col-md-8 col-lg-9">
+        <div class="notification__wrap">
+            <div class="tab-content bd-gray-300 bd-t-0 pd-y-20" id="tab-notification">
+                <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-vcenter">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th></th>
+                                    <th>Ngày học</th>
+                                    <th>Môn học</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (var item in Model)
+                                    {
+                                        var videos = CoursesScheduleFileTable.getbyScheduleID(item.ID);
+                                        <tr class="tr-row">
+                                            <td><a href="javascript:;" class="collapse-toggle" data-id="@item.ID"><i class="fas fa-plus-square"></i></a></td>
+                                            <td><span>@item.Date.Value.ToString("dd/MM/yyyy") @item.TimeName</span></td>
+                                            <td><span>@item.SubjectName</span></td>
+                                            <td>@item.StatusName</td>
+                                        </tr>
+                                        <tr class="collapse-row">
+                                            <td colspan="4">
+                                                <div class="collapse-content">
+                                                    @foreach (var i in videos)
+                                                    {
+                                                        <div>
+                                                            <video width="750" controls>
+                                                                <source src="@i.FileName" type="video/mp4">
+                                                            </video>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+    </script>
+}
+}
+

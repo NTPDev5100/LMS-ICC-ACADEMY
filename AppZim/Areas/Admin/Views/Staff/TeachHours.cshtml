@@ -1,0 +1,205 @@
+﻿@using AppZim.TableSql;
+@using AppZim.Models;
+@model List<tbl_AccountTotalHourTeaching>
+
+@{
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    ViewBag.Title = "TeachHours";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item active" aria-current="page">Giờ dạy của Giáo Viên</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("TeachHours", "Staff", FormMethod.Get, new { id = "form-search", area = "Admin" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="mg-l-5 mg-r-5">
+                    <input type="text" name="date" class="form-control datetimepicker date-only" placeholder="__/__/____" value="@ViewBag.Date">
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="type" id="ddl-type" class="custom-select" onchange="pagesearch()">
+                        <option @(ViewBag.Type == 1 ? "selected" : "") value="1">Ngày</option>
+                        <option @(ViewBag.Type == 2 ? "selected" : "") value="2">Tuần</option>
+                        <option @(ViewBag.Type == 3 ? "selected" : "") value="3">Tháng</option>
+                        <option @(ViewBag.Type == 4 ? "selected" : "") value="4">Quý</option>
+                        <option @(ViewBag.Type == 5 ? "selected" : "") value="5">Năm</option>
+                    </select>
+                </div>
+                <a href="javascript:;" class="btn btn-primary" onclick="pagesearch()"><i data-feather="search"></i> Tìm kiếm</a>
+                <a href="javascript:;" class="btn btn-success mg-l-5 teachhourse-export"><i data-feather="file-text"></i> Export excel</a>
+            </div>
+        }
+    </div>
+</div>
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th colspan="2">Giáo viên @ViewBag.DateView</th>
+                    <th>Trạng thái</th>
+                    <th>Loại lớp</th>
+                    <th>Giờ dạy</th>
+                    <th>Điểm danh</th>
+                    <th>Không điểm danh</th>
+                    <th>Tổng giờ</th>
+                    <th>Giờ trực</th>
+                    <th>Tổng giờ trực</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int type = ViewBag.Type;
+                    int countTeacher = 0;
+                    foreach (var item in Model)
+                    {
+                        tbl_AccountTotalHourTeaching bf = AccountTotalHourTeachingTable.getbyuid(item.UID.Value).Where(n => n.Type == type && n.DateRun < item.DateRun).OrderByDescending(n => n.DateRun).FirstOrDefault();
+                        var ac = AccountTable.getbyID(item.UID.Value);
+                        string avatar = "/app-assets/zimv2/assets/img/teacher.jpg";
+                        if (!string.IsNullOrEmpty(ac.AvatarThumbnail))
+                        {
+                            avatar = ac.AvatarThumbnail;
+                        }
+                        countTeacher++;
+                        <tr>
+                            <td>
+                                <div class="avatar">
+                                    <img src="@avatar" class="rounded-circle">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="media-body">
+                                    <h6 class="tx-13 mg-b-0">@ac.FullName</h6>
+                                </div>
+                            </td>
+                            <td class="rank">
+                                <div>
+                                    @if (bf == null)
+                                    {
+                                        <img class="up" src="/app-assets/zimv2/images/up-arrow.svg">
+                                    }
+                                    else
+                                    {
+                                        if (bf.Rank > countTeacher && item.Rank > 0)
+                                        { <img class="up" src="/app-assets/zimv2/images/up-arrow.svg">}
+                                        else if (bf.Rank < countTeacher && bf.Rank > 0)
+                                        { <img class="down" src="/app-assets/zimv2/images/down-arrow.svg">}
+
+                                    }
+                                </div>
+                            </td>
+                            <td>Offline</td>
+                            <td>@item.Hours</td>
+                            <td>@item.RealHour</td>
+                            <td>@item.AbsentHour</td>
+                            <td>@item.TotalHour</td>
+                            <td>@item.HoursCourseSelfStudy</td>
+                            <td>@item.TotalHourCourseSelfStudy</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(6, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </nav>
+</div>
+<script>
+    $(document)
+        .ajaxStart(function () {
+            $('#AjaxLoader').show();
+        })
+        .ajaxStop(function () {
+            $('#AjaxLoader').hide();
+        });
+    $('input[name=search]').keyup(function (event) {
+        if (event.keyCode === 13) {
+            pagesearch();
+        }
+    });
+    $('#btn-search').click(function () {
+        pagesearch();
+    })
+    function pagesearch() {
+        $('#form-search').submit();
+    }
+    $('.teachhourse-export').click(function () {
+        let search = $('input[name="search"]').val();
+        let date = $('input[name="date"]').val();
+        let type = $('select[name="type"]').val();
+        let $this = this;
+        $(this).addClass('disabled')
+        $.ajax({
+            type: "GET",
+            url: "/Admin/Staff/ExportTeachHours",
+            data: { 'search': '' + search + '', 'date': '' + date + '', 'type': type },
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (msg.rs) {
+                    fnExcelReport(msg.data, msg.f);
+                    $(this).removeClass('disabled')
+                }
+                else {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: msg.message,
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+            }
+        });
+    });
+    function fnExcelReport(data, filename) {
+        var ua = window.navigator.userAgent;
+        var msie = ua.indexOf("MSIE ");
+        if (msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) // If Internet Explorer
+        {
+
+            txtArea1.document.open("txt/html", "replace");
+            txtArea1.document.write(data);
+            txtArea1.document.close();
+            txtArea1.focus();
+            sa = txtArea1.document.execCommand("SaveAs", true, filename + ".xls");
+
+            document.open("txt/html", "replace");
+            document.write(data);
+            document.close();
+
+            sa = document.execCommand("SaveAs", true, filename + ".xls");
+        }
+        else {//other browser
+            var a = document.createElement('a');
+            var data_type = 'data:application/vnd.ms-excel';
+            var table_div = data;    //Your tab_text
+            var table_html = table_div.replace(/ /g, '%20');
+            a.href = data_type + ', ' + table_html;
+            //setting the file name
+            a.download = filename + '.xls';
+            //triggering the function
+            a.click();
+
+        }
+    }
+
+</script>

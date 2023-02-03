@@ -1,0 +1,77 @@
+﻿@using AppZim.Models;
+@model List<tbl_NotificationSingleLog>
+@{
+    ViewBag.Title = "NotificationToApp";
+Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+            <li class="breadcrumb-item active" aria-current="page">Danh sách thông báo</li>
+        </ol>
+    </nav>
+</div>
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+    Tạo thông báo
+</button>
+<br />
+<br />
+<table class="table table-striped" id="dataTable">
+    <thead>
+        <tr>
+            <th>Thời gian</th>
+            <th>Tiêu đề</th>
+            <th>Người nhận</th>
+            <th>Nội dung</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.CreateDate</td>
+                <td>@item.Title</td>
+                <td>@item.AccRoleName</td>
+                <td>@item.Content</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        @using (Html.BeginForm("NotificationToApp", "Notification", FormMethod.Post))
+        {
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Gửi thông báo đến app</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <label>Gửi cho ai?</label>
+                    <select name="who" class="form-control">
+                        <option value="0">Tất cả</option>
+                        <option value="4">Giáo viên và học vụ</option>
+                        <option value="5">Học viên</option>
+                    </select>
+                    <label>Tiêu đề</label>
+                    <input class="form-control" name="title" required />
+                    <label>Nội dung</label>
+                    <textarea name="content" class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Gửi</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#dataTable').DataTable();
+    })
+</script>

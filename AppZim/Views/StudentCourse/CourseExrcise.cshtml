@@ -1,0 +1,243 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "StudentExercise";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+
+    List<tbl_ExerciseGroup> tl = ExerciseGroupTable.getbycurrid(Model.CurriculumsID, 1);
+    List<tbl_ExerciseGroup> tn = ExerciseGroupTable.getbycurrid(Model.CurriculumsID, 2);
+    List<tbl_ExerciseGroup> au = ExerciseGroupTable.getbycurrid(Model.CurriculumsID, 3);
+
+    List<tbl_ExerciseGroup> tlc = ExerciseGroupTable.getbycourseidvstype(Model.ID, 1);
+    List<tbl_ExerciseGroup> tnc = ExerciseGroupTable.getbycourseidvstype(Model.ID, 2);
+    List<tbl_ExerciseGroup> auc = ExerciseGroupTable.getbycourseidvstype(Model.ID, 3);
+
+    tl.AddRange(tlc);
+    tn.AddRange(tnc);
+    au.AddRange(auc);
+    var totalLesson = CoursesScheduleTable.getbycourseid(Model.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(Model.ID, 1).Count;// số buổi đã học
+    int remainLesson = totalLesson - learnedLesson;
+}
+@section myStyles{
+    <style>
+        .excer-item .bd-action {
+            padding-top: 0px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(72,94,144,0.16);
+        }
+    </style>
+}
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-4 col-lg-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@Model.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Tổng số buổi học">@totalLesson</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseDetail", "StudentCourse", new { area = "", Model.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseDocument", "StudentCourse", new { area = "", id = Model.ID })" class="menu-link"><i data-feather="book"></i>Tài liệu</a>
+                    </li>
+                    <li class="menu-item active">
+                        <a href="@Url.Action("CourseExrcise", "StudentCourse", new { area = "", id = Model.ID })" class="menu-link"><i data-feather="book-open"></i>Bài tập</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseNotification","StudentCourse",  new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("VideoCourse","StudentCourse",  new { area = "", id = Model.ID })" class="menu-link"><i data-feather="video"></i>Video buổi học</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","StudentCourse",  new { area = "", id = Model.ID })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        @{Html.RenderAction("PartialNextLession", "StudentCourse", new { id = Model.ID });}
+    </div>
+    <div class="col-12 colsm-12 col-md-8 col-lg-9">
+        <div class="docs-wrap">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs nav-justified" id="excercise-tab" role="tablist">
+                        <li class="nav-item" hidden><!--đóng tự luận-->
+                            <a class="nav-link " id="tuluan-tab" data-toggle="tab" href="#bt-tuluan" role="tab" aria-controls="bt-tuluan" aria-selected="true">Tự luận</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" id="tracnghiem-tab" data-toggle="tab" href="#bt-tracnghiem" role="tab" aria-controls="bt-tracnghiem" aria-selected="false">Trắc nghiệm</a>
+                        </li>
+                        <li class="nav-item" hidden>
+                            <a class="nav-link" id="noi-tab" data-toggle="tab" href="#bt-noi" role="tab" aria-controls="bt-noi" aria-selected="false">Nói</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content bd bd-gray-00 bd-t-0 pd-20" id="excercise-content">
+                        <div class="tab-pane fade show " id="bt-tuluan" role="tabpanel" aria-labelledby="tuluan-tab" hidden><!--đóng tự luận-->
+                            <div class="excer-item">
+                                <div class="accordion">
+                                    @{
+                                        foreach (var item in tl)
+                                        {
+                                            var exs = ExerciseTable.getbygroupid(item.ID);
+                                            <h6 class="d-flex justify-content-between"><span class="deadline">@item.ExerciseGroupName</span><span class="number">@exs.Count câu hỏi</span></h6>
+                                            <div class="list-excer">
+                                                <div class="excer-row">
+                                                    <div class="accordion accordion-primary accordion-style1">
+                                                        @{
+                                                            foreach (var e in exs)
+                                                            {
+                                                                string score = "N/A";
+                                                                string ed = "N/A";
+                                                                var ck = CoursesExerciseDeadlineTable.getbycourseid(Model.ID, e.ID);
+                                                                if (ck != null)
+                                                                {
+                                                                    ed = ck.eTime.ToString("dd/MM/yyyy");
+                                                                }
+                                                                var ckanwer = ExerciseAddonStudentTable.checkstudenex(aclog.ID, e.ID, ViewBag.Course.ID);
+                                                                if (ckanwer != null)
+                                                                {
+                                                                    if (ckanwer.StatusDone == 3 || ckanwer.StatusDone == 5)
+                                                                    {
+                                                                        score = ckanwer.Scores.ToString();
+                                                                    }
+                                                                }
+                                                                <h6 class="d-flex justify-content-between"><span class="deadline">Hạn cuối: <span class="date">@ed</span></span><span>Điểm: <span class="score">@score</span></span></h6>
+                                                                <div class="excer-bd">
+                                                                    <div class="bd-action">
+                                                                        <div class="row">
+                                                                            <div class="col-12 col-sm-12 mg-t-20">
+                                                                                @{
+                                                                                    if (ckanwer == null && ck != null)
+                                                                                    {
+                                                                                        <a href="@Url.Action("ExrciseDetailEssay", "StudentExrcise", new { area = "", courseid = ViewBag.Course.ID, eid = e.ID })" class="btn btn-primary mg-sm-r-10">Làm bài tập</a>
+                                                                                    }
+                                                                                    if (ckanwer != null)
+                                                                                    {
+                                                                                        <a href="@Url.Action("ExrciseDetailEssayFix", "StudentExrcise", new { area = "", id = ckanwer.ID })" class="btn btn-primary mg-sm-r-10">Chỉnh sửa</a>
+                                                                                    }
+                                                                                }
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="bd-content">
+                                                                        @Html.Raw(e.ExerciseTitle)
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade show active" id="bt-tracnghiem" role="tabpanel" aria-labelledby="tracnghiem-tab">
+                            <div class="tracnghiem-wrap">
+                                @{
+                                    foreach (var item in tn)
+                                    {
+                                        var exs = ExerciseTable.getbygroupid(item.ID);
+                                        if (exs.Count > 0)
+                                        {
+                                            <div class="tn-block card">
+                                                <div class="tn-item d-md-flex card-body row pd-15">
+                                                    <div class="left-col col-12 col-sm-8">
+                                                        <a href="@Url.Action("ExrciseDetailEssayMulti", "StudentExrcise", new { area = "", courseid = ViewBag.Course.ID, gid = item.ID })" class="txt title">@item.ExerciseGroupName</a>
+                                                    </div>
+                                                    <div class="right-col col-12 col-sm-4">
+                                                        <p class="txt"><span class="number">@exs.Count câu hỏi</span></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="bt-noi" role="tabpanel" aria-labelledby="noi-tab" hidden>
+                            <div class="excer-item">
+                                <div class="accordion">
+                                    @{
+                                        foreach (var item in au)
+                                        {
+                                            var exs = ExerciseTable.getbygroupid(item.ID);
+                                            <h6 class="d-flex justify-content-between"><span class="deadline">@item.ExerciseGroupName</span><span class="number">@exs.Count câu hỏi</span></h6>
+                                            <div class="list-excer">
+                                                <div class="excer-row">
+                                                    <div class="accordion accordion-primary accordion-style1">
+                                                        @{
+                                                            foreach (var e in exs)
+                                                            {
+                                                                string score = "N/A";
+                                                                string ed = "N/A";
+                                                                var ck = CoursesExerciseDeadlineTable.getbycourseid(Model.ID, e.ID);
+                                                                if (ck != null)
+                                                                {
+                                                                    ed = ck.eTime.ToString("dd/MM/yyyy");
+                                                                }
+                                                                var ckanwer = ExerciseAddonStudentTable.checkstudenex(aclog.ID, e.ID, ViewBag.Course.ID);
+                                                                if (ckanwer != null)
+                                                                {
+                                                                    if (ckanwer.StatusDone == 3 || ckanwer.StatusDone == 5)
+                                                                    {
+                                                                        score = ckanwer.Scores.ToString();
+                                                                    }
+                                                                }
+                                                                <h6 class="d-flex justify-content-between"><span class="deadline">Hạn cuối: <span class="date">@ed</span></span><span>Điểm: <span class="score">@score</span></span></h6>
+                                                                <div class="excer-bd">
+                                                                    <div class="bd-action">
+                                                                        <div class="row">
+                                                                            <div class="col-12 col-sm-12 mg-t-20">
+                                                                                @{
+                                                                                    if (ckanwer == null && ck != null)
+                                                                                    {
+                                                                                        <a href="@Url.Action("ExrciseDetailAudio", "StudentExrcise", new { area = "", courseid = ViewBag.Course.ID, eid = e.ID })" class="btn btn-primary mg-sm-r-10">Làm bài tập</a>
+                                                                                    }
+                                                                                    if (ckanwer != null)
+                                                                                    {
+                                                                                        <a href="@Url.Action("ExrciseDetailEssayFix", "StudentExrcise", new { area = "", id = ckanwer.ID })" class="btn btn-primary mg-sm-r-10">Chỉnh sửa</a>
+                                                                                    }
+                                                                                }
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="bd-content">
+                                                                        @Html.Raw(e.ExerciseTitle)
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/jqueryui/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.accordion').accordion({
+                active: 'none',
+                heightStyle: 'content',
+                collapsible: true
+            });
+
+        });
+    </script>
+}
+

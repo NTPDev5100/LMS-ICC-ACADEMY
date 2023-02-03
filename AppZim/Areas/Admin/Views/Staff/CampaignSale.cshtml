@@ -1,0 +1,347 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@using AppZim.Areas.Admin.Controllers;
+@model PagedList.IPagedList<tbl_CampaignSale>
+@{
+    ViewBag.Title = "CampaignSale";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+@section myStyles{
+    <style>
+    </style>
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách chiến dịch</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("CampaignSale", "Staff", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="#modal-create-center" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" id="ddl-sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Bắt đầu ></option>
+                            }
+                            else
+                            {
+                                <option value="1">Bắt đầu ></option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Bắt đầu <</option>
+                            }
+                            else
+                            {
+                                <option value="2">Bắt đầu <</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Kết thúc ></option>
+                            }
+                            else
+                            {
+                                <option value="3">Kết thúc ></option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Kết thúc <</option>
+                            }
+                            else
+                            {
+                                <option value="4">Kết thúc <</option>
+                            }
+                            if (ViewBag.Sort == 5)
+                            {
+                                <option value="5" selected>Chiến dịch a -> z</option>
+                            }
+                            else
+                            {
+                                <option value="5">Chiến dịch a -> z</option>
+                            }
+                            if (ViewBag.Sort == 6)
+                            {
+                                <option value="6" selected>Chiến dịch z -> a</option>
+                            }
+                            else
+                            {
+                                <option value="6">Chiến dịch z -> a</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="trangthai" id="ddl-trangthai" class="custom-select" onchange="pagesearch()">
+                        <option value="2">-- Trạng thái --</option>
+                        @{
+
+                            if (ViewBag.TrangThai == 0)
+                            {
+                                <option value="0" selected>Đang mở</option>
+                            }
+                            else
+                            {
+                                <option value="0">Đang mở</option>
+                            }
+                            if (ViewBag.TrangThai == 1)
+                            {
+                                <option value="1" selected>Hoàn thành</option>
+                            }
+                            else
+                            {
+                                <option value="1">Hoàn thành</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="">
+                    <a href="javascript:;" class="btn btn-success export-excel"><i data-feather="file-text"></i> Xuất Excel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Chiến dịch</th>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th>Doanh thu</th>
+                    @*<th>Hoàn trả</th>*@
+                    <th>Ghi chú</th>
+                    <th class="no-wrap text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        IEnumerable<tbl_CoursesStudent> l = CoursesStudentTable.getall().Where(n => n.CampaignSaleID == item.ID).OrderByDescending(n => n.ID).ToList();
+                        var l2 = StudentAppointmentTable.getByCampaignSaleID(item.ID);
+                        List<ChienDich> fl = new List<ChienDich>();
+                        // tbl_CoursesStudent
+                        foreach (var i in l)
+                        {
+                            ChienDich x = new ChienDich();
+                            x.TenHocVien = i.StudentName;
+                            x.TenKhoaHoc = i.CourseName;
+                            x.Gia = (double)i.PriceCourse + (double)i.CommitmentPrice;
+                            x.DuocGiam = (double)i.PriceDiscout;
+                            x.DaThanhToan = (double)i.Deposit;
+                            x.ConThieu = (x.Gia - x.DuocGiam - x.DaThanhToan);
+                            x.SupportID = i.SupportUID.Value;
+                            x.NgayTao = i.CreatedDate.Value;
+                            fl.Add(x);
+                        }
+                        foreach (var i in l2)
+                        {
+                            ChienDich x = new ChienDich();
+                            x.TenHocVien = i.StudentName;
+                            x.TenKhoaHoc = i.ClassName;
+                            x.Gia = (double)i.ClassPrice;
+                            x.DuocGiam = (double)i.DiscountPrice;
+                            x.DaThanhToan = (double)i.Deposit;
+                            x.ConThieu = (x.Gia - x.DuocGiam - x.DaThanhToan);
+                            x.SupportID = AccountTable.getbyusername(i.CreatedBy) == null ? 0 : AccountTable.getbyusername(i.CreatedBy).ID;
+                            x.NgayTao = item.CreatedDate.Value;
+                            fl.Add(x);
+                        }
+
+                        int TongDoanhThu = (int)fl.Sum(x => x.DaThanhToan); //tổng doanh thu
+                        <tr class="tr-row">
+                            <td>@item.CampaignName</td>
+                            <td>@item.sTime.Value.ToString("dd/MM/yyyy")</td>
+                            <td>@item.eTime.Value.ToString("dd/MM/yyyy")</td>
+                            @{
+                                if (item.IsHide.Value)
+                                {
+                                    <td class="campaign-status col-fix-10 text-center tx-danger"><span class="">Hoàn thành</span></td>
+                                }
+                                else
+                                {
+                                    <td class="campaign-status col-fix-10 text-center tx-success"><span class="">Đang mở</span></td>
+                                }
+                            }
+                            <td>@String.Format("{0:0,0}", TongDoanhThu)</td>
+                            @*<td>@String.Format("{0:0,0}", hoantra)</td>*@
+                            <td>@item.Note</td>
+                            <td class="text-center">
+                                <a href="/Admin/Staff/CampaignSaleDetail/@item.ID" data-toggle="tooltip" data-placement="left" title="Chi tiết"><i data-feather="eye"></i></a>
+                            </td>
+                            @*<td>
+                                @if (c == null)
+                                {
+                                    <a href="javascript:;" class="btn btn-icon btn-sm btn-delete" style="background:#f52222;color:white" data-id="@item.ID" data-name="@item.CampaignName" data-toggle="tooltip" data-placement="top" title="Xóa">
+                                        <i data-feather="trash-2"></i>
+                                    </a>
+                                }
+                            </td>*@
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        @Html.PagedListPager(Model, page => Url.Action("CampaignSale", new { page, search = ViewBag.Search, sort = ViewBag.Sort }),
+        new PagedListRenderOptions
+        {
+            UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+        })
+    </nav>
+</div>
+
+<div class="modal fade" id="modal-create-center" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddCampaignSale", "Staff", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Tạo mới chiến dịch</h4>
+                        <h6 class="text-info">Lưu ý: Không thể tạo chiến dịch trùng thời gian</h6>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Tên chiến dịch:</label>
+                                    <input name="txt-name" required type="text" class="form-control" placeholder="..." value="">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            @{
+                                string startDate = "";
+                                string endDate = "";
+                                var camp = CampaignSaleTable.getall().OrderByDescending(x => x.eTime).FirstOrDefault();
+                                if (camp != null)
+                                {
+                                    startDate = camp.eTime.Value.AddDays(1).ToString("dd/MM/yyyy");
+                                    endDate = camp.eTime.Value.AddDays(5).ToString("dd/MM/yyyy");
+                                }
+                            }
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <label>Bắt đầu:</label>
+                                    <input name="txt-stime" required type="text" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY" value="@startDate">
+                                </div>
+                                <div class="col-sm-6">
+                                    <label>Kết thúc:</label>
+                                    <input name="txt-etime" type="text" required class="datetimepicker date-only form-control" placeholder="DD / MM / YYYY" value="@endDate">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Ghi chú:</label>
+                            <textarea name="txt-note" rows="3" class="form-control"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts{
+    <script>
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).ready(function () {
+            $('.btn-delete').on('click', function () {
+                let id = $(this).attr('data-id');
+                let fullname = $(this).attr('data-name');
+                let $this = $(this);
+                if (confirm("Bạn có chắc chắn muốn xóa chiến dịch " + fullname + "?")) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/Staff/DeleteCampaignSale?id=' + id,
+                        success: function (msg) {
+                            if (msg.rs) {
+                                $this.closest('tr').remove();
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'check',
+                                    classBackground: 'noti-success',
+                                    timeout: 3000
+                                })
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                })
+                            }
+                        }
+                    })
+
+                }
+                else {
+                    return false;
+                }
+            });
+        })
+
+        //Xuất excel
+        $('.export-excel').click(function () {
+            var search = $('input[name=search]').val();
+            var sort = $('select[name=sort]').val();
+            var trangthai = $('select[name=trangthai]').val();
+            $.ajax({
+                type: "POST",
+                url: "/Staff/ExportExcelCampaignSale",
+                data: '{search: "' + search + '",sort:"' + sort + '",trangthai:"' + trangthai + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        fnExcelReport(msg.data, msg.f); //hàm này ở layout
+                    }
+                    else {
+                        alert(msg.noti);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        });
+    </script>
+}

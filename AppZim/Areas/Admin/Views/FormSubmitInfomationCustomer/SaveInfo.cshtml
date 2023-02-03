@@ -1,0 +1,440 @@
+﻿@using AppZim.TableSql
+@{
+    Layout = null;
+
+    var locations = LocationTable.getall();
+    var jobs = JobTable.getall();
+    var academic = AcademicPurposesTable.getall();
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>ZIM</title>
+    <link href="~/app-assets/vendors/sweetalert/sweetalert.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+    <link href="~/app-assets/js/datepicker/datepicker.min.css" rel="stylesheet" />
+    <style>
+        html, body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+        }
+
+        .form-reg-wrap {
+            max-width: 600px;
+            overflow: hidden;
+            border-radius: 4px;
+            -webkit-box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 3px 1px -2px rgba(0, 0, 0, .12), 0 1px 5px 0 rgba(0, 0, 0, .2);
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 3px 1px -2px rgba(0, 0, 0, .12), 0 1px 5px 0 rgba(0, 0, 0, .2);
+        }
+
+        .form-title {
+            background: #333;
+            font-size: 24px;
+            font-weight: 500;
+            text-align: center;
+            padding: 15px;
+            color: #fff;
+        }
+
+        .form-body {
+            padding: 15px;
+            border: 1px solid #d1d1d1;
+            border-top: 0;
+        }
+
+            .form-body .form-notice {
+                font-weight: bold;
+                font-size: 18px;
+                font-style: italic;
+            }
+
+        .form-row {
+            margin: 30px 0;
+            box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+        }
+
+            .form-row.row {
+                display: -webkit-box;
+                display: -moz-box;
+                display: -ms-flexbox;
+                display: -webkit-flex;
+                display: flex;
+                -webkit-box-pack: justify;
+                -ms-flex-pack: justify;
+                justify-content: space-between;
+                -ms-flex-flow: wrap;
+                flex-flow: wrap;
+                margin: 30px -15px;
+            }
+
+            .form-row .hafl-col {
+                width: 50%;
+                padding: 0 15px 15px;
+                box-sizing: border-box;
+            }
+
+            .form-row .rq {
+                color: red;
+            }
+
+            .form-row .sub {
+                font-size: 11px;
+                font-style: italic;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+
+            .form-row .lb {
+                font-weight: bold;
+                font-size: 13px;
+            }
+
+            .form-row p {
+                margin: 5px 0;
+            }
+
+            .form-row
+            .checklb {
+                display: inline-block;
+                font-size: 12px;
+                margin-right: 10px;
+            }
+
+        .checklb input {
+            display: none;
+        }
+
+        .checklb .ip-avata {
+            width: 15px;
+            height: 15px;
+            border: solid 1px #ccc;
+            margin-right: 5px;
+            border-radius: 50%;
+            background-color: #ebebeb;
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: text-bottom;
+            position: relative;
+        }
+
+        .checklb input:checked + .ip-avata {
+            background-color: #000;
+        }
+
+            .checklb input:checked + .ip-avata:before {
+                top: 50%;
+            }
+
+        .ip-avata:before {
+            content: '\2713';
+            color: #f2f6f7;
+            position: absolute;
+            top: -100%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            font-weight: bold;
+            font-size: 12px;
+            transition: all .2s ease;
+            -webkit-transition: all .2s ease;
+        }
+
+        .form-input {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+        }
+
+            .form-input:focus {
+                outline: 1px solid #000;
+            }
+
+        .datepicker-panel > ul > li {
+            transition: background color .2s ease-in-out;
+        }
+
+            .datepicker-panel > ul > li:hover {
+                background-color: #333;
+                color: #fff;
+            }
+
+        .datepicker-panel > ul:first-child li {
+            background: #333;
+            color: #fff;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+            .datepicker-panel > ul:first-child li:hover {
+                background: #2c2c2c;
+            }
+
+        .upload-button {
+            max-width: 400px;
+            position: relative;
+            background: #333;
+            padding: 5px 15px;
+            cursor: pointer;
+            display: -webkit-box;
+            display: -moz-box;
+            display: -ms-flexbox;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-align: center;
+            -moz-box-align: center;
+            -ms-flex-align: center;
+            -webkit-align-items: center;
+        }
+
+            .upload-button .material-icons {
+                color: #575757;
+                font-size: 35px;
+                vertical-align: middle;
+            }
+
+            .upload-button span {
+                color: #fff;
+                font-weight: 500;
+                font-size: 14px;
+                vertical-align: middle;
+                padding-left: 15px;
+            }
+
+            .upload-button input[type="file"] {
+                opacity: 0;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 2;
+                cursor: pointer;
+            }
+
+        ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+            color: #c6c6c6;
+        }
+
+        :-ms-input-placeholder { /* Internet Explorer 10-11 */
+            color: #c6c6c6;
+        }
+
+        ::-ms-input-placeholder { /* Microsoft Edge */
+            color: #c6c6c6;
+        }
+
+        .btn-submit {
+            display: block;
+            padding: 10px 15px;
+            background: #333;
+            width: 100%;
+            color: #fff;
+            border: 0;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-bottom: -15px;
+        }
+
+        .has-icon {
+            position: relative;
+        }
+
+            .has-icon input:focus + .material-icons {
+                color: #333;
+            }
+
+            .has-icon .material-icons {
+                position: absolute;
+                right: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #ccc;
+                transition: all .2s ease;
+                -webkit-transition: all .2s ease;
+                -moz-transition: all .2s ease;
+            }
+
+        @@media screen and (max-width:480px) {
+            .form-row .hafl-col {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-reg-wrap">
+        @using (Html.BeginForm("SubmitSaveInfo", "FormSubmitInfomationCustomer", FormMethod.Post, new { id = "form-info" }))
+        {
+            <input type="hidden" name="hdfFormID" value="@ViewBag.FormID" />
+            <input type="hidden" name="hdfEduType" value="Academic" />
+
+            <div class="form-title">
+                <span class="title">@ViewBag.TitleForm</span>
+            </div>
+            <div class="form-body">
+                <div class="form-notice">
+                    <p>@ViewBag.Note</p>
+                </div>
+                <div class="form-row">
+                    <p class="lb">Họ tên <span class="rq">*</span></p>
+                    <input type="text" name="txt-name" class="form-input" placeholder="Nguyen Van A" required />
+                </div>
+                @*<div class="form-row">
+                        <p class="lb">Đơn vị tổ chức thi <span class="rq">*</span></p>
+                        <label class="checklb">
+                            <input type="radio" name="dv1" checked>
+                            <span class="ip-avata"></span>
+                            British Council
+                        </label>
+                    </div>*@
+                <div class="form-row">
+                    <p class="lb">Chọn module thi <span class="rq">*</span></p>
+                    <label class="checklb">
+                        <input type="radio" name="md1" value="Academic" class="rd-edu-type" checked>
+                        <span class="ip-avata"></span>
+                        Academic
+                    </label>
+                    <label class="checklb">
+                        <input type="radio" name="md1" value="General" class="rd-edu-type">
+                        <span class="ip-avata"></span>
+                        General
+                    </label>
+                </div>
+
+                <div class="form-row row">
+                    <div class="hafl-col">
+                        <p class="lb">Chọn ngày thi <span class="rq">*</span></p>
+                        <div class="has-icon datepick">
+                            <input type="text" name="txt-date-exam" data-toggle="datepicker" required class="form-input" />
+                            <i class="material-icons">date_range</i>
+                        </div>
+                    </div>
+                    <div class="hafl-col">                       
+                        <p class="lb">Mục đích học <span class="rq">*</span></p>
+                        <select class="form-input" name="ddl-academicpurposes" required>
+                            @{
+                                <option value="">Mục đích học</option>
+                                foreach (var item in academic)
+                                {
+                                    <option value="@item.ID">@item.AcademicPurposesName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                @*<div class="form-row">
+                        <p class="lb">Upload ảnh CMND/ Passport - Ảnh phải nét và rõ ràng, CMND còn hạn sử dụng <span class="rq">*</span></p>
+                        <p class="sub">* Bắt buộc</p>
+                        <div class="upload-button">
+                            <i class="material-icons">cloud_upload</i>
+                            <span>Upload ảnh CMND/ Passport</span>
+                            <input type="file" name="cmnd" class="form-input upload-input" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <p class="lb">Upload ảnh CMND/ Passport - Ảnh phải nét và rõ ràng, CMND còn hạn sử dụng <span class="rq">*</span></p>
+                        <p class="sub">* Bắt buộc</p>
+                        <div class="upload-button">
+                            <i class="material-icons">cloud_upload</i>
+                            <span>Upload ảnh phiếu chuyển khoản đăng ký thi</span>
+                            <input type="file" name="cmnd" class="form-input upload-input" />
+                        </div>
+                    </div>*@
+                <div class="form-row">
+                    <p class="lb">Email <span class="rq">*</span></p>
+                    <div class="has-icon email">
+                        <input type="email" name="txt-email" class="form-input" required />
+                        <i class="material-icons">email</i>
+
+                    </div>
+                </div>
+                <div class="form-row row">
+                    <div class="hafl-col">
+                        <p class="lb">Số điện thoại <span class="rq">*</span></p>
+                        <input type="text" name="txt-phone" class="form-input" placeholder="09xx xxx xxx" required />
+                    </div>
+                    <div class="hafl-col">
+                        <p class="lb">Ngày sinh <span class="rq">*</span></p>
+                        <div class="has-icon datepick">
+                            <input type="text" name="txt-birthday" required data-toggle="datepicker" class="form-input" />
+                            <i class="material-icons">date_range</i>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <p class="lb">Địa chỉ <span class="rq">*</span></p>
+                    <select class="form-input" name="ddl-district" required>
+                        @{
+                            foreach (var item in locations)
+                            {
+                                var ldis = DistrictTable.getbycityid(item.ID);
+                                <optgroup label="@item.CityName">
+                                    @foreach (var jtem in ldis)
+                                    {
+                                        <option value="@jtem.ID">@jtem.DistrictName</option>
+                                    }
+                                </optgroup>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="form-row">
+                    <p class="lb">Công việc hiện tại <span class="rq">*</span></p>
+                    <select class="form-input" name="ddl-job" required>
+                        @{
+                            <option value="">Công việc</option>
+                            foreach (var item in jobs)
+                            {
+                                <option value="@item.ID">@item.JobName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="form-row">
+                    <p class="lb">Ghi chú</p>
+                    <textarea class="textarea form-input" name="txt-note" placeholder="..." rows="4"></textarea>
+                </div>
+                <div class="form-row">
+                    <button type="submit" class="btn-submit">ĐĂNG KÝ</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <script src="~/app-assets/js/jquery-3.4.1.min.js"></script>
+    <script src="~/app-assets/vendors/jquery-validation/jquery.validate.min.js"></script>
+    <script src="~/app-assets/js/datepicker/datepicker.min.js"></script>
+
+    <script src="~/app-assets/vendors/sweetalert/sweetalert.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="datepicker"]').datepicker({
+                format: 'dd/mm/yyyy'
+            });
+
+            $('[data-toggle="datepicker"]').on('keydown paste', function (e) {
+                e.preventDefault();
+            });
+
+            if ('@TempData["SubmitSuccess"]' == 1) {// thong bao
+                swal("Đăng ký thành công", "", "success");
+            }
+        });
+
+
+        $('.rd-edu-type').click(function () {
+            var data = $(this).val()
+            console.log(data);
+            $('#hdfEduType').val(data);
+        })
+    </script>
+</body>
+
+</html>

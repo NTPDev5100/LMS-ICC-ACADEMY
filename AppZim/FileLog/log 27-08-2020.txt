@@ -1,0 +1,2 @@
+PageError: StudentSetController    FunctionError: DoneTest    loginUID: 4443    MessageError: An error occurred while executing the command definition. See the inner exception for details.    27/08/2020 13:21
+PageError: StudentSetController    FunctionError: DoneTest    loginUID: 4443    MessageError: The underlying provider failed on Open.    27/08/2020 14:40

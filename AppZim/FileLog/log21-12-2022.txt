@@ -1,0 +1,10 @@
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:36
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:36
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:36
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:36
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:36
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:36
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:36
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:36
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:37
+PageError: StaffController    FunctionError: UpdateReceiverAjax    loginUID: 1    MessageError: An error occurred while updating the entries. See the inner exception for details.    21/12/2022 17:38

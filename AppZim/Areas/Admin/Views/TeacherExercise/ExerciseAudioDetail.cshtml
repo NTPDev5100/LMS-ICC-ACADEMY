@@ -1,0 +1,757 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    ViewBag.Title = "Sửa bài audio";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    List<tbl_ExerciseAddonStudentCommentRedo> lcmt = ExerciseAddonStudentCommentRedoTable.getbyexstudentid(Model.ID);
+    var ldaft = ExerciseAddonDraftTable.getbyexestudentdi(Model.ID);
+    if (ldaft.Count == 0)
+    {
+        tbl_ExerciseAddonDraft l = new tbl_ExerciseAddonDraft();
+        l.ID = 0;
+        ldaft.Add(l);
+    }
+}
+<link href="~/app-assets/vendors/sweetalert/sweetalert.css" rel="stylesheet" />
+<style>
+    .modal blockquote {
+        padding-top: 10px;
+        padding-bottom: 10px;
+        background: #ebebeb;
+    }
+
+    p > img {
+        max-width: 100%;
+    }
+</style>
+<div class="all">
+    @using (Html.BeginForm("FixDoneExercise", "TeacherExercise", FormMethod.Post, new { id = "form-fix" }))
+    {
+        <input type="hidden" name="hdfdata" />
+        <input type="hidden" name="hdfid" value="@Model.ID" />
+        <input type="hidden" name="hdffix" />
+        <input type="hidden" name="hdfnote" />
+        <input type="hidden" name="hdfscore" />
+
+        <div class="row section">
+            <div class="s12"><h5 class="title-page center-align">Sửa bài audio</h5></div>
+        </div>
+        <div class="exercise-mark section">
+            <div class="row">
+                <div class="col s12 m7">
+                    <div class="card-panel hoverable">
+                        <div class="student-info">
+                            <h5 class=" font-weight-600 teal-text m-0">@Model.CourseName</h5>
+                            <p>
+                                <span class="title lb-fixed font-weight-600 black-text">
+                                    Họ tên:
+                                </span>
+                                @Model.StudentName
+                            </p>
+                            <p>
+                                <span class="title lb-fixed font-weight-600 black-text">
+                                    Câu hỏi:
+                                </span>
+                                @Html.Raw(Model.ExerciseQuestion)
+                            </p>
+                            @{
+                                if (ViewBag.Exercise != null)
+                                {
+                                    if (!string.IsNullOrEmpty(ViewBag.Exercise.LinkFile))
+                                    {
+                                        <p>
+                                            <span class="title lb-fixed font-weight-600 black-text">
+                                                File:
+                                            </span>
+                                            <a href="@ViewBag.Exercise.LinkFile" download="download">@ViewBag.Exercise.FileName<span class="material-icons ml-1 cyan-text" style="vertical-align:bottom;">cloud_download</span></a>
+                                        </p>
+                                    }
+
+                                }
+                                if (lcmt.Count > 0)
+                                {
+                                    <p>
+                                        <span class="title lb-fixed font-weight-600 black-text">
+                                            Phản hồi học viên:
+                                        </span>
+                                        @foreach (var item in lcmt)
+                                        {
+                                            <br /><span style="font-style: italic;">- @item.Comment</span>
+                                        }
+                                    </p>
+                                }
+
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col s12 m5">
+                    <div class="card-panel">
+                        <div class="edit-action">
+                            <span class="font-weight-500 black-text">Tự động lưu (5 phút):</span>
+                            <div class="switch mb-5">
+                                <label for="autosave">
+                                    Tắt
+                                    <input type="checkbox" id="autosave">
+                                    <span class="lever"></span>
+                                    Bật
+                                </label>
+
+                            </div>
+                            <a href="javascript:;" class="btn teal light" onclick="DraftList();">Danh sách nháp</a>
+                            <a href="javascript:;" class="btn blue darken-4" onclick="SaveDraft()">Lưu nháp</a>
+                            <a href="javascript:;" class="btn green darken-1" onclick="Done();">Chấm xong</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-editor">
+                <div class="row">
+                    <div class="col s12 m7">
+
+                        <div class="card-panel hoverable">
+                            <div class="card-title">
+                                <h5 class=" font-weight-600 black-text m-0">Bài làm</h5>
+                                <hr />
+                            </div>
+                            <div class="raw-txt" id="student-raw-text">
+                                @Html.Raw(Model.ParagraphAnswerFix)
+                            </div>
+                            @{
+                                var laudio = ExerciseAddonStudentFileAudioTable.getbyexerciseaddonstudentID(Model.ID);
+                                if (!string.IsNullOrEmpty(Model.FileAudio))
+                                {
+                                    <audio controls>
+                                        <source src="@Model.FileAudio" type="audio/ogg">
+                                        <source src="@Model.FileAudio" type="audio/mpeg">
+                                    </audio>
+                                }
+                                foreach (var item in laudio)
+                                {
+                                    tbl_ExerciseAddonStudentOnSetPackage exonset = ExerciseAddonStudentOnSetPackageTable.getbyid(item.ExerciseAddonStudentOnSetPackageID);
+                                    if (exonset != null)
+                                    {
+                                        <div>
+                                            <h6 class="mg-b-5">Part @exonset.Part</h6>
+                                        </div>
+                                        <div class="raw-txt">
+                                            @Html.Raw(exonset.ExerciseQuestion)
+                                        </div>
+                                    }
+                                    <audio controls>
+                                        <source src="@item.LinkFile" type="audio/ogg">
+                                        <source src="@item.LinkFile" type="audio/mpeg">
+                                    </audio>
+                                    <br />
+                                }
+                            }
+                            <a href="javascript:;" class="btn blue darken-4" onclick="addComment()">Thêm đoạn sửa</a>
+                        </div>
+                    </div>
+                    <div class="col s12 m5">
+                        <div class="card-panel">
+                            <div class="card-title">
+                                <h5 class=" font-weight-600 black-text m-0">Sửa lỗi</h5>
+                                <hr />
+                            </div>
+                            <div class="teacher-answer" id="teacher-answer">
+
+
+                                @*<div class="edit-item padding-5 mb-5 hoverable">
+                                        <span class="delete material-icons float-right">clear</span>
+                                        <div class="input-field">
+                                            <textarea id="area-1" class="materialize-textarea"></textarea>
+                                            <label for="area-1">Nội dung góp ý</label>
+                                        </div>
+                                        <div class="record-wrap mt-2 mb-2">
+                                            <button class="js-start btn btn-primary"><span class="material-icons" style="line-height:inherit;">keyboard_voice</span></button>
+                                            <button class="js-stop btn btn-orange ml-3">stop</button>
+                                        </div>
+                                    </div>*@
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="teacher-comment section">
+            <div class="row">
+                <div class="col s7">
+                    <div class="card-title mb-3">
+                        <h5 class=" font-weight-600 black-text m-0">Nhận xét giáo viên</h5>
+                        <hr />
+                    </div>
+                    <div id="froala-editor">
+
+                    </div>
+                </div>
+                <div class="col s5">
+                    <div class="card-title mb-2">
+                        <h5 class="font-weight-600 black-text m-0">Đánh giá </h5>
+                        <hr />
+                    </div>
+                    <div class="row">
+                        <div class="col s12">
+                            <span class="bold black-text">Tổng điểm:</span>
+                            <div class="input-field inline">
+                                <input id="txt-totalscore" name="txt-totalscore" type="text" class="validate" required>
+                            </div>
+                            <a href="javascript:;" id="add-review-score" style="padding: 30px 22px;" class="material-icons tooltipped float-right" data-position="top" data-tooltip="Thêm đánh giá">add_box</a>
+                        </div>
+                    </div>
+                    <div id="div-diem">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div id="div-draft" class="modal modalAddStaff">
+    <div class="modal-header">
+        <h5>Danh sách bản nháp</h5>
+    </div>
+    <div class="modal-content">
+        <div class="form-wrap">
+            <div class="input-field col s12 m8">
+                <i class="material-icons prefix">map</i>
+                <select id="ddl-draft" name="ddl-school">
+                    <option value="0">---</option>
+                </select>
+                <label>Danh sách bản nháp</label>
+            </div>
+            <div class="input-field col s12 m4">
+                <a href="javascript:;" id="btn-view-draft" class="waves-green btn gradient-45deg-indigo-light-blue">Xem</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="guide-chrome" class="modal guide-chrome modal-fixed-footer">
+    <div class="modal-content">
+        <h5 class="center-align padding-2">Hướng dẫn kích hoạt microphone <span class="material-icons modal-close right">close</span></h5>
+        <div class="wrap-content">
+            <div class="guide-block">
+                <h6 class="black-text font-weight-700">Đối với chrome</h6>
+                <p>1. Copy đường dẫn sau và paste vào Tab mới trình duyêt Chrome: <blockquote class="black-text font-weight-500">chrome://settings/content/microphone</blockquote></p>
+                <p>2. Xóa bỏ website ZIM trong danh sách Block</p>
+                <p>3. Refresh lại trang để được yêu cầu quyền truy cập.</p>
+            </div>
+            <div class="guide-block">
+                <h6 class="black-text font-weight-700">Đối với FireFox</h6>
+                <p>1. Copy đường dẫn sau và paste vào Tab mới trình duyêt Firefox: <blockquote class="black-text font-weight-500">about:preferences#privacy</blockquote></p>
+                <p>2. Kéo xuống gần cuối sẽ thấy mục Quyền hạn, bấm Cài đặt tại Microphone.</p>
+                <p>3. Tìm chọn website ZIM và điều chỉnh trạng thái thành cho phép. Nếu không tìm thấy bạn hãy quay lại trang ZIM và refresh lại trang để được yêu cầu quyền truy cập.</p>
+                <p>4. Refresh lại trang để được yêu cầu quyền truy cập.</p>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer  right-align">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn">Đã hiểu</a>
+    </div>
+
+</div>
+<script src="~/app-assets/tinymce/tinymce.min.js"></script>
+<script src="~/app-assets/vendors/sweetalert/sweetalert.min.js"></script>
+<script>
+    //tu dong luu
+    window.onload = function () {
+        var auto = setTimeout(function () { autoRefresh(); }, 100);
+        function submitform() {
+            if ($('#autosave').is(':checked')) {
+                save();
+            }
+        }
+
+        function autoRefresh() {
+            clearTimeout(auto);
+            auto = setTimeout(function () { submitform(); autoRefresh(); }, 60000);//1000 1 giây
+        }
+    }
+    function save() {
+        var data = '';
+        $('.edit-item').each(function () {
+            var t = '';
+            var datacmt = $(this).attr('data-cmt');
+            t += datacmt + 'ṭ';
+            var cmt = $(this).find('textarea').val();
+            t += cmt + 'ṭ';
+
+            var au = $(this).find('.audio-result');
+            if (au.length > 0) {
+                var id = au.attr('data-index');
+                console.log(chunks[id]);
+
+                var formData = new FormData();
+                formData.append("FileUpload", chunks[id]);
+                $.ajax({
+                    async: false,
+                    type: 'POST',
+                    url: '/Admin/TeacherExercise/UploadFileAudio',
+                    data: formData,
+                    dataType: 'json',
+                    contentType: false,
+                    processData: false,
+                    success: function (msg) {
+                        t += msg.l;
+                    },
+                    error: function (error) {
+                        console.log('error upload file audio');
+                    }
+                });
+            }
+            data += t + 'ḷ';
+        });
+
+        var fix = "";
+        var note = btoa(unescape(encodeURIComponent(tinymce.editors["froala-editor"].getContent())));
+
+        //console.log(data);
+        //console.log(fix);
+        //console.log(note);
+
+        $.ajax({
+            type: "POST",
+            url: "/Admin/TeacherExercise/SaveDraft",
+            data: '{hdfid: ' + @Model.ID + ', hdfdata:"' + data + '", hdffix:"' + fix + '", hdfnote:"' + note + '", score:"' + $('#txt-totalscore').val() + '"}',
+                contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                        success: function (msg) {
+                            console.log(msg.rs);
+                        },
+        error: function (xmlhttprequest, textstatus, errorthrow) {
+            console.log("error save draft");
+        }
+    });
+    }
+    //======================================================================================================================end auto save=======================>
+
+    var chunks = [];
+    //Comments function
+    $(document).ready(function () {
+        var teacherEditor = {
+            selector: '#froala-editor',
+            plugin: "autosave",
+            menubar: false,
+            inline: false,
+            toolbar: 'bold italic underline  strikethrough forecolor backcolor | undo redo',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+            ]
+        }
+        tinymce.init(teacherEditor);
+
+        if (@Model.StatusDone == 4) {
+            loaddraft(@ldaft[0].ID);
+        }
+    });
+
+    $(document).ready(function () {
+        var autosave = document.getElementById('autosave');
+        autosave.addEventListener('change', function () {
+            if (autosave.checked) { //if checked
+
+
+                //Show toast
+                toast.create({
+                    title: "Tự động lưu bật",
+                    text: "Nội dung",
+                    icon: 'av_timer',
+                    classBackground: "green darken-2",
+                    timeout: 3000
+                });
+            }
+            else {
+
+                $('div#froala-editor').froalaEditor({
+                    // Change save interval (time in miliseconds).
+                    saveInterval: 0
+                })
+                //Show toast
+                toast.create({
+                    title: "Tự động lưu tắt",
+                    text: "Đã tắt",
+                    icon: 'av_timer',
+                    classBackground: "red accent-2",
+                    timeout: 2500
+                });
+            }
+        });
+    });
+
+
+
+
+
+    // Danh sach nha´p
+    function DraftList() {
+        $('#ddl-draft').empty();
+        $.ajax({
+            type: "POST",
+            url: "/Admin/TeacherExercise/LoadDraft",
+            data: '{id: ' + @Model.ID + '}',
+                contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                        success: function (msg) {
+                            $('#ddl-draft').append(msg.l);
+                            $('select').formSelect();
+                            $('#div-draft').modal('open');
+                        },
+        error: function (xmlhttprequest, textstatus, errorthrow) {
+            console.log("error save draft");
+        }
+    });
+    }
+    //============================================================================================
+    //Lưu nháp thủ công
+    function SaveDraft() {
+        save();
+        toast.create({
+            title: "Thông báo!",
+            text: "Lưu nháp thành công",
+            icon: 'save',
+            classBackground: "blue darken-4",
+            timeout: 2500
+        });
+    }
+
+    //Cham xong
+    function Done() {
+        var data = '';
+        $('.edit-item').each(function () {
+            var t = '';
+            var datacmt = $(this).attr('data-cmt');
+            t += datacmt + 'ṭ';
+            var cmt = $(this).find('textarea').val();
+            t += cmt + 'ṭ';
+
+
+            var au = $(this).find('.audio-result');
+            if (au.length > 0) {
+                var id = au.attr('data-index');
+                console.log(chunks[id]);
+
+                var formData = new FormData();
+                formData.append("FileUpload", chunks[id]);
+                $.ajax({
+                    async: false,
+                    type: 'POST',
+                    url: '/Admin/TeacherExercise/UploadFileAudio',
+                    data: formData,
+                    dataType: 'json',
+                    contentType: false,
+                    processData: false,
+                    success: function (msg) {
+                        t += msg.l;
+                    },
+                    error: function (error) {
+                        console.log('Co loi N4m oi');
+                    }
+                });
+            }
+            data += t + 'ḷ';
+        });
+
+        var scores = '';
+        $('.score-detail').each(function () {
+            var md = $(this).find('.txt-muc-cham').val();
+            var d = $(this).find('.txt-diem').val();
+            scores += md + 'ṭ' + d + 'ḷ';
+        })
+        $('input[name=hdfscore]').val(scores);
+
+        console.log(data);
+        $('input[name=hdfdata]').val(data);
+
+        //var counttext = tinymce.editors[0].getContent({ format: 'text' });
+        //var content = tinymce.editors[0].getContent();
+        var fix = "";
+        var note = tinymce.editors["froala-editor"].getContent();
+
+        $('input[name=hdffix]').val(fix);
+        $('input[name=hdfnote]').val(note);
+        save();
+        if (confirm('Đã sửa xong bài?')) {
+            $('#form-fix').submit();
+        }
+    }
+
+    var recorder;
+    var recordButtons = document.querySelectorAll('.js-start');
+    var stopButtons = document.querySelectorAll('.js-stop');
+    console.log(recorder);
+    //Start button click
+    function startRecord(e) {
+        recordButtons = document.querySelectorAll('.js-start');
+        stopButtons = document.querySelectorAll('.js-stop');
+        //start recording with 1 second time between receiving 'ondataavailable' events
+        recordButtons.forEach(function (ele) {
+            ele.disabled = true;
+        });
+        stopButtons.forEach(function (ele) {
+            ele.disabled = false;
+        });
+        recorder.start();
+
+
+    }
+
+    //Stop button click
+    function stopRecord(e) {
+        recordButtons = document.querySelectorAll('.js-start');
+        stopButtons = document.querySelectorAll('.js-stop');
+        // this will trigger one final 'ondataavailable' event and set recorder state to 'inactive'
+        recordButtons.forEach(function (ele) {
+            ele.disabled = false;
+        });
+        stopButtons.forEach(function (ele) {
+            ele.disabled = true;
+        });
+        recorder.stop();
+        recorder.stopElementBtn = e.target;
+
+    }
+
+    // Add Audio js
+    function replaceAudioElement(blobUrl, targetPr, indexof) {
+        targetPr.removeChild(targetPr.lastChild);
+        const resultEl = document.createElement('div');
+        resultEl.classList = 'audio-result mt-5';
+        resultEl.setAttribute('data-index', '' + indexof + '');
+        targetPr.appendChild(resultEl);
+        const audioEl = document.createElement('audio');
+        audioEl.controls = true;
+        audioEl.style = 'display:block; width:100%;';
+        audioEl.classList = "valign-center";
+        const sourceEl = document.createElement('source');
+        sourceEl.src = blobUrl;
+        sourceEl.type = 'audio/webm';
+        targetPr.appendChild(sourceEl);
+        audioEl.appendChild(sourceEl);
+        const downloadEl = document.createElement('a');
+        downloadEl.style = 'display: inline-block';
+        downloadEl.innerHTML = '<span class="material-icons" style="line-height:inherit;">file_download</span>';
+        downloadEl.download = 'audio.webm';
+        downloadEl.classList = "btn btn-primary mt-5";
+        downloadEl.href = blobUrl;
+        const deleteEl = document.createElement('a');
+        deleteEl.innerHTML = "Delete";
+        deleteEl.style = 'display: inline-block; cursor:pointer;';
+        deleteEl.classList = "btn red accent-4 mt-5 ml-3";
+        deleteEl.href = 'javascript:;';
+        deleteEl.addEventListener('click', function () {
+            this.parentNode.parentNode.removeChild(this.parentNode);
+        }); resultEl.appendChild(audioEl);
+        resultEl.appendChild(downloadEl);
+        resultEl.appendChild(deleteEl);
+
+
+    }
+    if (window.MediaRecorder !== undefined) {
+        recordButtons.forEach(function (ele) {
+            ele.disabled = true;
+        });
+        // request permission to access audio stream
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            recordButtons.forEach(function (ele) {
+                ele.disabled = false;
+            });
+            stopButtons.forEach(function (ele) {
+                ele.disabled = true;
+            });
+            // for notice
+
+            // store streaming data chunks in array
+            //var chunks = [];
+
+            // function to be called when data is received
+            recordButtons.forEach(function (ele) {
+                ele.addEventListener('click', startRecord);
+            });
+            stopButtons.forEach(function (ele) {
+                ele.addEventListener('click', stopRecord);
+            });
+
+
+
+            // create media recorder instance to initialize recording
+            recorder = new MediaRecorder(stream);
+            var blobData = [];
+            recorder.ondataavailable = (e) => {
+                // add stream data to chunks
+                // console.log(recorder);
+                chunks.push(e.data);
+                blobData.push(e.data);
+            };
+            recorder.onstop = function (e) {
+                // if recorder is 'inactive' then recording has finished
+                if (recorder.state == 'inactive') {
+                    // convert stream data chunks to a 'webm' audio format as a blob
+
+                    const blob = new Blob(blobData, { type: 'audio/webm' });
+                    // convert blob to URL so it can be assigned to a audio src attribute
+                    replaceAudioElement(URL.createObjectURL(blob), recorder.stopElementBtn.parentElement, chunks.length - 1);
+                    blobData.length = 0;
+                }
+            }
+
+        }).catch(function () {
+            swal({
+                title: "Trình ghi âm đang tắt !",
+                text: "Vui lòng cung cấp quyền truy cập microphone để sử dụng chức năng ghi âm.",
+                icon: 'warning',
+                dangerMode: true,
+                buttons: {
+                    confirm: 'Hướng dẫn bật',
+                    cancel: 'Không, tôi không cần!'
+
+                }
+            }).then(function (result) {
+                if (result) {
+                    $('#guide-chrome').modal('open');
+                }
+
+            });
+        });
+    } else {
+        document.getElementById('status') = 'browser not support Media Recorder';
+    }
+
+    $('#btn-view-draft').click(function () {
+        var id = $('#ddl-draft').val();
+        loaddraft(id);
+    })
+    function loaddraft(id) {
+        if (id == 0) {
+            //toast.create({
+            //    title: "Thông báo!",
+            //    text: "Vui lòng chọn bản nháp bạn muốn mở",
+            //    icon: 'error_outline',
+            //    classBackground: "noti-error",
+            //    timeout: 3000
+            //});
+            return;
+        }
+        $('#student-raw-text').empty();
+        $('#teacher-answer').empty();
+
+        $.ajax({
+            type: "POST",
+            url: "/Admin/TeacherExercise/LoadDraftDetail",
+            data: '{id: ' + id + '}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (msg.rs) {
+                    $('#student-raw-text').append(msg.d.ParagraphAnswerFix);
+                    dem = msg.dem;
+                    var m = '';
+                    for (var i = 0; i < msg.de.length; i++) {
+                        var item = msg.de[i];
+                        m += '<div class="edit-item padding-5 mb-5 hoverable" data-cmt="' + item.DataCMT + '">';
+                        m += '   <span class="delete material-icons float-right">clear</span>';
+                        m += '   <div class="input-field">';
+                        m += '       <textarea placeholder="..." id="area-' + i + '" class="materialize-textarea">' + item.FixNote + '</textarea>';
+                        m += '   </div>';
+                        m += '   <div class="record-wrap mt-2 mb-2">';
+                        m += '       <button class="js-start btn btn-primary"><span class="material-icons" style="line-height:inherit;">keyboard_voice</span></button>';
+                        m += '       <button class="js-stop btn btn-orange ml-3" disabled>stop</button>';
+                        if (item.LinkAudio != '') {
+                            m += '<div class="audio-result mt-5" data-index="0">';
+                            m += '  <audio controls="" class="valign-center" style="display: block; width: 100%;"><source src="' + item.LinkAudio + '" type="audio/webm"></audio>';
+                            m += '  <a download="audio.webm" class="btn btn-primary mt-5" href="' + item.LinkAudio + '" style="display: inline-block;">';
+                            m += '  <span class="material-icons" style="line-height:inherit;">file_download</span></a><a class="btn red accent-4 mt-5 ml-3 deleteaudio" href="javascript:;" style="display: inline-block; cursor: pointer;">Delete</a>';
+                            m += '</div>';
+                        }
+                        m += '   </div>';
+                        m += '</div>';
+                    }
+
+                    $('#teacher-answer').append(m);
+                    $('.edit-item').each(function () {
+                        $(this).on('click', '.js-stop', stopRecord);
+                        $(this).on('click', '.js-start', startRecord);
+                    });
+
+
+                    $('.edit-item').each(function () {
+                        $(this).on('click', '.delete', function () {
+                            var dataId = $(this).closest('.edit-item').attr('data-cmt');
+                            var cmt = $('#student-raw-text #' + dataId);
+                            cmt.contents().unwrap();
+
+                            $(this).closest('.edit-item').remove();
+                        });
+                    })
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("error save draft");
+            }
+        });
+        $('#div-draft').modal('close');
+    }
+
+    // Editor TinyMCE
+    var dem = 0;
+    var currentCmt = [];
+    function addComment() {
+        dem += 1;
+        var htmlObj = $('<div class="edit-item padding-5 mb-5 hoverable" data-cmt="cmt-' + dem + '">'
+            + '<span class="delete material-icons float-right">clear</span>'
+            + '<div class="input-field">'
+            + '<textarea placeholder="..." id="area-' + dem + '" class="materialize-textarea"></textarea>'
+            + '</div>'
+            + '<div class="record-wrap mt-2 mb-2">'
+            + '<button class="js-start btn btn-primary" accept="audio/*;capture=microphone"><span class="material-icons" style="line-height:inherit;">keyboard_voice</span></button>'
+            + '<button class="js-stop btn btn-orange ml-3" disabled>stop</button>'
+            + '<div class="audio-result mt-5>'
+            + '<audio style="display: block; width: 100%;">'
+            + '</audio>'
+            + '</div>'
+            + '</div>'
+            + '</div>');
+
+        $('#teacher-answer').append(htmlObj);
+        document.getElementById('area-' + dem + '').focus();
+        htmlObj.on('click', '.delete', function () {
+            var dataId = $(this).closest('.edit-item').attr('data-cmt');
+
+            $(this).closest('.edit-item').remove();
+        });
+
+        $('#teacher-answer').on('click', '.js-stop', stopRecord);
+        $('#teacher-answer').on('click', '.js-start', startRecord);
+    };
+
+
+    //thêm chi tiết điểm
+    $('#add-review-score').click(function () {
+        var m = '';
+        m += '<div class="row score-detail">';
+        m += '  <div class="col s7">';
+        m += '      <input placeholder="Mục chấm" type="text" class="txt-muc-cham" required>';
+        m += '  </div>';
+        m += '  <div class="col s3">';
+        m += '      <input placeholder="Điểm 0.0" type="text" class="txt-diem" required>';
+        m += '  </div>';
+        m += '  <div class="col s2" style="padding:20px;">';
+        m += '      <a href="javascript:;" class="material-icons tooltipped delete-detail" data-position="top" data-tooltip="Xóa">clear</a>';
+        m += '  </div>';
+        m += '</div>';
+        $('#div-diem').append(m);
+    })
+    $(document).on("click", ".delete-detail", function () {
+        var r = $(this).closest('.row');
+        r.remove();
+    });
+    $(document).on("click", ".deleteaudio", function () {
+        var r = $(this).closest('.audio-result');
+        r.remove();
+    });
+</script>

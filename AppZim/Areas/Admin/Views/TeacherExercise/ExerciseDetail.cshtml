@@ -1,0 +1,1123 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+
+@{
+    ViewBag.Title = "Test";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    tbl_ExerciseAddonStudent exs = ExerciseAddonStudentTable.getbyid(ViewBag.ExerciseStudent.ID);
+    tbl_Exercise ex = ExerciseTable.getbyid(exs.ExerciseID.Value);
+    int setID = 0;
+    if (ex != null)
+    {
+        if (exs.SetPackageID != null)
+        {
+            setID = exs.SetPackageID.Value;
+        }
+    }
+    tbl_SetPackage set = SetPackageTable.getbyid(setID);
+    string av = "/app-assets/zimv2/images/invis-user.png";
+    if (!string.IsNullOrEmpty(aclog.Avatar))
+    {
+        av = aclog.Avatar;
+    }
+    string role = AccountTable.getrolehtml(aclog.RoleID.Value);
+    var course = CoursesTable.getbyid(exs.CourseID.Value);
+
+}
+
+@section myStyles{
+    <style>
+        .mg-b-5 {
+            margin-bottom: 0px;
+        }
+
+        .content {
+            overflow: initial;
+        }
+
+        .question {
+            display: flex;
+            align-items: center;
+        }
+
+            .question h6 {
+                margin: 0;
+                padding: 0;
+            }
+
+            .question p {
+                margin: 0;
+                padding: 0;
+            }
+    </style>
+}
+@using (Html.BeginForm("FixDoneExercise", "TeacherExercise", FormMethod.Post, new { id = "form-fix" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="hdfdata" />
+    <input type="hidden" name="hdfid" value="@exs.ID" />
+    <input type="hidden" name="hdffix" />
+    <input type="hidden" name="hdfnote" />
+    <input type="hidden" name="hdfscore" />
+    <div class="row mg-b-5">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                    <li class="breadcrumb-item"><a href="@Url.Action("ExerciseList", "TeacherExercise", new { area = "Admin" })">Dữ liệu bài tập</a></li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <!-- End breadcrumb -->
+    <div class="row">
+        <div class="col-12 col-md-8">
+            <div class="exc-info">
+                <div class="question-wrap">
+                    @if (ex != null)
+                    {
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mg-b-5">Câu hỏi</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="raw-txt">
+                                    @Html.Raw(exs.ExerciseQuestion)
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (ex != null)
+                    {
+                        <div class="card mg-t-10">
+                            <div class="card-header">
+                                <h6 class="mg-b-5">Học viên trả lời</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="raw-txt" id="student-raw-text">
+                                    @Html.Raw(exs.ParagraphAnswer)
+                                    @if (ex.Type == 3)// bài tập nói
+                                    {
+                                        var laudio = ExerciseAddonStudentFileAudioTable.getbyexerciseaddonstudentID(exs.ID);
+                                        if (!string.IsNullOrEmpty(exs.FileAudio))
+                                        {
+                                            <audio controls>
+                                                <source src="@exs.FileAudio" type="audio/ogg">
+                                                <source src="@exs.FileAudio" type="audio/mpeg">
+                                            </audio>
+                                        }
+                                        foreach (var item in laudio)
+                                        {
+                                            <audio controls>
+                                                <source src="@item.LinkFile" type="audio/ogg">
+                                                <source src="@item.LinkFile" type="audio/mpeg">
+                                            </audio>
+                                            <br />
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        List<tbl_ExerciseAddonStudentOnSetPackage> lexon_part1 = ExerciseAddonStudentOnSetPackageTable.getbyexaddid(exs.ID).Where(n => n.Part == 1).ToList();
+                        List<tbl_ExerciseAddonStudentOnSetPackage> lexon_part2 = ExerciseAddonStudentOnSetPackageTable.getbyexaddid(exs.ID).Where(n => n.Part == 2).ToList();
+                        List<tbl_ExerciseAddonStudentOnSetPackage> lexon_part3 = ExerciseAddonStudentOnSetPackageTable.getbyexaddid(exs.ID).Where(n => n.Part == 3).ToList();
+                        var laudio = ExerciseAddonStudentFileAudioTable.getbyexerciseaddonstudentID(exs.ID);
+                        <div class="raw-txt" id="student-raw-text">
+                            <div class="card mg-t-10">
+                                <div class="card-header">
+                                    <h6 class="mg-b-5">Part 1: @lexon_part1.Count Câu hỏi</h6>
+                                </div>
+                                <div class="card-body">
+                                    @for (int i = 0; i < lexon_part1.Count; i++)
+                                    {
+                                        <div class="question">
+                                            <h6>Question @(i + 1):</h6>&nbsp;@Html.Raw(lexon_part1[i].ExerciseQuestion)
+                                        </div>
+                                        List<tbl_ExerciseAddonStudentFileAudio> files = laudio.Where(n => n.ExerciseAddonStudentOnSetPackageID.Value == lexon_part1[i].ID).ToList();
+                                        foreach (var item in files)
+                                        {
+                                            <audio controls>
+                                                <source src="@item.LinkFile" type="audio/ogg">
+                                                <source src="@item.LinkFile" type="audio/mpeg">
+                                            </audio>
+                                            <br />
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <div class="card mg-t-10">
+                                <div class="card-header">
+                                    <h6 class="mg-b-5">Part 2: @lexon_part2.Count Câu hỏi</h6>
+                                </div>
+                                <div class="card-body">
+                                    @for (int i = 0; i < lexon_part2.Count; i++)
+                                    {
+                                        <div class="question"><h6>Question @(i + 1):</h6>&nbsp;@Html.Raw(lexon_part2[i].ExerciseQuestion)</div>
+                                        List<tbl_ExerciseAddonStudentFileAudio> files = laudio.Where(n => n.ExerciseAddonStudentOnSetPackageID.Value == lexon_part2[i].ID).ToList();
+                                        foreach (var item in files)
+                                        {
+                                            <audio controls>
+                                                <source src="@item.LinkFile" type="audio/ogg">
+                                                <source src="@item.LinkFile" type="audio/mpeg">
+                                            </audio>
+                                            <br />
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <div class="card mg-t-10">
+                                <div class="card-header">
+                                    <h6 class="mg-b-5">Part 3: @lexon_part3.Count Câu hỏi</h6>
+                                </div>
+                                <div class="card-body">
+                                    @for (int i = 0; i < lexon_part3.Count; i++)
+                                    {
+                                        <div class="question"><h6>Question @(i + 1):</h6>&nbsp;@Html.Raw(lexon_part3[i].ExerciseQuestion)</div>
+                                        List<tbl_ExerciseAddonStudentFileAudio> files = laudio.Where(n => n.ExerciseAddonStudentOnSetPackageID.Value == lexon_part3[i].ID).ToList();
+                                        foreach (var item in files)
+                                        {
+                                            <audio controls>
+                                                <source src="@item.LinkFile" type="audio/ogg">
+                                                <source src="@item.LinkFile" type="audio/mpeg">
+                                            </audio>
+                                            <br />
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="card mg-t-10">
+                        <div class="card-header">
+                            <h6 class="mg-b-5">Nhận xét</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="teacher-comment"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-12 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mg-b-0">Thông tin</h6>
+                </div>
+                <div class="card-body">
+                    <div class="information-block">
+                        <div class="student-info">
+                            <div class="student-course">
+                                @{
+                                    if (course != null)
+                                    {
+                                        <p class="txt"><span class="lb">Trung tâm:</span> <span class="value">@course.SchoolName</span></p>
+                                        <p class="txt"><span class="lb">Lớp:</span> <span class="value">@course.ClassName</span></p>
+                                        <p class="txt"><span class="lb">Khóa học:</span> <span class="value">@course.CourseName</span></p>
+                                    }
+                                    else
+                                    {
+                                        if (set != null)
+                                        {
+                                            <p class="txt"><span class="lb">Gói bài:</span> <span class="value">@set.PackageName</span></p>
+                                        }
+
+                                    }
+                                }
+
+                                <p class="txt"><span class="lb">Học viên:</span> <span class="value">@exs.StudentName</span></p>
+                                <p class="txt"><span class="lb">Thời gian làm:</span> <span class="value">@exs.CreatedDate.Value.ToString("dd/MM/yyyy")</span></p>
+                            </div>
+                            <div class="w-100 mg-t-10 d-flex justify-content-between">
+                                <a href="javascript:;" id="btn-submit-done" class="btn btn-success mg-r-10">Xác nhận</a>
+                                <a href="#modal-list-draft" class="btn btn-info load-draft" data-toggle="modal">Danh sách nháp</a>
+                                <a href="javascript:;" class="btn btn-info save-draft" data-toggle="modal">Lưu nháp</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="left-sticky">
+                <div class="card mg-t-10">
+                    <div class="card-header">
+                        <h6 class="mg-b-0 d-flex align-items-end justify-content-between"><span>Nhận xét</span><span id="number-note"></span></h6>
+                    </div>
+                    <div class="card-body note-ps">
+                        <div id="list-note-wrap">
+
+                        </div>
+                    </div>
+                </div>
+                <div class="card teacher-score mg-t-10">
+                    <div class="card-header">
+                        <h6 class="mg-b-5">Ghi điểm</h6>
+                    </div>
+                    <div class="card-body d-flex flex-column-reverse">
+                        <div class="row-flex d-flex pd-r-40 align-items-center mg-t-10">
+                            <div class="label w-50">
+                                <span class="txt">Tổng điểm</span>
+                            </div>
+                            <div class="value w-50 ">
+                                <input type="number" name="txt-totalscore" class="form-control" placeholder="0">
+                            </div>
+                            <div class="action">
+                                <a href="javascript:;" class="add-score" data-toggle="tooltip" data-placement="top" title="Thêm điểm chi tiết"><i data-feather="plus"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="modal-list-draft" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            <div class="modal-body pd-20 pd-sm-40">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div>
+                    <h4>Danh sách bản nháp</h4>
+                    <div class="form-group">
+                        <select class="form-control select2" id="ddl-draft"></select>
+                    </div>
+                    <a href="javascript:;" id="btn-view-draft" class="btn btn-primary btn-block">Xem</a>
+                </div>
+            </div><!-- modal-body -->
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+<script src="~/app-assets/zimv2/assets/js/jquery.scrollTo.min.js"></script>
+<script src="~/app-assets/zimv2/assets/js/sweetalert2@8.js"></script>
+@section myScripts{
+    <script>
+        var chunks = [];
+        $(document).ready(function () {
+            //setTimeout(function () { LoadDraftFirst(); },200)
+            hoverhighline();
+            const ps = new PerfectScrollbar(".note-ps", {
+                wheelSpeed: 2,
+                wheelPropagation: true,
+                minScrollbarLength: 20
+            });
+
+            //init TinyMCE
+            var rawTextInline = {
+                selector: '#student-raw-text',
+                menubar: false,
+                inline: true,
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste'
+
+                ],
+                paste_as_text: true,
+                toolbar: '',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+                setup: (editor) => {
+                    editor.ui.registry.addButton('comments', {
+                        text: '<i class="far fa-comment-dots"></i>',
+                        onAction: addComment
+                    });
+                    editor.ui.registry.addContextToolbar('textselection', {
+                        predicate: function (node) {
+                            return !editor.selection.isCollapsed();
+                        },
+                        items: 'bold italic  strikethrough forecolor backcolor comments | undo redo',
+                        position: 'selection',
+                        scope: 'node'
+                    });
+                }
+            };
+            var teacherComment = {
+                selector: '#teacher-comment',
+                menubar: false,
+                inline: false,
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste'
+                ],
+                paste_as_text: true,
+                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+            };
+            tinymce.init(rawTextInline);
+            tinymce.init(teacherComment);
+            // Editor TinyMCE
+            var dem = 0;
+            var currentCmt = [];
+            function addComment() {
+                dem += 1;
+                var selectedText = tinyMCE.activeEditor.selection.getContent({ format: 'html' });
+                var selecteddivobj = $('<div>').append(selectedText);
+                //selecteddivobj.find('.ct-comment').each(function (i, item) {
+                //    $(item).contents().unwrap();
+                //});
+                var $ctComt = $('<span class="ct-comment">' + selecteddivobj.html() + '</span>');
+
+                //console.log($ctComt.html());
+
+                var indexNode = $ctComt[0];
+                currentCmt.push(indexNode);
+                // console.log(currentCmt);
+                $ctComt.attr('id', 'cmt-' + dem);
+                // console.log($ctComt);
+                //console.log($ctComt.html());
+                tinyMCE.activeEditor.selection.setContent($ctComt[0].outerHTML);
+                var htmlObj = $(`    <div class="note-block active" data-cmt="cmt-${dem}">
+                                                    <div class="note-content">
+                                                        <div class="comment-info d-flex">
+                                                            <div class="avatar">
+                                                                <img src="@av" class="rounded-circle" alt="avatar">
+                                                            </div>
+                                                            <div class="meta mg-l-10 flex-grow-1 pd-r-30">
+                                                                <p class="name mg-b-0">@aclog.FullName</p>
+                                                                <p class="date-time mg-b-10 tx-12 tx-color-03 mg-b-0">@role</p>
+                                                                <div class="dropdown dropdown-icon">
+                                                                    <a href="javascript:;" class="material-icons" id="dropdown-id-1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">more_vert</a>
+                                                                    <div class="dropdown-menu" aria-labelledby="dropdown-id-1">
+                                                                        <a class="dropdown-item edit-cmt" href="#">Edit</a>
+                                                                        <a class="dropdown-item delete" href="#">Delete</a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="comment-content">
+                                                            <p class="txt-content"></p>
+                                                            <textarea class="form-control inline-edit" id="area-${dem}" placeholder="..."></textarea>
+                                                        </div>
+                                                        <div class="record-block">
+                                                            <div class="record-action">
+                                                                <button type="button" class="btn-record js-start btn btn-dark mg-r-5"><i data-feather="mic"></i> <span class="record-time mg-l-5"><span class="minutes">00</span>:<span class="seconds">00</span></span></button>
+                                                                <button type="button" class="btn-record js-stop btn btn-danger mg-r-5"><i data-feather="stop-circle"></i></button>
+                                                                <button type="button" class="btn-save-cmt btn btn-primary"><i data-feather="save"></i></button>
+                                                            </div>
+                                                            <div class="record-list">
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>`);
+
+                //console.log(htmlObj);
+
+                $('#list-note-wrap').append(htmlObj);
+                feather.replace();
+                document.getElementById('area-' + dem + '').focus();
+
+                htmlObj.on('click', '.delete', function () {
+                    var dataId = $(this).closest('.note-block').attr('data-cmt');
+                    //  console.log(dataId);
+                    var cmt = $('#student-raw-text #' + dataId);
+                    cmt.contents().unwrap();
+
+                    $(this).closest('.note-block').fadeOut(500, function () {
+                        $(this).closest('.note-block').remove();
+                    })
+                });
+
+                $('#list-note-wrap').on('click', '.js-stop', stopRecord);
+                $('#list-note-wrap').on('click', '.js-start', startRecord);
+
+                // check old cmt after add new cmt
+                var currentCommentID = [];
+                $('#student-raw-text').find('.ct-comment').each(function (i, item) {
+                    var idcmtString = item.getAttribute('id');
+                    currentCommentID.push(idcmtString);
+
+                });
+
+                $('#list-note-wrap').children('.note-block').each(function (i, item) {
+                    var dataID = $(item).attr('data-cmt');
+                    if (!currentCommentID.includes(dataID)) {
+                        $(item).remove();
+                    };
+                });
+            };
+
+
+            var recorder;
+            var recordButtons = document.querySelectorAll('.js-start');
+            var stopButtons = document.querySelectorAll('.js-stop');
+            //Start button click
+            function startRecord(e) {
+                recordButtons = document.querySelectorAll('.js-start');
+                stopButtons = document.querySelectorAll('.js-stop');
+                //start recording with 1 second time between receiving 'ondataavailable' events
+                recordButtons.forEach(function (ele) {
+                    ele.disabled = true;
+                    ele.classList.add('disabled');
+                });
+                stopButtons.forEach(function (ele) {
+                    ele.disabled = false;
+                    ele.classList.remove('disabled');
+                });
+                recorder.start();
+                recordTime('start', $(e.target).closest('.btn-record'));
+                //   console.log(recorder);
+            }
+
+            //Stop button click
+            function stopRecord(e) {
+                recordButtons = document.querySelectorAll('.js-start');
+                stopButtons = document.querySelectorAll('.js-stop');
+                // this will trigger one final 'ondataavailable' event and set recorder state to 'inactive'
+                recordButtons.forEach(function (ele) {
+                    ele.disabled = false;
+                    ele.classList.remove('disabled');
+                });
+                stopButtons.forEach(function (ele) {
+                    ele.disabled = true;
+                    ele.classList.add('disabled');
+                });
+
+                recorder.stop();
+                recorder.stopElementBtn = e.target;
+                recordTime('stop', $(e.target).closest('.btn-record'));
+                //  console.log(recorder.state);
+            }
+
+            // Add Audio js
+            function replaceAudioElement(blobUrl, targetPr, indexof) {
+                try {
+                    // while(targetPr.lastChild){
+                    // targetPr.removeChild(targetPr.lastChild);
+                    // }
+                    //  console.log(targetPr);
+                    targetPr = targetPr.querySelector('.record-list');
+
+                    const resultEl = document.createElement('div');
+                    resultEl.classList = 'audio-result mg-t-10';
+                    resultEl.setAttribute('data-index', '' + indexof + '');
+                    targetPr.appendChild(resultEl);
+                    const audioEl = document.createElement('audio');
+                    audioEl.controls = true;
+                    audioEl.style = 'display:block; width:100%;';
+                    audioEl.classList = "valign-center";
+                    const sourceEl = document.createElement('source');
+                    sourceEl.src = blobUrl;
+                    sourceEl.type = 'audio/webm';
+                    targetPr.appendChild(sourceEl);
+                    audioEl.appendChild(sourceEl);
+                    const downloadEl = document.createElement('a');
+                    downloadEl.style = 'display: inline-block';
+                    downloadEl.innerHTML = '<i class="fas fa-download"></i> Download';
+                    downloadEl.download = 'audio.webm';
+                    downloadEl.classList = "mg-t-10";
+                    downloadEl.href = blobUrl;
+                    const deleteEl = document.createElement('a');
+                    deleteEl.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+                    deleteEl.style = 'display: inline-block; cursor:pointer;';
+                    deleteEl.classList = "mg-t-10 mg-l-15";
+                    deleteEl.href = 'javascript:;';
+                    deleteEl.addEventListener('click', function () {
+                        this.parentNode.parentNode.removeChild(this.parentNode);
+                    }); resultEl.appendChild(audioEl);
+                    resultEl.appendChild(downloadEl);
+                    resultEl.appendChild(deleteEl);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+
+            }
+            if (window.MediaRecorder !== undefined) {
+                recordButtons.forEach(function (ele) {
+                    ele.disabled = true;
+                });
+                // request permission to access audio stream
+                // console.log('ok');
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    recordButtons.forEach(function (ele) {
+                        ele.disabled = false;
+                        ele.classList.remove('disabled');
+                    });
+                    stopButtons.forEach(function (ele) {
+                        ele.disabled = true;
+                        ele.classList.add('disabled');
+                    });
+                    // for notice
+
+                    // store streaming data chunks in array
+                    //var chunks = [];
+
+                    // function to be called when data is received
+                    recordButtons.forEach(function (ele) {
+                        ele.addEventListener('click', startRecord);
+                    });
+                    stopButtons.forEach(function (ele) {
+                        ele.addEventListener('click', stopRecord);
+                    });
+
+
+
+                    // create media recorder instance to initialize recording
+                    recorder = new MediaRecorder(stream);
+                    var blobData = [];
+                    recorder.ondataavailable = (e) => {
+                        // add stream data to chunks
+                        // console.log(recorder);
+                        chunks.push(e.data);
+                        blobData.push(e.data);
+                    };
+                    recorder.onstop = function (e) {
+                        // if recorder is 'inactive' then recording has finished
+                        if (recorder.state == 'inactive') {
+                            // convert stream data chunks to a 'webm' audio format as a blob
+                            const blob = new Blob(blobData, { type: 'audio/webm' });
+                            // convert blob to URL so it can be assigned to a audio src attribute
+                            //   console.log(recorder.stopElementBtn);
+                            replaceAudioElement(URL.createObjectURL(blob), recorder.stopElementBtn.parentElement.parentElement, chunks.length - 1);
+                            blobData.length = 0;
+                        }
+                    }
+
+                }).catch(function () {
+                    Swal.fire({
+                        title: 'Allow micro!',
+                        imageUrl: '/app-assets/zimv2/images/allow-micro.jpg',
+                        imageWidth: 350,
+                        imageAlt: 'Custom image',
+                        animation: false
+                    })
+                });
+            } else {
+                document.getElementById('status') = 'browser not support Media Recorder';
+            }
+
+            $('.note-list-wrap').on('click', '.js-stop', stopRecord);
+            $('.note-list-wrap').on('click', '.js-start', startRecord);
+
+            function hoverhighline() {
+                $('body').on('click', '.ct-comment', function (e) {
+                    e.preventDefault();
+                    var id = $(this).attr('id');
+                    var $blockControl = $('[data-cmt="' + id + '"]');
+                    //   console.log($blockControl);
+                    $(this).css({
+                        'background': ' #FAE168',
+                        'padding': '5px', 'transform': 'scale(1.4)',
+                        'color': '#000'
+                    });
+                    $('.ct-comment').not($(this)).attr('style', '');
+                    $('.note-ps').scrollTo($blockControl, 500, { offset: -50 });
+
+
+                    $('.note-block').each(function () {
+                        var idIn = $(this).attr("data-cmt");
+
+                        if (idIn == id) {
+                            $(this).css({
+                                'webkit-box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                                'box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                                'border-color': 'transparent',
+                                'background': 'rgba(255, 255, 255, 1)',
+                                'transform': 'scale(1.02) translate(-10px,-5px)'
+                            });
+                        } else {
+                            $(this).attr('style', '');
+                        }
+                    });
+                });
+
+
+                // $('body').on('mouseleave', '.ct-comment', function (e) {
+
+                //     var id = $(this).attr('id');
+                //     $('.note-block').each(function () {
+                //         var idIn = $(this).attr("data-cmt");
+                //         if (idIn == id) {
+                //             $(this).attr('style', '');
+                //         }
+                //     });
+                // })
+
+                //hover edit item
+
+                $('body').on('click', '.note-block', function (e) {
+                    var id = $(this).attr('data-cmt');
+                    $(this).css({
+                        'webkit-box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                        'box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                        'border-color': 'transparent',
+                        'background': 'rgba(255, 255, 255, 1)',
+                        'transform': 'scale(1.02) translate(-10px,-5px)'
+
+                    });
+                    $('.note-block').not($(this)).attr('style', '');
+                    $('.ct-comment').each(function () {
+                        var idIn = $(this).attr("id");
+                        if (idIn == id) {
+                            $(this).css({
+                                'background': ' #FAE168',
+                                'padding': '5px', 'transform': 'scale(1.4)',
+                                'color': '#000'
+                            });
+                        }
+                        else {
+                            $(this).attr('style', '');
+                        }
+                    });
+                })
+            }
+
+
+            var startTime;
+            function recordTime(action, ele) {
+                var $parent = ele.parent().find('.record-time');
+                var sec = 0;
+                switch (action) {
+                    case 'start': {
+                        startTime = setInterval(function () {
+                            $parent.find('.seconds').html(pad(++sec % 60));
+                            $parent.find('.minutes').html(pad(parseInt(sec / 60, 10)));
+                        }, 1000);
+                        break;
+                    }
+                    case 'stop': {
+                        $parent.find('.seconds').text('00');
+                        $parent.find('.minutes').text('00');
+                        clearInterval(startTime);
+                        break;
+                    }
+                }
+            }
+            function pad(val) {
+                return val > 9 ? val : "0" + val;
+            };
+
+            //Auto resize textarea
+            $('body').on('keydown', 'textarea', autosize);
+            function autosize() {
+                var el = this;
+                setTimeout(function () {
+                    el.style.cssText = 'height:auto; padding:10px';
+                    el.style.cssText = '-moz-box-sizing:content-box';
+                    el.style.cssText = 'height:' + el.scrollHeight + 'px';
+                }, 0);
+            }
+
+            $('body').on('click', '.btn-save-cmt', function () {
+                var $this = $(this);
+                var value = $this.closest('.note-content').find('textarea').val().replace(/<br\s*\/?>/mg, "\n");
+                $this.closest('.note-content').find('.txt-content').text(value);
+                $this.closest('.note-block').removeClass('active');
+            });
+
+            $('body').on('click', '.edit-cmt', function (e) {
+                e.preventDefault();
+                var $this = $(this);
+                $this.closest('.note-block').addClass('active');
+                var value = $this.closest('.note-content').find('.txt-content').html();
+                $this.closest('.note-content').find('textarea').html(value);
+            });
+
+            $('.add-score').on('click', function () {
+                var html = ` <div class="row-flex d-flex pd-r-40 align-items-center mg-t-10 score-detail">
+                                            <div class="label w-50 pd-r-5">
+                                                 <input type="text" class="form-control txt-muc-cham" placeholder="Chi tiết...">
+                                            </div>
+                                            <div class="value w-50">
+                                                <input type="number" class="form-control txt-diem" placeholder="0">
+                                            </div>
+                                            <div class="action">
+                                                <a href="javascript:;" class="delete-score"><i data-feather="minus"></i></a>
+                                            </div>
+                                        </div>`;
+                $(this).closest('.card-body').append(html);
+                feather.replace();
+            });
+            $('.teacher-score').on('click', '.delete-score', function () {
+                $(this).closest('.row-flex').remove();
+            });
+            //$('textarea[name="question"]').val($('#questions').eq(1).html()
+
+                //=====================================================================================================================
+
+                // xem ban nhap
+    $('#btn-view-draft').click(function () {
+        var id = $('#ddl-draft').val();
+        if (id != 0) {
+            loaddraft(id);
+        }
+    })
+    function LoadDraftFirst() {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/TeacherExercise/LoadDraftFirst",
+                data: '{id: ' + @exs.ID + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        loaddraft(msg.l);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error save draft");
+                }
+            });
+        }
+    function loaddraft(id) {
+        $('#student-raw-text').empty();
+        $('#teacher-comment').empty();
+        $('#list-note-wrap').empty();
+        $.ajax({
+            type: "POST",
+            url: "/Admin/TeacherExercise/LoadDraftDetail",
+            data: '{id: ' + id + '}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (msg.rs) {
+                    $('#student-raw-text').append(msg.l.Draft.ParagraphAnswerFix);
+                    tinymce.editors["teacher-comment"].setContent(msg.l.Draft.NoteFix);
+                    dem = msg.dem;
+                    var m = '';
+                    for (var i = 0; i < msg.l.ListFix.length; i++) {
+                        var item = msg.l.ListFix[i];
+                        console.log(item);
+                        var htmlObj = $(`    <div class="note-block active" data-cmt="${item.DraftFix.DataCMT}">
+                                                    <div class="note-content">
+                                                        <div class="comment-info d-flex">
+                                                            <div class="avatar">
+                                                                <img src="${item.av}" class="rounded-circle" alt="avatar">
+                                                            </div>
+                                                            <div class="meta mg-l-10 flex-grow-1 pd-r-30">
+                                                                <p class="name mg-b-0">${item.FullName}</p>
+                                                                <p class="date-time mg-b-10 tx-12 tx-color-03 mg-b-0">${item.Role}</p>
+                                                                <div class="dropdown dropdown-icon">
+                                                                    <a href="javascript:;" class="material-icons" id="dropdown-id-1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">more_vert</a>
+                                                                    <div class="dropdown-menu" aria-labelledby="dropdown-id-1">
+                                                                        <a class="dropdown-item edit-cmt" href="#">Edit</a>
+                                                                        <a class="dropdown-item delete" href="#">Delete</a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="comment-content">
+                                                            <p class="txt-content"></p>
+                                                            <textarea class="form-control inline-edit" id="area-${item.DraftFix.NumberaCMT}" placeholder="...">${item.DraftFix.FixNote}</textarea>
+                                                        </div>
+                                                        <div class="record-block">
+                                                            <div class="record-action">
+                                                                <button type="button" class="btn-record js-start btn btn-dark mg-r-5"><i data-feather="mic"></i> <span class="record-time mg-l-5"><span class="minutes">00</span>:<span class="seconds">00</span></span></button>
+                                                                <button type="button" class="btn-record js-stop btn btn-danger mg-r-5"><i data-feather="stop-circle"></i></button>
+                                                                <button type="button" class="btn-save-cmt btn btn-primary"><i data-feather="save"></i></button>
+                                                            </div>
+                                                            <div class="record-list">
+                                                               ${item.ListAudio}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>`);
+
+                        //console.log(htmlObj);
+
+                        $('#list-note-wrap').append(htmlObj);
+                        feather.replace();
+
+                        htmlObj.on('click', '.delete', function () {
+                            var dataId = $(this).closest('.note-block').attr('data-cmt');
+                            //  console.log(dataId);
+                            var cmt = $('#student-raw-text #' + dataId);
+                            cmt.contents().unwrap();
+
+                            $(this).closest('.note-block').fadeOut(500, function () {
+                                $(this).closest('.note-block').remove();
+                            })
+                        });
+                        htmlObj.on('click', '.delete-audio', function () {
+                            this.closest('.audio-result').remove();
+                        });
+                        $('#list-note-wrap').on('click', '.js-stop', stopRecord);
+                        $('#list-note-wrap').on('click', '.js-start', startRecord);
+                    }
+                    $('#teacher-answer').append(m);
+                    $('.edit-item').each(function () {
+                        $(this).on('click', '.js-stop', stopRecord);
+                        $(this).on('click', '.js-start', startRecord);
+                    });
+                    hoverhighline();
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("error save draft");
+            }
+        });
+        $('.close').click();
+        }
+        });
+         var checksubmit = 0;
+            //Cham xong
+        $('#btn-submit-done').click(function Done() {
+            var data = '';
+            $('.note-block').each(function () {
+                var t = '';
+                var datacmt = $(this).attr('data-cmt');
+                t += datacmt + 'ṭ';
+                var cmt = $(this).find('textarea').val();
+                t += cmt + 'ṭ';
+
+                var au = $(this).find('.audio-result');
+                console.log(au);
+                if (au.length > 0) {
+                    var linkaudio = "";
+                    for (var i = 0; i < au.length; i++) {
+                        var id = $(au[i]).attr('data-index');
+                        if (id != -1) {
+                            console.log(chunks[id]);
+                            var formData = new FormData();
+                            formData.append("FileUpload", chunks[id]);
+                            $.ajax({
+                                async: false,
+                                type: 'POST',
+                                url: '/Admin/TeacherExercise/UploadFileAudio',
+                                data: formData,
+                                dataType: 'json',
+                                contentType: false,
+                                processData: false,
+                                success: function (msg) {
+                                    linkaudio += msg.l + '|';
+                                },
+                                error: function (error) {
+                                    console.log('e');
+                                }
+                            });
+                        }
+                        else {
+                            linkaudio += $(au[i]).attr('data-audio') + '|';
+                        }
+                    }
+                    t += linkaudio;
+                }
+                data += t + 'ḷ';
+            });
+            console.log(data);
+            var scores = '';
+            $('.score-detail').each(function () {
+                var md = $(this).find('.txt-muc-cham').val();
+                var d = $(this).find('.txt-diem').val();
+                scores += md + 'ṭ' + d + 'ḷ';
+            })
+            $('input[name=hdfscore]').val(scores);
+            $('input[name=hdfdata]').val(data);
+
+            var fix = tinymce.editors["student-raw-text"].getContent();
+            var note = tinymce.editors["teacher-comment"].getContent();
+
+            $('input[name=hdffix]').val(fix);
+            $('input[name=hdfnote]').val(note);
+
+            //save();//Lưu 1 bản nháp sau cùng
+            if (confirm('Đã sửa xong bài?')) {
+                checksubmit = 1;
+                save();
+                $('#form-fix').submit();
+                $(this).attr('disabled', 'disabled');
+            }
+        })
+
+        //tu dong luu nhap
+        window.onload = function () {
+            //var auto = setTimeout(function () { autoRefresh(); }, 100);
+            //function submitform() {
+            //    if (checksubmit == 0) {
+            //        save();
+            //    }
+            //}
+            //function autoRefresh() {
+            //    clearTimeout(auto);
+            //    auto = setTimeout(function () { submitform(); autoRefresh(); }, 60000);//1000 = 1 giây => 1 phút = 60000
+            //}
+            //const autoSaveInterval = setInterval(function () {
+            //    console.log(checksubmit);
+            //    console.log("???")
+            //    if (checksubmit == 0) {
+            //        save();
+            //        console.log("save");
+            //    }
+            //    else {
+            //        clearInterval(autoSaveInterval);
+            //    }
+            //}, 60000);//1000 = 1 giây => 1 phút = 60000
+        }
+        //ham luu nhap
+        function save() {
+            var data = '';
+            $('.note-block').each(function () {
+                var t = '';
+                var datacmt = $(this).attr('data-cmt');
+                t += datacmt + 'ṭ';
+                var cmt = $(this).find('textarea').val();
+                t += cmt + 'ṭ';
+
+                var au = $(this).find('.audio-result');
+                console.log(au);
+                if (au.length > 0) {
+                    var linkaudio = "";
+                    for (var i = 0; i < au.length; i++) {
+                        var id = $(au[i]).attr('data-index');
+                        if (id != -1) {
+                            console.log(chunks[id]);
+                            var formData = new FormData();
+                            formData.append("FileUpload", chunks[id]);
+                            $.ajax({
+                                async: false,
+                                type: 'POST',
+                                url: '/Admin/TeacherExercise/UploadFileAudio',
+                                data: formData,
+                                dataType: 'json',
+                                contentType: false,
+                                processData: false,
+                                success: function (msg) {
+                                    linkaudio += msg.l + '|';
+                                },
+                                error: function (error) {
+                                    console.log('e');
+                                }
+                            });
+                        }
+                        else {
+                            linkaudio += $(au[i]).attr('data-audio') + '|';
+                        }
+                    }
+                    t += linkaudio;
+                }
+                data += t + 'ḷ';
+            });
+
+            var scores = '';
+            $('.score-detail').each(function () {
+                var md = $(this).find('.txt-muc-cham').val();
+                var d = $(this).find('.txt-diem').val();
+                scores += md + 'ṭ' + d + 'ḷ';
+            })
+            var fix = btoa(unescape(encodeURIComponent(tinymce.editors["student-raw-text"].getContent())));
+            var note = btoa(unescape(encodeURIComponent(tinymce.editors["teacher-comment"].getContent())));
+            console.log(fix);
+            console.log(note);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/TeacherExercise/SaveDraft",
+                data: '{hdfid: ' + @exs.ID + ', hdfdata:"' + data + '", hdffix:"' + fix + '", hdfnote:"' + note + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    console.log(msg.rs);
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("e");
+                }
+            });
+        }
+
+        // tai ban nhap len modal
+        $('.load-draft').click(function () {
+            $('#ddl-draft').empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/TeacherExercise/LoadDraft",
+                data: '{id: ' + @exs.ID + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#ddl-draft').append(msg.l);
+                    },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error save draft");
+                }
+            });
+        })
+        $('.save-draft').click(function () {
+             var data = '';
+            $('.note-block').each(function () {
+                var t = '';
+                var datacmt = $(this).attr('data-cmt');
+                t += datacmt + 'ṭ';
+                var cmt = $(this).find('textarea').val();
+                t += cmt + 'ṭ';
+
+                var au = $(this).find('.audio-result');
+                console.log(au);
+                if (au.length > 0) {
+                    var linkaudio = "";
+                    for (var i = 0; i < au.length; i++) {
+                        var id = $(au[i]).attr('data-index');
+                        if (id != -1) {
+                            console.log(chunks[id]);
+                            var formData = new FormData();
+                            formData.append("FileUpload", chunks[id]);
+                            $.ajax({
+                                async: false,
+                                type: 'POST',
+                                url: '/Admin/TeacherExercise/UploadFileAudio',
+                                data: formData,
+                                dataType: 'json',
+                                contentType: false,
+                                processData: false,
+                                success: function (msg) {
+                                    linkaudio += msg.l + '|';
+                                },
+                                error: function (error) {
+                                    console.log('e');
+                                }
+                            });
+                        }
+                        else {
+                            linkaudio += $(au[i]).attr('data-audio') + '|';
+                        }
+                    }
+                    t += linkaudio;
+                }
+                data += t + 'ḷ';
+            });
+
+            var scores = '';
+            $('.score-detail').each(function () {
+                var md = $(this).find('.txt-muc-cham').val();
+                var d = $(this).find('.txt-diem').val();
+                scores += md + 'ṭ' + d + 'ḷ';
+            })
+            var fix = btoa(unescape(encodeURIComponent(tinymce.editors["student-raw-text"].getContent())));
+            var note = btoa(unescape(encodeURIComponent(tinymce.editors["teacher-comment"].getContent())));
+            console.log(fix);
+            console.log(note);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/TeacherExercise/SaveDraft",
+                data: '{hdfid: ' + @exs.ID + ', hdfdata:"' + data + '", hdffix:"' + fix + '", hdfnote:"' + note + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                   toast.create({
+                        title: 'Notification!',
+                        text: 'Thành công',
+                          icon: 'check',
+                        classBackground: 'noti-success',
+                        timeout: 3000
+                    })
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("e");
+                }
+            });
+        });
+    </script>
+}

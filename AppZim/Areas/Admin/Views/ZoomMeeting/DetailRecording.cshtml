@@ -1,0 +1,122 @@
+﻿@using AppZim.ZIM;
+@model List<Zoom.RecordingFiles>
+@{
+    ViewBag.Title = "DetailRecording";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1">
+        <li class="breadcrumb-item active" aria-current="page">Chi tiết bản ghi khóa học [@ViewBag.Topic]</li>
+    </ol>
+</nav>
+
+@*@using (Html.BeginForm("DetailRecording", "ZoomMeeting", FormMethod.Get, new { id = "form-search" }))
+    {
+        <div class="d-xl-flex align-items-center justify-content-between ">
+            <div>
+
+            </div>
+            <div class="d-xl-block">
+                @{
+                    if (Model.Count() > 0)
+                    {
+                        <div class="search-form mg-l-5 mg-r-5">
+                            <input type="search" list="browsers" class="form-control" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                            <datalist id="browsers">
+                                @{
+                                    foreach (var i in Model.Select(x => x.topic).Distinct())
+                                    {
+                                        <option value="@i">@i</option>
+                                    }
+                                }
+                            </datalist>
+                            <button class="btn" type="submit"><i data-feather="search"></i></button>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }*@
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th>Dung lượng tệp</th>
+                    <th>Loại tệp</th>
+                    <th class="text-center"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    if (Model.Count() > 0)
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.recording_start.Replace("T", " ").Replace("Z", " ")</td>
+                                <td>@item.recording_end.Replace("T", " ").Replace("Z", " ")</td>
+                                <td>@Math.Round((Convert.ToDouble(item.file_size) / 1024000), 1) Mb</td>
+                                <th>@item.file_extension - @item.recording_type</th>
+                                <td class="text-center">
+                                    @{
+                                        if (item.file_type == "MP4")
+                                        {
+                                            <a href="#exampleModalCenter-@item.file_size" data-toggle="modal" class="btn btn-secondary btn-icon btn-sm">
+                                                <i class="fab fa-youtube"></i>
+                                            </a>
+                                        }
+                                        else if (item.file_type == "M4A")
+                                        {
+                                            <a href="#exampleModalCenter-@item.file_size" data-toggle="modal" class="btn btn-info btn-icon btn-sm">
+                                                <i class="fas fa-headphones-alt"></i>
+                                            </a>
+                                        }
+
+                                        <div class="modal fade" id="exampleModalCenter-@item.file_size" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered" style="max-width:500px;height:auto" role="document">
+                                                <div class="modal-content" style="border:none;background:none">
+                                                    <video width="100%" height="auto" controls>
+                                                        <source src="@item.download_url" type="video/mp4">
+                                                    </video>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <a href="@item.download_url" download="" class="btn btn-success btn-icon btn-sm">
+                                        <i class="fas fa-cloud-download-alt"></i>
+                                    </a>
+
+                                    <a href="javascript:;" class="btn btn-danger btn-icon btn-sm" data-meeting_id="@item.meeting_id" data-id="@item.id" onclick="deleteMeetingRecordingFile($(this))" style="background: #f74141;border-color: #f74141">
+                                        <i data-feather="trash"></i> Xóa
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section myScripts{
+    <script>
+        function deleteMeetingRecordingFile(e) {
+            const recordingId = e.attr("data-id");
+            const meeting_id = e.attr("data-meeting_id");
+            console.log(recordingId);
+            console.log(meeting_id);
+            const result = confirm("Xác nhận xóa tệp Record này?");
+            if (result) {
+                window.location.href = '/Admin/ZoomMeeting/DeleteMeetingRecordingFile?meeting_id=' + meeting_id + '&recordingId=' + recordingId + '&idTeacherConfig=' + @ViewBag.idTeacherConfig;
+            }
+        }
+    </script>
+}
+
+

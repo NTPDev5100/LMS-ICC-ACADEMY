@@ -1,0 +1,349 @@
+﻿    @using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_PostComment>
+@{
+    ViewBag.Title = "PostDetail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    tbl_PostContent po = PostContentTable.getbyid(ViewBag.ID);
+    var av = "/app-assets/zimv2/images/invis-user.png";
+    var ac = AccountTable.getbyusername(po.CreatedBy);
+    if (!string.IsNullOrEmpty(ac.AvatarThumbnail))
+    {
+        av = ac.AvatarThumbnail;
+    }
+    string avcmt = "/app-assets/zimv2/images/invis-user.png";
+    if (!string.IsNullOrEmpty(aclog.AvatarThumbnail))
+    {
+        avcmt = aclog.AvatarThumbnail;
+    }
+}
+
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+<style>
+    .content-blog {
+        border: unset;
+        /*max-width: 798px;*/
+        margin: 0 auto;
+    }
+
+    .comment-lists .comment-info {
+        border-radius: 5px;
+    }
+
+    .content-cmt-time {
+        font-size: 12px;
+        color: #596882;
+        padding-left: 2px;
+    }
+
+    .comment-wrap textarea {
+        border-radius: 4px;
+    }
+
+    img {
+        height: 100%;
+    }
+
+    @@media only screen and (max-width: 767px) {
+        iframe {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .title-post {
+            font-weight: 900;
+        }
+    }
+
+    @@media only screen and (min-width: 768px) {
+        .title-post {
+            font-size: 2.4em;
+            font-weight: 900;
+        }
+    }
+
+    .post-content {
+        position: relative;
+    }
+
+    .content-blog .author .avatar {
+        position: absolute;
+        bottom: 100%;
+        right: 100%;
+        border-radius: 0;
+        margin-bottom: -50px;
+        margin-right: 25px;
+        height: 100px;
+        width: 100px;
+        background: #fff;
+        padding: 5px;
+        box-shadow: 5px 6px 8px 0px rgba(0,0,0,.2);
+    }
+
+    .post-content {
+        position: relative;
+    }
+
+    .content-blog .author .author-info {
+        margin-left: 0;
+    }
+
+    .content-blog .thread_title {
+        padding: 15px 0;
+    }
+
+    .content-blog .author {
+        padding: 0;
+        padding-bottom: 15px;
+    }
+
+    @@media screen and (max-width:992px){
+        .content-blog .author .avatar {
+            margin-bottom: 15px;
+            right:auto;
+            left:0;
+            margin-left: -15px;
+        }
+    }
+</style>
+<div class="media d-block d-lg-flex blog-detail">
+    <div class="media-body mg-t-30 mg-lg-t-0 pd-x-15 content-blog">
+        <div class="post-content">
+            <div class="thread_title">
+                <span class="title-post">@po.TitlePost</span>
+            </div>
+            <div class="author">
+                <div class="author-info">
+                    <a href="javascript:;" class="username"><span class="hasVerifiedBadge">@ac.FullName</span></a>
+                    <div class="date-comment-view">
+                        <span class="date"><span class="DateTime">@po.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</span></span>
+                        <span class="comment">views: @po.NumberView</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="post-content">
+            <article>
+                @Html.Raw(po.ContentPost)
+            </article>
+        </div>
+        <div class="comment-wrap">
+            <div class="comment-block">
+                <div class="comment-form-wrap">
+                    <div class="comment-item">
+                        <div class="comment-avatar">
+                            <a href="javascript:;" class="avatar">
+                                <img src="@avcmt" alt="avatar">
+                            </a>
+                        </div>
+                        <div class="comment-content">
+                            <div class="cmt-area mg-b-5">
+                                <div class="text-area">
+                                    <textarea id="txt-content" required class="form-control" placeholder="Bình luận..."></textarea>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="button" id="btn-cmt" style="float:right;" class="btn btn-primary"><i data-feather="edit-3"></i> Gửi</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <ul class="comment-lists mg-0" id="div-cmt">
+                    @{
+                        foreach (var item in Model)
+                        {
+                            string cmt = "/app-assets/zimv2/images/invis-user.png";
+                            var acmt = AccountTable.getbyusername(item.CreatedBy);
+                            if (acmt == null)
+                            {
+                                continue;
+                            }
+                            if (!string.IsNullOrEmpty(acmt.AvatarThumbnail))
+                            {
+                                cmt = acmt.AvatarThumbnail;
+                            }
+
+                            <li class="comment-item-wrap">
+                                <div class="comment-item">
+                                    <div class="comment-avatar">
+                                        <a href="javascript:;" class="avatar">
+                                            <img src="@cmt" alt="avatar">
+                                        </a>
+                                    </div>
+                                    <div class="comment-content">
+                                        <div class="comment-info">
+                                            <a href="javascript:;">@acmt.FullName</a>
+                                            <span class="content-cmt">@item.CMT</span>
+                                        </div>
+                                        <div class="comment-info-hourt">
+                                            <span class="content-cmt-time">@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm") <a id="button-@item.ID" style="padding:0px;" href="javascript:;" data-id="@item.ID" class="rep-cmt">Reply</a></span>
+                                        </div>
+                                        <ul class="comment-lists mg-0" id="rep-@item.ID">
+                                            @{
+                                                var reps = PostCommentTable.getbypostcmtid(item.ID);
+                                                foreach (var rep in reps)
+                                                {
+                                                    string cmtrep = "/app-assets/zimv2/images/invis-user.png";
+                                                    var acmtrep = AccountTable.getbyusername(rep.CreatedBy);
+                                                    if (acmtrep == null)
+                                                    {
+                                                        continue;
+                                                    }
+                                                    if (!string.IsNullOrEmpty(acmtrep.AvatarThumbnail))
+                                                    {
+                                                        cmtrep = acmtrep.AvatarThumbnail;
+                                                    }
+
+                                                    <li class="comment-item-wrap">
+                                                        <div class="comment-item">
+                                                            <div class="comment-avatar">
+                                                                <a href="#" class="avatar">
+                                                                    <img src="@cmtrep" alt="avatar" style="width:25px; height:25px;">
+                                                                </a>
+                                                            </div>
+                                                            <div class="comment-content">
+                                                                <div class="comment-info">
+                                                                    <a href="#">@acmtrep.FullName</a>
+                                                                    <span class="content-cmt">@rep.CMT</span>
+                                                                </div>
+                                                                <div class="comment-info-hourt">
+                                                                    <span class="content-cmt-time">@rep.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                }
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    }
+                </ul>
+                <nav aria-label="Page navigation" class="mg-t-10">
+                    @Html.PagedListPager(Model, page => Url.Action("PostDetail", new { page }),
+                    new PagedListRenderOptions
+                    {
+                        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+                    })
+                </nav>
+            </div>
+        </div>
+    </div><!-- media-body -->
+</div>
+
+
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('input[name=hdfUrl]').val(document.URL);
+            $('.comment-toggle').on('click', function () {
+                $('.comment-block').slideToggle();
+            });
+            $('.comment-toggle').on('click', function () {
+                $('.comment-block').slideIn();
+            });
+            //Auto resize textarea
+            $('body').on('keydown', 'textarea', autosize);
+            function autosize(e) {
+                var keyCode = e.keyCode || e.which;
+                var el = this;
+                if (keyCode === 13) {
+                    e.preventDefault();
+
+                    // Ajax code here
+
+                    return false;
+                }
+                setTimeout(function () {
+                    el.style.cssText = 'height:auto; padding:10px';
+                    el.style.cssText = '-moz-box-sizing:content-box';
+                    el.style.cssText = 'height:' + el.scrollHeight + 'px';
+                }, 0);
+            }
+        });
+
+        $('#btn-cmt').click(function () {
+            if (!ckstring($('#txt-content').val())) {
+                var content = btoa(unescape(encodeURIComponent($('#txt-content').val())));
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/PostNewFeed/CmtPost",
+                    data: '{id: ' + @po.ID + ', cmtid: 0, content:"' + content + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#div-cmt').prepend(msg.d);
+                        $('#txt-content').val('');
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: view-history");
+                    }
+                });
+            }
+        })
+
+        $('.rep-cmt').click(function () {
+            var id = $(this).attr('data-id');
+            var ht = '';
+            ht += '<li>';
+            ht += ' <div class="comment-item">';
+            ht += '     <div class="comment-avatar">';
+            ht += '         <a href="#" class="avatar">';
+            ht += '             <img src="@avcmt" alt="avatar" style="width:25px; height:25px;">';
+            ht += '         </a>';
+            ht += '     </div>';
+            ht += '     <div class="comment-content">';
+            ht += '         <div class="cmt-area mg-b-5 pd-r-5">';
+            ht += '             <div class="text-area">';
+            ht += '                 <textarea id="txt-content-' + id + '" required class="form-control" placeholder="Comment here..."></textarea>';
+            ht += '             </div>';
+            ht += '         </div>';
+            ht += '     </div>';
+            ht += '     <div>';
+            ht += '         <button type="button" style="float:right;" class="btn btn-primary btn-rep" data-id="' + id + '">Submit</button>';
+            ht += '     </div>';
+            ht += ' </div>';
+            ht += '</li > ';
+            $('#rep-' + id + '').append(ht);
+            $(this).hide();
+            $('#txt-content-' + id + '').focus();
+
+        })
+        $(document).on("click", ".btn-rep", function () {
+            var id = $(this).attr('data-id');
+            var e = $(this);
+
+            if (!ckstring($('#txt-content-' + id + '').val())) {
+                var content = btoa(unescape(encodeURIComponent($('#txt-content-' + id + '').val())));
+                console.log(content);
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/PostNewFeed/CmtPost",
+                    data: '{id: 0, cmtid: ' + id + ', content:"' + content + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#rep-' + id + '').append(msg.d);
+                        $('#button-' + id + '').show();
+                        var li = $(e).closest('li');
+                        li.remove();
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: btn-rep");
+                    }
+                });
+            }
+        });
+    </script>
+}
+

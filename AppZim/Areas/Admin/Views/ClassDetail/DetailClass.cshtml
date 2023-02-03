@@ -1,0 +1,482 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_Curriculum>
+@{
+    ViewBag.Title = "DetailClass";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var languages = Language.GetAll();
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item">Giáo trình</li>
+    </ol>
+</nav>
+<div class="d-xl-flex align-items-center justify-content-between left">
+    <div class="d-xl-block">
+        @using (Html.BeginForm("DetailClass", "ClassDetail", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+                <div class="search-form mg-l-5 mg-r-5">
+                    <select class="custom-select select2" name="search-language" onchange="searchpage()">
+                        <option value="0">--Ngôn ngữ--</option>
+                        @foreach (var l in languages)
+                        {
+                            <option value="@l.ID">@l.Name</option>
+                        }
+                    </select>
+                    <script>$('select[name=search-language]').val(@ViewBag.Language)</script>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<!-- End breadcrumb -->
+<div class="email-form-template mg-t-30">
+    <div class="row">
+        @*<div class="col-12 col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="title mg-b-0">Môn học</h6>
+                            <a href="#div-add-sub" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Mã môn</th>
+                                        <th>Tên môn</th>
+                                        <th class="text-center">Tạm ẩn</th>
+                                        <th class="text-center">@subs.Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        foreach (var item in subs)
+                                        {
+                                            <tr>
+                                                <td>@item.Code</td>
+                                                <td>@item.SubjectName</td>
+                                                <td class="text-center">
+                                                    @{
+                                                        if (item.isHide != null)
+                                                        {
+                                                            if (item.isHide.Value)
+                                                            {
+                                                                <i data-feather="check-circle"></i>
+                                                            }
+                                                        }
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="dropdown dropdown-icon">
+                                                        <a href="javascript:;" class="material-icons" id="dropdown-id-1"
+                                                           data-toggle="dropdown" aria-haspopup="true"
+                                                           aria-expanded="false">more_vert</a>
+                                                        <div class="dropdown-menu" aria-labelledby="dropdown-id-1">
+                                                            <a class="dropdown-item btn-icon edit-sub" href="#div-edit-sub" data-toggle="modal" data-id="@item.ID" data-hide="@item.isHide" data-sub="@item.SubjectName" data-code="@item.Code"><i data-feather="edit"></i> Sửa</a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>*@
+        <div class="col-12 mg-t-15 mg-md-t-0">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="title mg-b-0">Danh sách giáo trình</h6>
+                        <a href="#div-add-curriculum" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter table-striped">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Giáo trình</th>
+                                    @*<th>Thời lượng học/ca</th>
+                                        <th>Số buổi</th>*@
+                                    <th class="text-center">Ngôn ngữ</th>
+                                    <th class="text-center">Link tài liệu</th>
+                                    <th class="text-center"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.CurriculumsName</td>
+                                            <td>@item.LanguageName</td>
+                                            <td>@item.LinkCurriculumn</td>
+                                            @*<td>@item.StyleLensson phút</td>
+                                                <td>@item.TotalLesson</td>*@
+                                            @*<td class="text-center">
+                                                    @{
+                                                        if (item.IsHide.Value)
+                                                        {
+                                                            <i data-feather="check-circle"></i>
+                                                        }
+                                                    }
+                                                </td>*@
+                                            <td class="text-center">
+                                                <div class="dropdown dropdown-icon">
+                                                    @*<a href="javascript:;" class="material-icons" id="dropdown-id-1"
+                                                        data-toggle="dropdown" aria-haspopup="true"
+                                                        aria-expanded="false">more_vert</a>*@
+                                                    @*<div class="dropdown-menu" aria-labelledby="dropdown-id-1">
+                                                        <a class="dropdown-item btn-icon" href="@Url.Action("CurriculumListDetail", "ClassDetail", new { id = item.ID, area = "Admin" })">
+                                                            <i data-feather="eye"></i> Chi tiết
+                                                        </a>
+                                                        <a class="dropdown-item btn-icon" href="@Url.Action("DocumentClass", "ClassDetail", new { id = item.ID, area = "Admin" })">
+                                                            <i data-feather="book"></i>
+                                                            Tài liệu
+                                                        </a>
+                                                        <a class="dropdown-item btn-icon" href="@Url.Action("ExerciseClass", "ClassDetail", new { id = item.ID, area = "Admin" })">
+                                                            <i data-feather="book-open"></i>
+                                                            Bài tập
+                                                        </a>*@
+                                                    <a href="#div-edit-curriculum" data-toggle="modal" class="dropdown-item btn-icon edit-curri" data-id="@item.ID" data-ishide="@item.IsHide" data-name="@item.CurriculumsName" data-link="@item.LinkCurriculumn" data-lesson="@item.StyleLensson" data-days="@item.TotalLesson" data-language="@item.LanguageId">
+                                                        <i data-feather="edit"></i>
+                                                        Chỉnh sửa
+                                                    </a>
+                                                    <a href="javascript:;" class="dropdown-item btn-icon btn-delete" data-id="@item.ID" data-name="@item.CurriculumsName">
+                                                        <i data-feather="trash-2"></i> Xóa
+                                                    </a>
+                                                    @*</div>*@
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Page navigation" class="mg-t-10">
+                        @Html.PagedListPager(Model, page => Url.Action("DetailClass", new { page, search = ViewBag.Search }),
+                        new PagedListRenderOptions
+                        {
+                            UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+                        })
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<div class="modal fade" id="div-add-sub" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+            <div class="modal-content">
+                @using (Html.BeginForm("AddSubject", "ClassDetail", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="hdfClassID" value="@Model.ID" />
+                    <input type="hidden" name="hdfspecial" id="hdfspecial" value="0" />
+                    <div class="modal-body pd-20 pd-sm-40">
+                        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </a>
+                        <div>
+                            <h4>Tạo mới môn học</h4>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label for="txt-subject">Mã môn:</label>
+                                        <input id="txt-code" name="txt-code" type="text" required class="validate form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label for="txt-subject">Tên môn:</label>
+                                        <input id="txt-subject" name="txt-subject" type="text" required class="validate form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="div-edit-sub" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+            <div class="modal-content">
+                @using (Html.BeginForm("EditSubject", "ClassDetail", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="hdfID" />
+                    <div class="modal-body pd-20 pd-sm-40">
+                        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </a>
+                        <div>
+                            <h4>Cập nhật môn học</h4>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label for="txt-edit-code">Mã môn:</label>
+                                        <input id="txt-edit-code" name="txt-edit-code" type="text" required class="validate form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label for="txt-edit-subject">Tên môn:</label>
+                                        <input id="txt-edit-subject" name="txt-edit-subject" type="text" required class="validate form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="chk-hide" name="chk-hide">
+                                            <label class="custom-control-label" for="chk-hide">Tạm ẩn</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>*@
+
+<div class="modal fade" id="div-add-curriculum" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddCurriculum", "ClassDetail", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfClassID" @*value="@Model.ID"*@ value="0" />
+                <input type="hidden" name="hdfID" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo mới giáo trình</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-curriculum">Giáo trình:</label>
+                                    <input id="txt-curriculum" name="txt-curriculum" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="slLanguage">Ngôn ngữ:</label>
+                                    <select class="custom-select select2" name="slLanguage" required id="slLanguage">
+                                        @foreach (var l in languages)
+                                        {
+                                            <option value="@l.ID">@l.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        @*<div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label for="ddl-style-curriculum">Thời lượng(số phút):</label>
+                                        <input data-type="number" id="ddl-style-curriculum" required name="ddl-style-curriculum" class="form-control" placeholder="120" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <label for="txt-lesson">Số buổi:</label>
+                                        <input placeholder="24" id="txt-lesson" name="txt-lesson" type="number" required class="validate form-control">
+                                    </div>
+                                </div>
+                            </div>*@
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-link">Link giáo trình:</label>
+                                    <input id="txt-link" name="txt-link" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="div-edit-curriculum" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditCurriculum", "ClassDetail", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" />
+                <input type="hidden" name="hdfClassID" @*value="@Model.ID"*@ value="0" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Cập nhật giáo trình</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-curriculum">Giáo trình:</label>
+                                    <input id="txt-edit-curriculum" name="txt-edit-curriculum" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="slLanguage-edit">Ngôn ngữ:</label>
+                                    <select class="custom-select select2" name="slLanguage-edit" required id="slLanguage-edit">
+                                        @foreach (var l in languages)
+                                        {
+                                            <option value="@l.ID">@l.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-link">Link giáo trình:</label>
+                                    <input id="txt-edit-link" name="txt-edit-link" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="chk-hideS" name="chk-hide">
+                                        <label class="custom-control-label" for="chk-hideS">Tạm ẩn</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        $(document).on("click", ".edit-sub", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=txt-edit-code]').val($(this).attr('data-code'));
+            $('input[name=txt-edit-subject]').val($(this).attr('data-sub'));
+            if ($(this).attr('data-hide') == 'True') {
+                $('#chk-hide').prop("checked", true);
+            }
+            else {
+                $('#chk-hide').prop("checked", false);
+            }
+            $('#edit-subject').modal('open');
+        });
+
+        $(document).on("click", ".edit-curri", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=txt-edit-curriculum]').val($(this).attr('data-name'));
+            $('input[name=txt-edit-link]').val($(this).attr('data-link'));
+
+            $('select[name=ddl-edit-style-curriculum]').val($(this).attr('data-lesson'));
+            $('select[name=slLanguage-edit]').val($(this).attr('data-language'));
+            $('select[name=slLanguage-edit]').trigger('change');
+
+            $('input[name=txt-edit-lesson]').val($(this).attr('data-days'));
+            if ($(this).attr('data-ishide') == 'True') {
+                $('#chk-hideS').prop("checked", true);
+            }
+            else {
+                $('#chk-hideS').prop("checked", false);
+            }
+        });
+
+        $('#chk-subject-special').on('change', function () {
+            if ($('#chk-subject-special').prop("checked")) {
+                $('#hdfspecial').val(1);
+            }
+            else {
+                $('#hdfspecial').val(0);
+            }
+        });
+
+
+        //Xóa giáo trình
+        $(document).ready(function () {
+            $('.btn-delete').on('click', function () {
+                let id = $(this).attr('data-id');
+                let fullname = $(this).attr('data-name');
+                let $this = $(this);
+                if (confirm("Bạn có chắc chắn muốn xóa giáo trình " + fullname + "?")) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/ClassDetail/DeleteCurriculums?id=' + id,
+                        success: function (msg) {
+                            if (msg.rs) {
+                                $this.closest('tr').remove();
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'check',
+                                    classBackground: 'noti-success',
+                                    timeout: 3000
+                                })
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                })
+                            }
+                        }
+                    })
+
+                }
+                else {
+                    return false;
+                }
+            });
+        })
+        function searchpage() {
+            $('#form-search').submit();
+        }
+    </script>
+}

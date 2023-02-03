@@ -1,0 +1,481 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "Schedule";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+@section myStyles{
+    <link href="~/app-assets/js/fullcalendar/fullcalendar.min.css" rel="stylesheet" />
+    <style>
+        .fc-time-grid .fc-slats td {
+            height: 3.5em;
+        }
+
+        .schedule-calendar .fc-toolbar.fc-header-toolbar {
+            height: 75px;
+        }
+
+        .style-audio {
+            font-size: 30px;
+            margin: 5px;
+        }
+
+            .style-audio :hover {
+                color: #808080;
+            }
+
+        .remove-audio {
+            top: -19px;
+            position: relative;
+        }
+
+            .remove-audio :hover {
+                color: #ff006e;
+            }
+    </style>
+}
+<div class="row mg-b-30">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item">Lịch dạy</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-12 mg-t-20 mg-xl-t-0">
+        <div id="schedule-calendar" class="schedule-calendar"></div>
+    </div>
+</div>
+<div class="modal" id="div-edit-schedule" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            <div class="modal-body pd-20 pd-sm-40">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+
+                <div>
+                    <h4>Cập nhật buổi học</h4>
+                    <h5>* Lưu ý: áp dụng cho tất cả các học viên trong khóa</h5>
+                    <div class="form-group">
+                        <div class="row">
+                            <input type="hidden" name="hdscheduleid" value="0" />
+                            <input type="hidden" name="aclogId" value="@aclog.ID">
+                            <input type="hidden" name="aclogName" value="@aclog.FullName">
+                            <input type="hidden" name="aclogUserName" value="@aclog.UserName">
+                            <div class="col-sm-12 mb-2">
+                                <label for="txt-full-name">Tình trạng buổi học</label>
+                                <select class="form-control" id="dll-language" name="dll-language" onchange="HideFile()" required>
+                                    <option value="1">Hoàn thành</option>
+                                    <option value="3">Giáo viên vắng mặt</option>
+                                    <option value="4">Học viên vắng mặt</option>
+                                </select>
+                            </div>
+
+                            <div class="col-sm-12 mb-2">
+                                <label class="">Điểm danh:</label>
+                                <select class="form-control" name="slAttendance">
+                                    <option value="1">Có mặt</option>
+                                    <option value="2">Vắng có phép</option>
+                                    <option value="3">Vắng không phép</option>
+                                    <option value="4">Đi muộn</option>
+                                    <option value="5">Về sớm</option>
+                                </select>
+                            </div>
+
+                            <div class="col-sm-12 mb-2">
+                                <label class="">Đánh giá:</label>
+                                <select class="form-control" name="slLearning">
+                                    <option value="1">Giỏi</option>
+                                    <option value="2">Khá</option>
+                                    <option value="3">Trung bình</option>
+                                    <option value="4">Kém</option>
+                                    <option value="5">Theo dõi đặc biệt</option>
+                                    <option value="6">Có cố gắng</option>
+                                    <option value="7">Không cố gắng</option>
+                                    <option value="8">Không nhận xét</option>
+                                </select>
+                            </div>
+
+                            <div class="col-sm-12 mb-2">
+                                <label for="txt-date-reserve" class="">Nhận xét</label>
+                                <textarea name="txt-note" class="form-control" rows="1"></textarea>
+                            </div>
+
+                            <div class="col-sm-12" id="div-file-audio">
+                                <label for="txt-audio">Chọn file audio - <span id="count-file" class="tx-success"></span></label>
+                                <input type="file" multiple data-name="txt-audio" class="dropify form-control" onchange="validateSize(this)" id="fileuploadaudio" name="fileuploadaudio" accept="video/*" />
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" id="upload" class="btn btn-primary btn-block">Lưu lại</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script src="~/app-assets/mycalendar/js/moment.min.js"></script>
+    <script src="~/app-assets/js/fullcalendar/fullcalendar.min.js"></script>
+    <script src="~/app-assets/js/worker.js"></script>
+    <script>
+    $(document)
+        .ajaxStart(function () {
+            $('#AjaxLoader').show();
+        })
+        .ajaxStop(function () {
+            $('#AjaxLoader').hide();
+        });
+        var m = '@ViewBag.m';
+        $(document).ready(function () {
+            // Initialize fullCalendar
+            // Calendar Event Source
+            var curYear = moment().format('YYYY');
+            var curMonth = moment().format('MM');
+            var calendarEvents = {
+                id: 1,
+                backgroundColor: '#f7f7f7',
+                borderColor: 'transparent',
+                events: [
+
+                ]
+            };
+
+            var DK = $('#schedule-calendar').fullCalendar({
+                height: 'parent',
+                eventLimit: false,
+                timeFormat: 'HH:mm',
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay,listWeek'
+                },
+                timeZone: 'UTC',
+                navLinks: true,
+                slotEventOverlap: false,
+                selectable: false,
+                displayEventEnd: true,
+                selectLongPressDelay: 100,
+                editable: false,
+                nowIndicator: true,
+                defaultView: 'listMonth',
+                views: {
+                    agenda: {
+                        columnHeaderHtml: function (mom) {
+                            return '<span>' + mom.format('ddd') + '</span>' + ' ' +
+                                '<span>' + mom.format('DD') + '</span>';
+                        }
+                    },
+                    day: { columnHeader: false },
+                    listMonth: {
+                        listDayFormat: 'ddd DD',
+                        listDayAltFormat: false
+                    },
+                    listWeek: {
+                        listDayFormat: 'ddd DD',
+                        listDayAltFormat: false
+                    },
+                    agendaThreeDay: {
+                        type: 'agenda',
+                        duration: { days: 3 },
+                        titleFormat: 'MMMM YYYY'
+                    }
+                },
+                events: calendarEvents,
+                eventAfterAllRender: function (view) {
+                    if (view.name === 'listMonth' || view.name === 'listWeek') {
+                        var dates = view.el.find('.fc-list-heading-main');
+                        dates.each(function () {
+                            var text = $(this).text().split(' ');
+                            var now = moment().format('DD');
+
+                            $(this).html(text[0] + '<span>' + text[1] + '</span>');
+                            if (now === text[1]) { $(this).addClass('now'); }
+                        });
+                    }
+                },
+                eventRender: function (event, element) {
+                    if (event) {
+                        if (element.find('.fc-list-item-title').length > 0) {
+                            element.find('.fc-list-item-title').append(
+                                `<div class="box-info">
+                                    <p class="txt">${event.school}</p>
+                                    <p class="txt">${event.room}</p>
+                                    <p class="txt">${event.course}</p>
+                                    <p class="txt"><span class="subject">${event.subject}</span></p>
+                                </div> `);
+                        } else {
+                            element.append(
+                                `<div class="box-info">
+                                    <p class="txt">${event.school}</p>
+                                    <p class="txt">${event.room}</p>
+                                    <p class="txt">${event.course}</p>
+                                    <p class="txt"><span class="subject">${event.subject}</span></p>
+                                </div>`
+                            );
+                        }
+                    }
+                    var eBorderColor = (event.source.borderColor) ? event.borderColor : 'rgb(247, 247, 247)';
+                    element.find('.fc-event-dot').css('backgroundColor', eBorderColor)
+                    element.css('borderLeft', `2px solid ${eBorderColor}`);
+                },
+            });
+            shedule(0);
+            function shedule(t) {
+                DK.fullCalendar('removeEvents');
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/TeacherCourse/LoadScheduleTeacher",
+                    data: '{month: "' + m + '", type: ' + t + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Dữ liệu trống',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                        }
+                        else {
+                            m = msg.m;
+                            //console.log(msg.l)
+                            var events = [];
+                            for (var i = 0; i < msg.l.length; i++) {
+                                var startDate = $.fullCalendar.moment(msg.l[i].start).format();
+                                var endDate = $.fullCalendar.moment(msg.l[i].end).format();
+                                var title = "";
+                                var course = msg.l[i].title;
+                                var allDate = msg.l[i].allDate;
+                                var url = msg.l[i].url;
+                                var borderColor = msg.l[i].borderColor;
+                                var subject = msg.l[i].subject;
+                                var room = msg.l[i].room;
+                                var school = msg.l[i].school;
+
+                                var event = {
+                                    title: title,
+                                    start: startDate,
+                                    end: endDate,
+                                    allDay: allDate,
+                                    url: url,
+                                    borderColor: borderColor,
+                                    subject: subject,
+                                    course: course,
+                                    room: room,
+                                    school: school
+                                }
+                                events.push(event);
+                            }
+                            calendarEvents.events = events;
+                            DK.fullCalendar('addEventSource', calendarEvents);
+                        }
+
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: shedule :) ");
+                    }
+                });
+            }
+
+            var calendar = $('#schedule-calendar').fullCalendar('getCalendar');
+            // change view to week when in tablet
+            if (window.matchMedia('(min-width: 576px)').matches) {
+                calendar.changeView('agendaWeek');
+            }
+
+            // change view to month when in desktop
+            if (window.matchMedia('(min-width: 992px)').matches) {
+                calendar.changeView('month');
+            }
+
+            // change view based in viewport width when resize is detected
+            calendar.option('windowResize', function (view) {
+                if (view.name === 'listWeek') {
+                    if (window.matchMedia('(min-width: 992px)').matches) {
+                        calendar.changeView('month');
+                    } else {
+                        calendar.changeView('listWeek');
+                    }
+                }
+            });
+            $('.fc-prev-button').click(function () {
+                shedule(1);
+            })
+            $('.fc-next-button').click(function () {
+                shedule(2);
+            })
+        });
+
+        var file;
+        $('#fileuploadaudio').change(function (e) {
+            file = e.target.files[0];
+        });
+
+        $(document).on("click", "#upload", function () {
+            var formdata = new FormData();
+
+            var hdscheduleid = $('input[name=hdscheduleid]').val();
+            var aclogId = $('input[name=aclogId]').val();
+            var aclogName = $('input[name=aclogName]').val();
+            var aclogUserName = $('input[name=aclogUserName]').val();
+            var attendance = $('select[name=slAttendance]').val();
+            var learning = $('select[name=slLearning]').val();
+            var note = $('textarea[name=txt-note]').val();
+            var status = $('select[name=dll-language]').val();
+            //Iterating through each files selected in fileInput
+            var blob = file;
+            var bytesPerChunk = 52428800;
+            var size = blob.size;
+            var start = 0;
+            var end = bytesPerChunk;
+            var completed = 0;
+            var count = size % bytesPerChunk == 0 ? size / bytesPerChunk : Math.floor(size / bytesPerChunk) + 1;
+            var counter = 0;
+
+
+            formdata.append('attendance', attendance);
+            formdata.append('learning', learning);
+            formdata.append('note', note);
+            formdata.append('status', status);
+            formdata.append('scheduleid', hdscheduleid);
+            $.ajax({
+                async: false,
+                type: 'POST',
+                url: '/Admin/TeacherCourse/AttendanceAllStudent',
+                data: formdata,
+                dataType: 'json',
+                contentType: false,
+                processData: false,
+                success: function (msg) {
+                    if (msg.rs == true) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Lưu thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2000
+                        })
+                        $('#div-edit-schedule').modal('hide');
+                        const worker = new Worker(URL.createObjectURL(new Blob([workerRunner.toString().replace(/^function .+\{?|\}$/g, '')], { type: 'text/javascript' })));
+                       // const worker = new Worker("data:application/x-javascript;base64,CiAgICBzZWxmLm9ubWVzc2FnZSA9IChldmVudCkgPT4gewogICAgICAgIGlmIChldmVudCAhPSBudWxsKSB7CiAgICAgICAgICAgIHZhciBmaWxlQ2h1bmtzID0gW107CiAgICAgICAgICAgIHZhciBidWZmZXJDaHVua1NpemVJbkJ5dGVzID0gNTI0Mjg4MDA7CgogICAgICAgICAgICB2YXIgY3VycmVudFN0cmVhbVBvc2l0aW9uID0gMDsKICAgICAgICAgICAgdmFyIGVuZFBvc2l0aW9uID0gYnVmZmVyQ2h1bmtTaXplSW5CeXRlczsKICAgICAgICAgICAgdmFyIHNpemUgPSBldmVudC5kYXRhLmZpbGUuc2l6ZTsKCiAgICAgICAgICAgIHdoaWxlIChjdXJyZW50U3RyZWFtUG9zaXRpb24gPCBzaXplKSB7CiAgICAgICAgICAgICAgICBmaWxlQ2h1bmtzLnB1c2goZXZlbnQuZGF0YS5maWxlLnNsaWNlKGN1cnJlbnRTdHJlYW1Qb3NpdGlvbiwgZW5kUG9zaXRpb24pKTsKICAgICAgICAgICAgICAgIGN1cnJlbnRTdHJlYW1Qb3NpdGlvbiA9IGVuZFBvc2l0aW9uOwogICAgICAgICAgICAgICAgZW5kUG9zaXRpb24gPSBjdXJyZW50U3RyZWFtUG9zaXRpb24gKyBidWZmZXJDaHVua1NpemVJbkJ5dGVzOwogICAgICAgICAgICB9CgogICAgICAgICAgICAvL0FwcGVuZCByYW5kb20gbnVtYmVyIHRvIGZpbGUgbmFtZSB0byBtYWtlIGl0IHVuaXF1ZQogICAgICAgICAgICB2YXIgZmlsZU5hbWUgPSBNYXRoLnJhbmRvbSgpICsgIl8iICsgZXZlbnQuZGF0YS5maWxlLm5hbWU7CgogICAgICAgICAgICB2YXIgZm9ybURhdGEgPSBuZXcgRm9ybURhdGEoKTsKCiAgICAgICAgICAgIGZvciAoaSA9IDA7IGkgPCBmaWxlQ2h1bmtzLmxlbmd0aDsgaSsrKSB7CiAgICAgICAgICAgICAgICBmb3JtRGF0YS5hcHBlbmQoJ2ZpbGUnLCBmaWxlQ2h1bmtzW2ldLCBmaWxlTmFtZSk7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgdmFyIHhocjIgPSBuZXcgWE1MSHR0cFJlcXVlc3QoKTsKICAgICAgICAgICAgeGhyMi5vcGVuKCJQT1NUIiwgIi9BZG1pbi9UZWFjaGVyQ291cnNlL1VwbG9hZEZpbGVDaHVua3MiLCB0cnVlKTsKICAgICAgICAgICAgeGhyMi5zZW5kKGZvcm1EYXRhKTsKICAgICAgICB9CiAgICB9OwoKLy9mdW5jdGlvbiB1cGxvYWRGaWxlKGZpbGUpIHsgICAKLy8gICAgLy9tYXggZmlsZSBjaHVuayBzaXplIHNldCB0byAxMDAgS0IgY2hhbmdlIGFzIHBlciByZXF1aXJlbWVudC4KCiAgICAKLy8gICAgdXBsb2FkRmlsZUNodW5rKGZpbGVDaHVua3MsIGZpbGVOYW1lLCAxLCBmaWxlQ2h1bmtzLmxlbmd0aCk7CgovL30KCi8vZnVuY3Rpb24gdXBsb2FkRmlsZUNodW5rKGZpbGVDaHVua3MsIGZpbGVOYW1lLCBjdXJyZW50UGFydCwgdG90YWxQYXJ0KSB7CiAgICAKLy8gICAgLy8kLmFqYXgoewovLyAgICAvLyAgICB0eXBlOiAiUE9TVCIsCi8vICAgIC8vICAgIHVybDogJy9UZWFjaGVyQ291cnNlL1VwbG9hZEZpbGVDaHVua3MnLAovLyAgICAvLyAgICBjb250ZW50VHlwZTogZmFsc2UsCi8vICAgIC8vICAgIHByb2Nlc3NEYXRhOiBmYWxzZSwKLy8gICAgLy8gICAgZGF0YTogZm9ybURhdGEsCi8vICAgIC8vICAgIHN1Y2Nlc3M6IGZ1bmN0aW9uIChkYXRhKSB7Ci8vICAgIC8vICAgICAgICBpZiAoZGF0YS5zdGF0dXMgPT0gdHJ1ZSkgewovLyAgICAvLyAgICAgICAgICAgIHRvYXN0LmNyZWF0ZSh7Ci8vICAgIC8vICAgICAgICAgICAgICAgIHRpdGxlOiAnVGjDtG5nIGLDoW8hJywKLy8gICAgLy8gICAgICAgICAgICAgICAgdGV4dDogJ1VwbG9hZCBmaWxlIHRow6BuaCBjw7RuZycsCi8vICAgIC8vICAgICAgICAgICAgICAgIGljb246ICdub3RpZmljYXRpb25zX2FjdGl2ZScsCi8vICAgIC8vICAgICAgICAgICAgICAgIGNsYXNzQmFja2dyb3VuZDogJ25vdGktd2FybmluZycsCi8vICAgIC8vICAgICAgICAgICAgICAgIHRpbWVvdXQ6IDIwMDAKLy8gICAgLy8gICAgICAgICAgICB9KQovLyAgICAvLyAgICAgICAgfQovLyAgICAvLyAgICB9LAovLyAgICAvLyAgICBlcnJvcjogZnVuY3Rpb24gKCkgewovLyAgICAvLyAgICAgICAgLy9yZXRyeSBtZXNzYWdlIHRvIHVwbG9hZCByZXN0IG9mIHRoZSBmaWxlCi8vICAgIC8vICAgICAgICBjb25zb2xlLmxvZygiZXJyb3IgdG8gdXBsb2FkIGZpbGUgcGFydCBubzogIiArIGN1cnJlbnRQYXJ0KTsKLy8gICAgLy8gICAgfQovLyAgICAvL30pOwovL30KCgovL3ZhciBtdWx0aVVwbG9hZCA9IGZ1bmN0aW9uIChjb3VudCwgY291bnRlciwgYmxvYiwgY29tcGxldGVkLCBzdGFydCwgZW5kLCBieXRlc1BlckNodW5rKSB7Ci8vICAgIGNvdW50ZXIgPSBjb3VudGVyICsgMTsKLy8gICAgaWYgKGNvdW50ZXIgPD0gY291bnQpIHsKLy8gICAgICAgIHZhciBjaHVuayA9IGJsb2Iuc2xpY2Uoc3RhcnQsIGVuZCk7Ci8vICAgICAgICB2YXIgeGhyID0gbmV3IFhNTEh0dHBSZXF1ZXN0KCk7Ci8vICAgICAgICB4aHIub25sb2FkID0gZnVuY3Rpb24gKCkgewovLyAgICAgICAgICAgIHN0YXJ0ID0gZW5kOwovLyAgICAgICAgICAgIGVuZCA9IHN0YXJ0ICsgYnl0ZXNQZXJDaHVuazsKLy8gICAgICAgICAgICBpZiAoY291bnQgPT0gY291bnRlcikgewovLyAgICAgICAgICAgICAgICB1cGxvYWRDb21wbGV0ZWQoYmxvYik7Ci8vICAgICAgICAgICAgfSBlbHNlIHsKLy8gICAgICAgICAgICAgICAgLy92YXIgcGVyY2VudGFnZSA9IChjb3VudGVyIC8gY291bnQpICogMTAwOwovLyAgICAgICAgICAgICAgICAvL3Byb2dyZXNzQmFyVXBkYXRlKHBlcmNlbnRhZ2UpOwovLyAgICAgICAgICAgICAgICBtdWx0aVVwbG9hZChjb3VudCwgY291bnRlciwgYmxvYiwgY29tcGxldGVkLCBzdGFydCwgZW5kLCBieXRlc1BlckNodW5rKTsKLy8gICAgICAgICAgICB9Ci8vICAgICAgICB9Ci8vICAgICAgICB4aHIub3BlbigiUE9TVCIsICIvQWRtaW4vVGVhY2hlckNvdXJzZS9NdWx0aVVwbG9hZD9pZD0iICsgY291bnRlci50b1N0cmluZygpICsgIiZmaWxlTmFtZT0iICsgYmxvYi5uYW1lLCBmYWxzZSk7Ci8vICAgICAgICB4aHIuc2VuZChjaHVuayk7Ci8vICAgIH0KLy99Ci8vdmFyIHVwbG9hZENvbXBsZXRlZCA9IGZ1bmN0aW9uIChibG9iKSB7Ci8vICAgIHZhciBmb3JtRGF0YSA9IG5ldyBGb3JtRGF0YSgpOwovLyAgICBmb3JtRGF0YS5hcHBlbmQoJ2ZpbGVOYW1lJywgYmxvYi5uYW1lKTsKLy8gICAgZm9ybURhdGEuYXBwZW5kKCdjb21wbGV0ZWQnLCB0cnVlKTsKCi8vICAgIHZhciB4aHIyID0gbmV3IFhNTEh0dHBSZXF1ZXN0KCk7Ci8vICAgIC8veGhyMi5vbmxvYWQgPSBmdW5jdGlvbiAoKSB7Ci8vICAgIC8vICAgIHByb2dyZXNzQmFyVXBkYXRlKDEwMCk7Ci8vICAgIC8vICAgIHByb2dyZXNzQmFyQ29tcGxldGUoKTsKLy8gICAgLy99Ci8vICAgIHhocjIub3BlbigiUE9TVCIsICIvQWRtaW4vVGVhY2hlckNvdXJzZS9VcGxvYWRDb21wbGV0ZT9maWxlTmFtZT0iICsgYmxvYi5uYW1lICsgIiZjb21wbGV0ZT0iICsgMSwgZmFsc2UpOwovLyAgICB4aHIyLnNlbmQoZm9ybURhdGEpOwovL30=");
+                        var domain = window.location.origin;
+                        worker.postMessage({
+                            file: file,
+                            domain: domain,
+                            hdscheduleid: hdscheduleid
+
+                        });
+                        worker.onmessage = (event) => {
+                            if (event.data.result == true) {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Upload file thành công',
+                                    icon: 'notifications_active',
+                                    classBackground: 'noti-warning',
+                                    timeout: 2000
+                                });                                
+                            } else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Upload file thất bại',
+                                    icon: 'warning',
+                                    classBackground: 'noti-warning',
+                                    timeout: 2000
+                                });
+                                var formdataNotification = new FormData();
+                                formdataNotification.append('aclogId', aclogId);
+                                formdataNotification.append('scheduleid', hdscheduleid);
+                                var xhr = new XMLHttpRequest();
+                                xhr.open("POST", "/Admin/TeacherCourse/NotificationUploadFail", true);
+                                xhr.send(formdataNotification);
+                            }
+                        }
+                       // multiUpload(count, counter, blob, completed, start, end, bytesPerChunk);
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Lưu thất bại',
+                            icon: 'warning',
+                            classBackground: 'noti-warning',
+                            timeout: 2000
+                        })
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error");
+                }
+            });
+
+        });
+
+
+        function validateSize(input) {
+            const fileSize = input.files[0].size; // in bytes
+            if (fileSize > 2147483648) {
+                alert('Vui lòng chọn file nhỏ hơn 2GB');
+                $("#fileuploadaudio").val(""); //for clearing with Jquery
+            }
+        }
+        function CheckJoinRoom(id) {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/ZoomMeeting/CheckJoinRoom",
+                data: '{id:  ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.m,
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2000
+                        })
+                    }
+                    else {
+                        //console.log(msg.url);
+                        window.open(msg.url, "_blank");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: error");
+                }
+            });
+        }
+
+        function HideFile() {
+            var check = $('#dll-language').val();
+            if (check == '1')
+                $('#div-file-audio').css('display', 'block');
+            else $('#div-file-audio').css('display', 'none');
+        }
+
+        function getScheduleID(id, attendance, learning, note, status, audio) {
+            $('input[name=hdscheduleid]').val(id);
+
+            $('select[name=slAttendance]').val(attendance || 0);
+            $('select[name=slAttendance]').trigger('change');
+
+            $('select[name=slLearning]').val(learning || 0);
+            $('select[name=slLearning]').trigger('change');
+
+            $('textarea[name=txt-note]').val(note || '');
+
+            $('select[name=dll-language]').val(status || 0);
+            $('select[name=dll-language]').trigger('change');
+
+            $("#count-file").text("Đã upload " + audio + " video");
+        }
+    </script>
+}

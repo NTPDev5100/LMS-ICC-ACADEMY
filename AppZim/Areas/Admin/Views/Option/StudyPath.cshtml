@@ -1,0 +1,132 @@
+﻿@using AppZim.Models
+@model List<tbl_StudyPath>
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml"; ;
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Lộ trình học</li>
+    </ol>
+</nav>
+<div>
+    <a href="#add-provincial" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+</div>
+<!-- End breadcrumb -->
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Lộ trình học</th>
+                    <th>Link lộ trình</th>
+                    <th>Chỉnh sửa</th>
+                    <th>Thời gian sửa</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.PathName</td>
+                        <td>@item.LinkCurriculumn</td>
+                        <td>@item.ModifiedBy</td>
+                        <td>
+                            @if (item.ModifiedDate != null)
+                            {
+                                <span>@item.ModifiedDate.Value.ToString("dd/MM/yyyy")</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <a href="#edit-provincial" data-toggle="modal" data-id="@item.ID" data-name="@item.PathName" data-driver="@item.LinkCurriculumn" class="btn btn-primary btn-icon btn-sm edit-supplier">
+                                <i data-feather="rotate-ccw"></i> Cập nhật
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="add-provincial" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddStudyPath", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="hdfID" name="hdfID" required />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Tạo mới</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Tên lộ trình:</label>
+                                    <input type="text" id="txt-name" name="txt-name" class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Link lộ trình:</label>
+                                    <input type="text" id="txt-academicpurposes" name="txt-academicpurposes" class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div id="edit-provincial" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditStudyPath", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="hdfID" name="hdfID" required />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Cập nhật</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Tên lộ trình:</label>
+                                    <input type="text" id="txt-name-edit" name="txt-name-edit" class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Link lộ trình:</label>
+                                    <input type="text" id="txt-edit-academicpurposes" name="txt-edit-academicpurposes" class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        $(document).on("click", ".edit-supplier", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=txt-edit-academicpurposes]').val($(this).attr('data-driver'));
+            $('input[name=txt-name-edit]').val($(this).attr('data-name'));
+            $('input[name=txt-edit-academicpurposes]').focus();
+        });
+    </script>
+}

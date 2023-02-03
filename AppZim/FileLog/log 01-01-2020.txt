@@ -1,0 +1,1 @@
+PageError: PushAutoController    FunctionError: teachingtecher    loginUID: 0    MessageError: Column 'DateExam' does not belong to table Table.    01/01/2020 13:00

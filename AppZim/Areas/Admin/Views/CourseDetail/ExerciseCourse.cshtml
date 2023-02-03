@@ -1,0 +1,609 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    ViewBag.Title = "StudentCourseDetail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+
+    List<tbl_ExerciseGroup> tl = ExerciseGroupTable.getbycurrid(Model.CurriculumsID, 1);
+    List<tbl_ExerciseGroup> tn = ExerciseGroupTable.getbycurrid(Model.CurriculumsID, 2);
+    List<tbl_ExerciseGroup> au = ExerciseGroupTable.getbycurrid(Model.CurriculumsID, 3);
+
+    List<tbl_ExerciseGroup> tlc = ExerciseGroupTable.getbycourseidvstype(Model.ID, 1);
+    List<tbl_ExerciseGroup> tnc = ExerciseGroupTable.getbycourseidvstype(Model.ID, 2);
+    List<tbl_ExerciseGroup> auc = ExerciseGroupTable.getbycourseidvstype(Model.ID, 3);
+
+    tl.AddRange(tlc);
+    tn.AddRange(tnc);
+    au.AddRange(auc);
+
+    List<tbl_ExerciseGroup> g = ExerciseGroupTable.getbycourseid(Model.ID);
+    var totalLesson = CoursesScheduleTable.getbycourseid(Model.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(Model.ID, 1).Count;// số buổi đã học
+    tbl_Courses course = CoursesTable.getbyid(Model.ID);
+    int remainLesson = totalLesson - learnedLesson - course.DifferenceSchedule.Value;
+}
+
+@section myStyles{
+    <link href="~/app-assets/zimv2/lib/fullcalendar/fullcalendar.min.css" rel="stylesheet">
+    <style>
+        .tn-block .txt.title {
+            font-size: 14px;
+        }
+
+        .tn-block .txt {
+            margin-bottom: -4px;
+        }
+    </style>
+}
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-9">
+        <div class="docs-wrap">
+            <div class="card">
+                <div class="card-header">
+                    <div class="top-filter">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="title mg-b-0">Dữ liệu bài tập</h6>
+                            @*<div class="action">
+                                <a href="#modal-edit-group" class="btn btn-outline-primary mg-r-10" data-toggle="modal"><i data-feather="edit-2"></i>  Sửa nhóm</a>
+                                <a href="#modal-create-group" class="btn btn-outline-info mg-r-10" data-toggle="modal"><i data-feather="folder"></i>  Tạo nhóm</a>
+                                <a href="#modal-create-exercise" class="btn btn-outline-success" data-toggle="modal"><i data-feather="edit-3"></i>  Tạo bài tập</a>
+                            </div>*@
+
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs nav-justified" id="excercise-tab" role="tablist">
+                        @*<li class="nav-item">
+                            <a class="nav-link active" id="tuluan-tab" data-toggle="tab" href="#bt-tuluan" role="tab" aria-controls="bt-tuluan" aria-selected="true">Tự luận</a>
+                        </li>*@
+                        <li class="nav-item">
+                            <a class="nav-link" id="tracnghiem-tab" data-toggle="tab" href="#bt-tracnghiem" role="tab" aria-controls="bt-tracnghiem" aria-selected="false">Trắc nghiệm</a>
+                        </li>
+                        @*<li class="nav-item">
+                            <a class="nav-link" id="noi-tab" data-toggle="tab" href="#bt-noi" role="tab" aria-controls="bt-noi" aria-selected="false">Nói</a>
+                        </li>*@
+                    </ul>
+                    <div class="tab-content bd bd-gray-00 bd-t-0 pd-20" id="excercise-content">
+                        @*<div class="tab-pane fade show active" id="bt-tuluan" role="tabpanel" aria-labelledby="tuluan-tab">
+                            <div class="excer-item">
+                                <div class="accordion">
+                                    @{
+                                        foreach (var item in tl)
+                                        {
+                                            var exs = ExerciseTable.getbygroupid(item.ID);
+                                            <h6 class="d-flex justify-content-between"><span class="deadline">@item.ExerciseGroupName</span><span class="number">@exs.Count câu hỏi</span></h6>
+                                            <div class="list-excer">
+                                                <div class="excer-row">
+                                                    <div class="accordion accordion-primary accordion-style1">
+                                                        @{
+                                                            foreach (var e in exs)
+                                                            {
+                                                                string sd = "N/A";
+                                                                string ed = "N/A";
+                                                                var ck = CoursesExerciseDeadlineTable.getbycourseid(Model.ID, e.ID);
+                                                                if (ck != null)
+                                                                {
+                                                                    sd = ck.sTime.ToString("dd/MM/yyyy");
+                                                                    ed = ck.eTime.ToString("dd/MM/yyyy");
+                                                                }
+
+                                                                <h6 class="d-flex justify-content-between"><span class="deadline">Hạn cuối: <span class="date">@ed</span></span></h6>
+                                                                <div class="excer-bd">
+                                                                    <div class="bd-action">
+                                                                        <div class="row">
+                                                                            <div class="col-12 col-sm-4 ">
+                                                                                <label>Bắt đầu:</label>
+                                                                                <input type="text" id="txt-stime-@e.ID" value="@sd" class="form-control datetimepicker date-only from-date" placeholder="DD / MM/ YYYY">
+                                                                            </div>
+                                                                            <div class="col-12 col-sm-4">
+                                                                                <label>Kết thúc:</label>
+                                                                                <input type="text" id="txt-etime-@e.ID" value="@ed" class="form-control datetimepicker date-only to-date" placeholder="DD / MM/ YYYY">
+                                                                            </div>
+                                                                            <div class="col-12 col-sm-4">
+                                                                                <label>Thao tác:</label>
+                                                                                <div>
+                                                                                    <a href="javascript:;" data-id="@e.ID" class="btn btn-primary mg-sm-r-10 update-deadline">Cập nhật</a>
+                                                                                    <a href="#modal-edit-exercise" data-id="@e.ID" data-toggle="modal" class="btn btn-warning update-exercise">Chỉnh sửa</a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="bd-content">
+                                                                        @Html.Raw(e.ExerciseTitle)
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>*@
+                        <div class="tab-pane fade" id="bt-tracnghiem" role="tabpanel" aria-labelledby="tracnghiem-tab">
+                            <div class="tracnghiem-wrap">
+                                @{
+                                    foreach (var item in tn)
+                                    {
+                                        var exs = ExerciseTable.getbygroupid(item.ID);
+                                        if (exs.Count > 0)
+                                        {
+                                            <div class="tn-block card">
+                                                <div class="tn-item d-md-flex card-body row pd-15">
+                                                    <div class="left-col col-12 col-sm-8">
+                                                        <a href="@Url.Action("ExerciseGroup","CourseDetail",  new { area = "Admin", courseid = Model.ID, id = item.ID  })" class="txt title">@item.ExerciseGroupName</a>
+                                                    </div>
+                                                    <div class="right-col col-12 col-sm-4">
+                                                        <p class="txt"><span class="number">@exs.Count câu hỏi</span></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                        @*<div class="tab-pane fade" id="bt-noi" role="tabpanel" aria-labelledby="noi-tab">
+                            <div class="excer-item">
+                                <div class="accordion">
+                                    @{
+                                        foreach (var item in au)
+                                        {
+                                            var exs = ExerciseTable.getbygroupid(item.ID);
+                                            <h6 class="d-flex justify-content-between"><span class="deadline">@item.ExerciseGroupName</span><span class="number">@exs.Count câu hỏi</span></h6>
+                                            <div class="list-excer">
+                                                <div class="excer-row">
+                                                    <div class="accordion accordion-primary accordion-style1">
+                                                        @{
+                                                            foreach (var e in exs)
+                                                            {
+                                                                string sd = "N/A";
+                                                                string ed = "N/A";
+                                                                var ck = CoursesExerciseDeadlineTable.getbycourseid(Model.ID, e.ID);
+                                                                if (ck != null)
+                                                                {
+                                                                    sd = ck.sTime.ToString("dd/MM/yyyy");
+                                                                    ed = ck.eTime.ToString("dd/MM/yyyy");
+                                                                }
+
+                                                                <h6 class="d-flex justify-content-between"><span class="deadline">Hạn cuối: <span class="date">@ed</span></span></h6>
+                                                                <div class="excer-bd">
+                                                                    <div class="bd-action">
+                                                                        <div class="row">
+                                                                            <div class="col-12 col-sm-4 ">
+                                                                                <label>Bắt đầu:</label>
+                                                                                <input type="text" id="txt-stime-@e.ID" value="@sd" class="form-control datetimepicker date-only from-date" placeholder="DD / MM/ YYYY">
+                                                                            </div>
+                                                                            <div class="col-12 col-sm-4">
+                                                                                <label>Kết thúc:</label>
+                                                                                <input type="text" id="txt-etime-@e.ID" value="@ed" class="form-control datetimepicker date-only to-date" placeholder="DD / MM/ YYYY">
+                                                                            </div>
+                                                                            <div class="col-12 col-sm-4">
+                                                                                <label>Thao tác:</label>
+                                                                                <div>
+                                                                                    <a href="javascript:;" data-id="@e.ID" class="btn btn-primary mg-sm-r-10 update-deadline">Cập nhật</a>
+                                                                                    <a href="#modal-edit-exercise" data-id="@e.ID" data-toggle="modal" class="btn btn-warning update-exercise">Chỉnh sửa</a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="bd-content">
+                                                                        @Html.Raw(e.ExerciseTitle)
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>*@
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-xl-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@Model.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Số buổi học chênh lệch">@course.DifferenceSchedule</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item">
+                        <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", Model.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 4 || aclog.RoleID == 7)
+                    {
+                        <li class="menu-item">
+                            <a href="@Url.Action("EditCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="edit"></i>Chỉnh sửa</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("ListStudent","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book"></i>Học viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action( "AttendanceCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="check-circle"></i>Điểm danh</a>
+                    </li>
+                    @*<li class="menu-item">
+                        <a href="@Url.Action("CourseExam","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="activity"></i>Điểm số</a>
+                    </li>*@
+                    @if (aclog.RoleID != 6)
+                    {
+                        @*<li class="menu-item active">
+                            <a href="@Url.Action( "ExerciseCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book-open"></i>Bài tập</a>
+                        </li>*@
+                        <li class="menu-item">
+                            <a href="@Url.Action( "DocumentCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="file-text"></i>Tài liệu</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("NoteCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="flag"></i>Đánh giá</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("NotificationCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("VideoOfSchedule","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="video"></i>Video bài giảng</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Upload file -->
+<div class="modal fade" id="modal-create-group" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddGroupExerciseCourse", "CourseDetail", FormMethod.Post))
+            {
+                <input type="hidden" name="hdfCourseID" value="@Model.ID" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo nhóm</h4>
+                        <div class="form-group">
+                            <label>Loại:</label>
+                            <select class="form-control" name="ddl-type" required>
+                                <option value="1">Tự luận</option>
+                                <option value="3">Nói</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tên nhóm:</label>
+                            <textarea name="txt-group" rows="1" class="form-control"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="modal-create-exercise" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddExerciseCourse", "CourseDetail", FormMethod.Post, new { @enctype = "multipart/form-data", id = "create-q" }))
+            {
+                <input type="hidden" name="hdfcID" value="@Model.ID" />
+                <input type="hidden" name="hdfQuestion" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo câu hỏi</h4>
+                        <div class="form-group">
+                            <label>Nhóm:</label>
+                            <select class="form-control select2" name="ddl-group" id="ddl-group">
+                                <option value="0">------</option>
+                                @{
+                                    foreach (var item in g)
+                                    {
+                                        <option value="@item.ID">@item.ExerciseGroupName - @item.TypeGroupName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Câu hỏi:</label>
+                            <textarea id="txt-question" class="content-editor"></textarea>
+                        </div>
+                        <a href="javascript:;" id="btn-check" class="btn btn-primary btn-block">Lưu lại</a>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="modal-edit-exercise" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateExerciseCourse", "CourseDetail", FormMethod.Post, new { @enctype = "multipart/form-data", id = "update-q" }))
+            {
+                <input type="hidden" name="hdfexID" />
+                <input type="hidden" name="hdfQuestionEdit" />
+
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo câu hỏi</h4>
+                        <div class="form-group">
+                            <label>Nhóm:</label>
+                            <select class="form-control select2" name="ddl-group-edit" id="ddl-group-edit">
+                                @{
+                                    foreach (var item in g)
+                                    {
+                                        <option value="@item.ID">@item.ExerciseGroupName - @item.TypeGroupName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Câu hỏi:</label>
+                            <textarea id="content-editor-edit" class="content-editor"></textarea>
+                        </div>
+                        <a href="javascript:;" id="btn-check-edit" class="btn btn-primary btn-block">Lưu lại</a>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="modal-edit-group" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateGroupExerciseCourse", "CourseDetail", FormMethod.Post))
+            {
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Chỉnh sửa nhóm</h4>
+                        <div class="form-group">
+                            <label>Chọn nhóm:</label>
+                            <select class="form-control select2" name="hdfGroupID" id="hdfGroupID" required onchange="getnamegroup(this)">
+                                <option value="">------</option>
+                                @{
+                                    foreach (var item in g)
+                                    {
+                                        <option value="@item.ID" data-vl="@item.ExerciseGroupName">@item.ExerciseGroupName - @item.TypeGroupName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tên nhóm:</label>
+                            <textarea name="txt-group-edit-name" id="txt-group-edit-name" rows="1" class="form-control" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/jqueryui/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.accordion').accordion({
+                active: 'none',
+                heightStyle: 'content',
+                collapsible: true
+            });
+
+        });
+
+    $('.update-deadline').click(function () {
+        var id = $(this).attr('data-id');
+        var st = $('#txt-stime-' + id + '').val();
+        var et = $('#txt-etime-' + id + '').val();
+
+        $.ajax({
+            type: "POST",
+            url: "/Admin/CourseDetail/UpdateDeadlineExercise",
+            data: '{courseid: ' + @Model.ID + ', exerciseid:' + id + ', stime:"' + st + '", etime:"' + et + '"}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (!msg.rs) {
+                    toast.create({
+                        title: 'Notification!',
+                        text: 'Fail',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                }
+                else {
+                    toast.create({
+                        title: 'Notification!',
+                        text: 'Success',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-success',
+                        timeout: 2500
+                    })
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("error ");
+            }
+        });
+    })
+
+    $('.update-exercise').click(function () {
+        var id = $(this).attr('data-id');
+        $('input[name=hdfexID]').val(id);
+        $.ajax({
+            type: "POST",
+            url: "/Admin/CourseDetail/GetExerciseID",
+            data: '{exerciseid:' + id + '}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (!msg.rs) {
+                    toast.create({
+                        title: 'Notification!',
+                        text: 'Not foud',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                }
+                else {
+                    $('select[name=ddl-group-edit]').val(msg.ex.ExerciseGroupID);
+                    tinyMCE.activeEditor.setContent(msg.ex.ExerciseTitle);
+                    $('select[name=ddl-group-edit]').trigger('change');
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("error ");
+            }
+        });
+    })
+
+    $(document).ready(function () {
+        function uploadImage() {
+            var editor = tinymce.activeEditor;
+            // create input element, call modal dialog w
+            var fileInput = document.createElement('input');
+            fileInput.setAttribute('type', 'file');
+            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+            // if file is submitted run our key code
+            fileInput.addEventListener('change', () => {
+
+                if (fileInput.files != null && fileInput.files[0] != null) {
+                    // create instance of FileReader()
+                    var formData = new FormData();
+                    formData.append("FileUpload", fileInput.files[0]);
+                    $.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: '/Admin/ClassDetail/UploadFileExercise',
+                        data: formData,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (msg) {
+                            console.log(msg.l);
+                            editor.insertContent('<img src="' + msg.l + '"/>');
+                        },
+                        error: function (error) {
+                            console.log('error upload file audio');
+                        }
+                    });
+                }
+            });
+            fileInput.click()
+        }
+        tinymce.init({
+            selector: '.content-editor',
+            plugin: "autosave",
+            menubar: false,
+            oninit: "setPlainText",
+            plugins: "paste",
+            paste_as_text: true,
+            inline: false,
+            menubar: 'file edit insert view format table tools help',
+            toolbar: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+            ],
+            height: 250,
+            images_dataimg_filter: function (img) {
+                return img.hasAttribute('internal-blob');
+            },
+            setup: (editor) => {
+                editor.ui.registry.addButton('UploadImage', {
+                    text: 'Image',
+                    icon: 'image',
+                    onAction: uploadImage
+                });
+            }
+        });
+
+        $('#btn-check').click(function () {
+            var content = tinymce.get('txt-question').contentDocument.activeElement.innerHTML;
+            var counttext = tinymce.get('txt-question').contentDocument.activeElement.innerText;
+
+            if ($('#ddl-group').val() == '0') {
+                toast.create({
+                    title: 'Notification!',
+                    text: 'Group is not null',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                })
+                return;
+            }
+            if (counttext.length == 1) {
+                toast.create({
+                    title: 'Notification!',
+                    text: 'Exercise is not null',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                })
+                return;
+            }
+            $('input[name=hdfQuestion]').val(content);
+            $('#create-q').submit();
+            $(this).attr("disabled", true);
+        })
+
+        $('#btn-check-edit').click(function () {
+            var content = tinymce.get('content-editor-edit').contentDocument.activeElement.innerHTML;
+            var counttext = tinymce.get('content-editor-edit').contentDocument.activeElement.innerText;
+
+            if ($('#ddl-group-edit').val() == '') {
+                toast.create({
+                    title: 'Notification!',
+                    text: 'Group is not null',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                })
+                return;
+            }
+            if (counttext.length == 1) {
+                toast.create({
+                    title: 'Notification!',
+                    text: 'Exercise is not null',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                })
+                return;
+            }
+            $('input[name=hdfQuestionEdit]').val(content);
+            $('#update-q').submit();
+            $(this).attr('disabled', true);
+        })
+    });
+
+    function getnamegroup (e) {
+        var name = $('option:selected', $(e)).attr('data-vl');
+        $('#txt-group-edit-name').val(name);
+    }
+    </script>
+}

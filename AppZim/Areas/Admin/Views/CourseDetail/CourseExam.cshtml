@@ -1,0 +1,190 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    ViewBag.Title = "StudentCourseDetail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    var lstudent = CoursesStudentTable.getbycourseid(Model.ID);
+    tbl_Courses course = CoursesTable.getbyid(Model.ID);
+    var totalLesson = CoursesScheduleTable.getbycourseid(course.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(course.ID, 1).Count;// số buổi đã học
+    int remainLesson = totalLesson - learnedLesson - course.DifferenceSchedule.Value;
+}
+
+@section myStyles{
+    <link href="~/app-assets/zimv2/lib/fullcalendar/fullcalendar.min.css" rel="stylesheet">
+    <style>
+        .fc-time-grid .fc-slats td {
+            height: 3.5em;
+        }
+    </style>
+}
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-9">
+        @using (Html.BeginForm("AddExam", "CourseDetail", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="hdfcourse" value="@course.ID" />
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <h6 class="mg-b-0">Đợt thi</h6>
+                            <input type="text" class="form-control wd-300 mg-l-10" name="txt-exam-name" required placeholder="..." />
+                        </div>
+                        <div class=" d-flex align-items-center">
+                            <div class="no-wrap mg-r-5">Lịch sử:</div>
+                            <div class="input-row mg-r-5">
+                                <select id="ddl-view-history" name="ddl-view-history" class="form-control" onchange="loaddata(this)">
+                                    @Html.Raw(ViewBag.Date)
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="list-student-course pd-b-10">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="no-wrap">Học viên</th>
+                                        <th class="no-wrap">Listening</th>
+                                        <th class="no-wrap">Speaking</th>
+                                        <th>Reading</th>
+                                        <th>Writting</th>
+                                        <th class="no-wrap">Trung bình</th>
+                                        <th>Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="body-table">
+                                    @{
+                                        var l = CoursesStudentTable.getbycourseid(course.ID);
+                                        foreach (var item in l)
+                                        {
+                                            <tr>
+                                                <td class="no-wrap">@item.StudentName</td>
+                                                <td class="wd-80">
+                                                    <input type="text" name="txt-lis-@item.ID" required class="form-control listening" maxlength="5" placeholder="0" data-type="point" />
+                                                </td>
+                                                <td class="wd-80">
+                                                    <input type="text" name="txt-spe-@item.ID" required class="form-control speaking" maxlength="5" placeholder="0" data-type="point" />
+                                                </td>
+                                                <td class="wd-80">
+                                                    <input type="text" name="txt-red-@item.ID" required class="form-control reading" maxlength="5" placeholder="0" data-type="point" />
+                                                </td>
+                                                <td class="wd-80">
+                                                    <input type="text" name="txt-wri-@item.ID" required class="form-control writting" maxlength="5" placeholder="0" data-type="point" />
+                                                </td>
+                                                <td class="wd-80">
+                                                    <input type="text" name="txt-overall-@item.ID" required class="form-control overall" maxlength="5" placeholder="0" data-type="point" />
+                                                </td>
+                                                <td>
+                                                    <textarea class="form-control" name="txt-note-@item.ID" required rows="1" placeholder="..."></textarea>
+                                                    <select name="ddl-target-@item.ID" class="form-control mg-t-10">
+                                                        <option value="1">---</option>
+                                                        <option value="2">Hoàn thành</option>
+                                                        <option value="3">Chưa hoàn thành</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                            </table>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary right">Lưu lại</button>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-xl-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@Model.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Số buổi học chênh lệch">@course.DifferenceSchedule</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item">
+                        <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", Model.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 4 || aclog.RoleID == 7)
+                    {
+                        <li class="menu-item">
+                            <a href="@Url.Action("EditCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="edit"></i>Chỉnh sửa</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("ListStudent","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book"></i>Học viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action( "AttendanceCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="check-circle"></i>Điểm danh</a>
+                    </li>
+                    @*<li class="menu-item active">
+                        <a href="@Url.Action("CourseExam","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="activity"></i>Điểm số</a>
+                    </li>*@
+                    @if (aclog.RoleID != 6)
+                    {
+                        @*<li class="menu-item">
+                            <a href="@Url.Action( "ExerciseCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book-open"></i>Bài tập</a>
+                        </li>*@
+                        <li class="menu-item">
+                            <a href="@Url.Action( "DocumentCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="file-text"></i>Tài liệu</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("NoteCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="flag"></i>Đánh giá</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("NotificationCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("VideoOfSchedule","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="video"></i>Video bài giảng</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<input type="hidden" id="hdfCaID" />
+@section myScripts{
+    <script>
+
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+        function loaddata(e) {
+            $('#body-table').empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CourseDetail/LoadDetailExam",
+                data: '{examid: ' + $(e).val() + ', courseid:'+@course.ID+'}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (!msg.rs) {
+                        toast.create({
+                            title: 'Notification!',
+                            text: 'Data empty',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        })
+                    }
+                    else {
+                        $('#body-table').append(msg.l);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e :) ");
+                }
+            });
+        }
+        $(document).on('click', '.update-attendance', function () {});
+    </script>
+}

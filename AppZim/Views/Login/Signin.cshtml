@@ -1,0 +1,283 @@
+﻿@using AppZim.TableSql
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Twitter -->
+    <meta name="twitter:site" content="ICC ACADEMY">
+    <meta name="twitter:creator" content="ICC ACADEMY">
+    <meta name="twitter:card" content="ICC ACADEMY">
+    <meta name="twitter:title" content="ICC ACADEMY">
+    <meta name="twitter:description" content="ICC ACADEMY">
+    <meta name="twitter:image" content="ICC ACADEMY">
+    <!-- Facebook -->
+    <meta property="og:url" content="ICC ACADEMY">
+    <meta property="og:title" content="ICC ACADEMY">
+    <meta property="og:description" content="ICC ACADEMY">
+    <meta property="og:image" content="ICC ACADEMY">
+    <meta property="og:image:secure_url" content="ICC ACADEMY">
+    <meta property="og:image:type" content="ICC ACADEMY">
+    <meta property="og:image:width" content="ICC ACADEMY">
+    <meta property="og:image:height" content="ICC ACADEMY">
+    <!-- Meta -->
+    <meta name="description" content="ICC ACADEMY">
+    <meta name="author" content="ICC ACADEMY">
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico">
+    <title>ICC ACADEMY | Đăng nhập</title>
+    <!-- vendor css -->
+    <link href="~/app-assets/zimv2/lib/@("@fortawesome")/fontawesome-free/css/all.min.css" rel="stylesheet">
+    <link href="~/app-assets/zimv2/lib/ionicons/css/ionicons.min.css" rel="stylesheet">
+    <!-- DashForge CSS -->
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/dashforge.css">
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/custom.css">
+</head>
+<body>
+    <style>
+        body {
+            background: #fff;
+        }
+        .footer{
+            background: #282828;
+            color: white;
+        }
+        .content-auth {
+            margin-top: 0;
+            min-height: calc(100vh - 46px);
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            -webkit-box-pack: center;
+            -webkit-justify-content: center;
+            -ms-flex-pack: center;
+            justify-content: center;
+        }
+
+        .calendar__wrapper {
+            padding: 30px;
+        }
+
+        .calendar {
+            text-align: center;
+            font-weight: bold;
+        }
+
+            .calendar > .fulldate {
+                font-size: 24px;
+                ;
+                margin: 0;
+                line-height: 1;
+            }
+
+            .calendar > .date {
+                font-size: 160px;
+                line-height: 1;
+                margin-bottom: 0;
+                color: #1b93c4;
+            }
+
+            .calendar > .time {
+                font-size: 60px;
+                margin: 0;
+                line-height: 1;
+            }
+
+        @@media screen and (max-width:992px) {
+            .calendar__wrapper {
+                padding: 30px 0;
+            }
+        }
+
+        @@media screen and (max-width:768px) {
+            .calendar__wrapper {
+                padding: 30px 0 0;
+                order: 2;
+            }
+
+            .sign-wrapper {
+                width: 100%;
+                padding: 0;
+                order: 1;
+            }
+        }
+
+        .btn-brand-02 {
+            background-color: #01a42f;
+            border-color: #01a42f;
+        }
+
+        .calendar > .date {
+            color: #01a42f;
+        }
+
+        .btn-brand-02:hover, .btn-brand-02:focus {
+            background-color: #ffdf7b;
+            border-color: #ffdf7b;
+        }
+        .singin-logo {
+            max-width: 200px;
+            display: block;
+            margin: auto;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .slogan {
+            margin-top: 50px;
+            font-weight: 400;
+            color: white;
+        }
+        .slogan p:nth-child(1){
+            font-style: italic;
+            margin-bottom: 0;
+        }
+            .slogan p:nth-child(2) {
+                font-weight: bold;
+            }
+        .form-control {
+            color: #1b2e4b;
+            font-size: inherit;
+            border-radius: 20px;
+            padding: 0 20px;
+            border: 1px solid #01a42f;
+        }
+        body {
+            background-image: url('../../app-assets/images/gioi-thieu-2.jpg');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+        }
+        .sign-wrapper {
+            padding-top: 0px;
+            background: white;
+            height: 100vh;
+            position: relative
+        }
+/*        .sign-wrapper::after{
+            position: absolute;
+            left: 100%;
+            top: 0;
+            content:'';
+            width: 100vw;
+            height: 100%;
+            background: white;
+        }*/
+        .content-auth{
+            padding: 0
+        }
+        .container{
+            padding: 0;
+            max-width: 100%;
+        }
+        .singin-logo{
+            max-width: 300px;
+            margin-top: 100px;
+            margin-bottom: 30px;
+        }
+        @@media screen and (max-width: 1500px){
+            .singin-logo {
+                max-width: 300px;
+                margin-top: 60px;
+            }
+        }
+    </style>
+
+    <div class="content content-fixed content-auth ">
+        <div class="container">
+            <div class="media align-items-stretch justify-content-center ht-100p pos-relative flex-wrap login-container-wrap">
+                <div class="calendar__wrapper flex-1" style="display: flex;align-items: center;justify-content: center;">
+                    <div class="calendar">
+                        <p class="js-fulldate fulldate" id="js-fulldate" style="color: white;font-size: 62px"></p>
+                        <p class="js-date date" id="js-date" style="padding-top: 10px;padding-bottom: 10px;font-size: 80px" ></p>
+                        <p class="js-time time" id="js-time"  style="font-size: 52px; background: white;padding: 10px 20px;display: inline-block; border-radius: 15px; color: #01a42f" ></p>
+                        <div class="slogan tx-center" style="text-align: right">
+                            @Html.Raw(IdiomsTable.getone().Idioms)
+                        </div>
+                    </div>
+                </div><!-- media-body -->
+                <div class="sign-wrapper pd-30" style="padding-top: 0px; height: calc(100vh - 46px);">
+                    <div class="wd-100p">
+                        <img class="singin-logo" src="~/app-assets/images/favicon.png" />
+                        <p class="tx-color-03 tx-16" style="color: red">Chào mừng bạn đã trở lại. Đăng nhập để tiếp tục!</p>
+                        @using (Html.BeginForm("Signin", "Login", FormMethod.Post))
+                        {
+                            <div class="form-group">
+                                <label style="font-weight: 600">Tên đăng nhập</label>
+                                <input type="text" name="txt-username" required class="form-control" placeholder="Username">
+                            </div>
+                            <div class="form-group">
+                                <div class="d-flex justify-content-between mg-b-5">
+                                    <label class="mg-b-0-f" style="font-weight: 600">Mật khẩu</label>
+                                </div>
+                                <input type="password" name="txt-password" class="form-control" placeholder="Enter your password">
+                            </div>
+                            <div class="form-group">
+                                <div class="d-flex justify-content-between mg-b-5">
+                                    <a href="@Url.Action("ForgotPassword", "Login", new { area = "" })" class="tx-13">Quên mật khẩu?</a>
+                                </div>
+                            </div>
+                            @Html.ValidationSummary(true, "", new { @class = "text-danger", @style = "text-align: center; color:red;" })
+                            <button type="submit" class="btn btn-brand-02 btn-block" style="text-transform: uppercase; border-radius: 20px;line-height: 20px">Đăng nhập</button>
+                        }
+                    </div>
+                </div><!-- sign-wrapper -->
+            </div><!-- media -->
+
+        </div><!-- container -->
+    </div><!-- content -->
+    <footer class="footer">
+        <div style="margin:auto;">
+            <span>&copy; <span id="js-current-year"></span><a href="#" style="color: white"> ICC ACADEMY</a> </span>
+            <span>
+                
+            </span>
+        </div>
+        <div>
+            <nav class="nav">
+                <a href="@Url.Action("TermOfService","Home",new {area=""})" style="color: white" class="nav-link">Điều khoản</a>
+                @*<a href="https://mona.media" class="nav-link">Privacy Policy</a>
+                    <a href="https://mona.media" class="nav-link">License</a>*@
+            </nav>
+        </div>
+    </footer>
+    <script src="~/app-assets/zimv2/lib/jquery/jquery.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/feather-icons/feather.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/dashforge.js"></script>
+    <!-- append theme customizer -->
+    <script src="~/app-assets/zimv2/lib/js-cookie/js.cookie.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/dashforge.settings.js"></script>
+    <script>
+
+        (function () {
+            'use strict';
+            const todayDayName = document.getElementById("js-fulldate");
+            const todayDate = document.getElementById("js-date");
+            const todayTime = document.getElementById("js-time");
+
+            let interval = setInterval(function () {
+                const currentDate = new Date();
+                todayDayName.textContent = currentDate.toLocaleString("en-US", {
+                    month: "long",
+                    year: "numeric"
+                });
+                const pad = (n) => n >= 10 ? n : '0' + n;
+                todayDate.textContent = currentDate.getDate();
+                todayTime.textContent = `${pad(currentDate.getHours())} : ${pad(currentDate.getMinutes())} : ${pad(currentDate.getSeconds()) }`;
+                const footerYear = document.getElementById("js-current-year");
+                footerYear.textContent = currentDate.getFullYear();
+            }, 100);
+
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_ExerciseAddonStudent>
+@{
+    ViewBag.Title = "Exrcise";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    IEnumerable<tbl_Courses> courses = CoursesTable.getall().Where(n => n.CourseSelfStudy != true).OrderByDescending(n => n.ID).ToList();
+    IEnumerable<tbl_TeacherCourse> tecourses = TeacherCourseTable.getbyteacherid(aclog.ID).Where(n => n.isHide != true).OrderByDescending(n => n.ID).ToList();
+    courses = from c in courses
+              join t in tecourses on c.ID equals t.CourseID
+              select c;
+}
+@section myStyles{
+    <style>
+    </style>
+}
+
+@using (Html.BeginForm("ExerciseProcess", "TeacherExercise", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <h4 class="mg-b-0 tx-spacing--1">Bài tập chờ xử lý</h4>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" id="ddl-sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Học viên  a > z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Học viên  a > z</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Số điện thoại z > a</option>
+                            }
+                            else
+                            {
+                                <option value="2">Số điện thoại z > a</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Thời gian làm ></option>
+                            }
+                            else
+                            {
+                                <option value="3">Thời gian làm ></option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Thời gian làm <</option>
+                            }
+                            else
+                            {
+                                <option value="4">Thời gian làm <</option>
+                            }
+                            if (ViewBag.Sort == 5)
+                            {
+                                <option value="5" selected>Người tạo câu hỏi  a > z</option>
+                            }
+                            else
+                            {
+                                <option value="5">Người tạo câu hỏi  a > z</option>
+                            }
+                            if (ViewBag.Sort == 6)
+                            {
+                                <option value="6" selected>Người tạo câu hỏi z > a</option>
+                            }
+                            else
+                            {
+                                <option value="6">Người tạo câu hỏi z > a</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0 transparent" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    <div class="form-group col-md-4 col-6 col-xl-7">
+                        <label class="form-control-label">Khóa học:</label>
+                        <select class="form-control select2" name="course">
+                            <option value="0">Tất cả</option>
+                            @{
+                                foreach (var c in courses)
+                                {
+                                    if (ViewBag.CourseID != null)
+                                    {
+                                        if (ViewBag.CourseID == c.ID)
+                                        {
+                                            <option value="@c.ID" selected>@c.CourseName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.ID">@c.CourseName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.ID">@c.CourseName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Thời gian làm từ:</label>
+                        <input type="text" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Đến:</label>
+                        <input type="text" name="to" class="form-control datetimepicker to-date date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-1">
+                        <label class="form-control-label">Thao tác:</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th>Học viên</th>
+                    <th>Khóa học</th>
+                    <th>Thời gian làm</th>
+                    <th class="no-wrap">Người tạo câu hỏi</th>
+                    <th class="no-wrap">@ViewBag.ToTal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        tbl_ExerciseAddonStudent jtem = item;
+                        <tr class="tr-row">
+                            <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                            <td class="no-wrap">@jtem.StudentName</td>
+                            <td>@jtem.CourseName</td>
+                            <td class="no-wrap">@jtem.CreatedDate.Value.ToString("dd/MM/yyyy")</td>
+                            <td class="no-wrap">@jtem.FullNameCreatedByExercise</td>
+                            <td><a href="@Url.Action("ExerciseDetail","TeacherExercise", new { area = "Admin", id = jtem.ID  })" data-toggle="tooltip" data-placement="left" title="Chi tiết"><i data-feather="eye"></i></a></td>
+                        </tr>
+                        <tr class="collapse-row">
+                            <td colspan="6">
+                                <div class="collapse-content">@Html.Raw(jtem.ExerciseQuestion)</div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        @Html.PagedListPager(Model, page => Url.Action("ExerciseProcess", new { page, search = ViewBag.Search, sort = ViewBag.Sort, from = ViewBag.From, to = ViewBag.To }),
+        new PagedListRenderOptions
+        {
+            UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+        })
+
+    </nav>
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+    </script>
+}

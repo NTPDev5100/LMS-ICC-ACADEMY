@@ -1,0 +1,2 @@
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1    MessageError: Object cannot be cast from DBNull to other types.    05/07/2021 21:36
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1    MessageError: Object cannot be cast from DBNull to other types.    05/07/2021 21:36

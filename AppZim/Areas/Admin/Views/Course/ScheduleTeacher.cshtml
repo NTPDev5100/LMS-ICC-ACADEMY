@@ -1,0 +1,160 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using MB.Extensions
+@{
+    ViewBag.Title = "ScheduleTeacher";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var teachers = AccountTable.getbyrole(4);
+    var studys = StudyTimeTable.getall().OrderBy(n => n.sTime).ToList();
+}
+<style>
+</style>
+<div class="row mg-b-20">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item active" aria-current="page">Xem lịch giáo viên</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<!-- End breadcrumb -->
+<div class="row">
+    <div class="col-12">
+        <div class="mg-b-30" id="filterCollapse">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row d-flex flex-wrap">
+                        <div class="form-group col-md-4 col-6 col-xl-4">
+                            <label class="form-control-label">Giáo viên: </label>
+                            <select id="ddl-teacher" class="custom-select select2">
+                                @{
+                                    foreach (var i in teachers)
+                                    {
+                                        <option value="@i.ID">@i.FullName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6 col-xl-4">
+                            <label class="form-control-label">Ca dạy: </label>
+                            <select id="ddl-study" class="custom-select select2" multiple>
+                                <option value="0">Tất cả ca</option>
+                                @{
+                                    foreach (var item in studys)
+                                    {
+                                        <option value="@item.ID">@item.sTime - @item.eTime</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6 col-xl-2">
+                            <label class="form-control-label">Thời gian từ: </label>
+                            <input type="text" id="txt-stime" value="@ViewBag.From" class="form-control datetimepicker date-only from-date" placeholder="DD / MM / YYYY">
+                        </div>
+                        <div class="form-group col-md-6 col-xl-2">
+                            <label class="form-control-label">Đến: </label>
+                            <input type="text" id="txt-etime" value="@ViewBag.To" class="form-control datetimepicker date-only to-date" placeholder="DD / MM / YYYY">
+                        </div>
+                        <div class="form-group col-12 mg-b-0">
+                            <button type="button" id="btn-view" class="btn btn-primary">Kiểm tra</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 colsm-12 col-md-12">
+        <div class="schedule-teacher">
+            <div class="lichday-col-wrap" id="lichday_colwrapper">
+                <table id="customers" class="table table-bordered"></table>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script>
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+
+
+        jQuery(document).ready(function ($) {
+
+            $('#btn-view').click(function () {
+
+                if ($("#ddl-teacher").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn giáo viên',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+
+                if ($("#txt-stime").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập ngày bắt đầu',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#ddl-study").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn ca',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+
+                $('#ul-study').empty();
+                $('#div-teacher').empty();
+                $('#div-schedule').empty();
+
+                var teacherid = $("#ddl-teacher").val();
+                var studyid = $("#ddl-study").val();
+                var stime = $("#txt-stime").val();
+                var etime = $("#txt-etime").val();
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Course/LoadScheduleTeacher",
+                    data: '{teacherid:"' + teacherid + '", studyid:"' + studyid + '", stime:"' + stime + '", etime:"' + etime + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Không có dữ liệu',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                        }
+                        else {
+                            $('#customers').empty();
+                            $('#customers').append(msg.l);
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e load schedule");
+                    }
+                });
+            })
+        });
+    </script>
+}

@@ -1,0 +1,2 @@
+PageError: AccountController    FunctionError: SearchCodeDiscoutNew    loginUID: 1    MessageError: The specified type member 'Date' is not supported in LINQ to Entities. Only initializers, entity members, and entity navigation properties are supported.    02/02/2021 09:54
+PageError: CustomerController    FunctionError: ServiceCustomer    loginUID: 1    MessageError: The underlying provider failed on Open.    02/02/2021 14:04

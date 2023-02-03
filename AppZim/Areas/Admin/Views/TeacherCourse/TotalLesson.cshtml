@@ -1,0 +1,307 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models;
+@model List<Admin_TeacherSalaryDetail_GetList_Result>
+@{
+    ViewBag.Title = "TotalLesson";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<GetCourseByTeacherAndSchedule_Result> courses = ViewBag.Courses;
+    double totalSalary = 0;
+    if(Model.Count > 0)
+    {
+        totalSalary = Model[0].TotalSalary ?? 0;
+    }
+}
+
+<style>
+    .shorter-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 120px;
+    }
+</style>
+<div class="d-xl-flex align-items-center justify-content-between">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+                    <li class="breadcrumb-item active" aria-current="page">Lịch sử giảng dạy</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("TotalLesson", "TeacherCourse", FormMethod.Get, new { id = "form-search", area = "Admin" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div style="color: #01a42f;margin-bottom:0px;">
+                    <label class="wd-100p mg-b-0">&nbsp;</label>
+                Tổng lương: @String.Format("{0:0,0}", totalSalary) VNĐ
+                </div>
+                <div class="form-group mg-l-5">
+                    <input type="hidden" name="ClosingFrom" value="@ViewBag.ClosingFrom" />
+                    <input type="hidden" name="ClosingTo" value="@ViewBag.ClosingTo" />
+                </div>
+
+                <div class="form-group mg-l-5">
+                    <select name="slCourse" class="custom-select select2">
+                        <option value="0">-- Khóa học --</option>
+                        @foreach (var i in courses)
+                        {
+                            <option value="@i.ID">@i.CourseName</option>
+                        }
+                    </select>
+                    <script>$('select[name=slCourse]').val(@ViewBag.Course)</script>
+                </div>
+                @*<div class="form-group mg-l-5">
+                        <select name="slisClosing" class="custom-select">
+                            <option value="">-- Trang thái --</option>
+                            <option value="true">Đã chốt lương</option>
+                            <option value="false">Chưa chốt lương</option>
+                        </select>
+                    </div>*@
+                <div class="form-group mg-l-5">
+                    <input name="from" class="form-control datetimepicker date-only" value="@ViewBag.From" />
+                </div>
+                <div class="form-group mg-l-5">
+                    <input name="to" class="form-control datetimepicker date-only" value="@ViewBag.To" />
+                </div>
+                <a href="javascript:;" class="btn btn-primary" onclick="pagesearch()" data-toggle="tooltip" title="Tìm kiếm"><i data-feather="search"></i></a>
+                <a href="javascript:;" class="btn btn-primary" onclick="updatePayroll()" data-toggle="tooltip" title="Chốt lương tháng trước"><i data-feather="dollar-sign"></i></a>
+            </div>
+        }
+    </div>
+</div>
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Tên giáo viên</th>
+                    <th>Khóa học</th>
+                    <th>Lương</th>
+                    <th>Ngày dạy</th>
+                    <th>Loại lương</th>
+                    <th>Video</th>
+                    <th>Trạng thái chốt lương</th>
+                    <th>Cần kiểm tra lại</th>
+                    <th>Lý do</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    string typeName = item.Type == 1 ? "Lương dạy"
+                        : item.Type == 2 ? "Lương học viên vắng" : "";
+                    <tr>
+                        <td>@item.TeacherName</td>
+                        <td>@item.CourseName</td>
+                        <td class="text-right">@String.Format("{0:0,0}", @item.Salary) VNĐ</td>
+                        <td>@item.Date.Value.ToString("dd/MM/yyyy")</td>
+                        <td>@typeName</td>
+                        <td><button class="btn btn-secondary" onclick="OpenVideoModal(@item.CoursesScheduleID)">Xem danh sách video</button></td>
+                        <td>
+                            @if (item.isClosing == true)
+                            {
+                                <i style="color:#01a42f;font-size:25px" class="far fa-check-circle"></i>
+                            }
+                            else
+                            {
+                                <i style="color:#db0606;font-size:25px" class="far fa-times-circle"></i>
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsReject == true)
+                            {
+                                <i style="color:#db0606;font-size:25px" class="far fa-times-circle"></i>
+                            }
+                        </td>
+                        <td class="no-wrap"><span class="shorter-text" data-toggle="tooltip" data-placement="right" title="@item.ReasonNote">@item.ReasonNote</span></td>
+                        <td>
+                            @if (item.isClosing == false)
+                            {
+                                <button class="btn btn-primary btn-update-reason" data-id="@item.ID" data-reason="@item.ReasonNote" data-closing="@item.isClosing" data-reject="@item.IsReject" data-toggle="tooltip" data-placement="right" title="Yêu cầu kiểm tra lại"><i class="fas fa-pen-square"></i></button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </ul>
+</nav>
+
+<div class="modal fade" id="div-videos" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Danh sách video của buổi học</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30" id="link-videos">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="div-update-reason" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:500px;">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateReasonSalary", "TeacherCourse", FormMethod.Post, new { id = "form-search", area = "Admin" }))
+            {
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Yêu cầu kiểm tra lại lương buổi dạy</h4>
+                        </div>
+                        <input type="hidden" name="hdid" value="0" />
+                    </div>
+                </div>
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        <select class="custom-select" name="slStatus">
+                            <option value="0">Chưa chốt</option>
+                            <option value="1">Cần kiểm tra lại</option>
+                            <option value="2">Chốt lương</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lý do</label>
+                        <textarea name="txt-reason" class="form-control"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary right mg-b-10"><i class="fas fa-save"></i> Lưu</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section myScripts
+{
+    <script>
+        const teacherId = @ViewBag.Teacher;
+
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        function updatePayroll() {
+            var from = $("input[name='ClosingFrom']").val();
+            var to = $("input[name='ClosingTo']").val();
+            if (teacherId == 0) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn giáo viên',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 2500
+                });
+                return;
+            }
+
+            if (confirm('Xác nhận chốt lương tất cả các buổi dạy từ ' + from + ' đến ' + to + ' ?')) {
+                console.log(teacherId)
+                $.ajax({
+                    url: '/SalaryStaff/PayrollForTeacher',
+                    method: 'post',
+                    dataType: 'json',
+                    data: { 'teacherId': teacherId },
+                    success: function (r) {
+                        if (r.rs == true) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Thành công',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-success',
+                                timeout: 2500
+                            });
+                            window.location.reload();
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: r.message,
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 4000
+                            })
+                        }
+                    }
+                })
+            }
+        }
+
+        function LoadVideos(courseScheduleId) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: '/SalaryStaff/Loadvideos',
+                    method: 'GET',
+                    dataType: 'json',
+                    data: { 'courseScheduleId': courseScheduleId },
+                    success: function (r) {
+                        resolve(r.data);
+                    }
+                });
+            });
+        }
+
+        async function OpenVideoModal(courseScheduleId) {
+            let data = await LoadVideos(courseScheduleId);
+            let htmlString = '';
+            let total = data.length;
+            for (let i = 0; i < total; i++) {
+                htmlString += `<a class="btn btn-primary mg-r-5" target="_blank" href="${data[i].FileName}">Xem video</a>`;
+            }
+
+            $('#link-videos').html(htmlString);
+            $('#div-videos').modal('show');
+        }
+
+        $('.btn-update-reason').click(function () {
+            $('input[name=hdid]').val($(this).attr('data-id'));
+            $('textarea[name=txt-reason]').val($(this).attr('data-reason'));
+            let isClosing = $(this).attr('data-closing');
+            let isReject = $(this).attr('data-reject');
+            console.log(isClosing);
+            console.log(isReject);
+            if (isClosing == 'True') {
+                $('select[name=slStatus]').val(2);
+            } else if (isReject == 'True') {
+                $('select[name=slStatus]').val(1);
+            } else {
+                $('select[name=slStatus]').val(0);
+            }
+            $('select[name=slStatus]').trigger('change');
+            $('#div-update-reason').modal('show');
+        });
+    </script>
+}
+

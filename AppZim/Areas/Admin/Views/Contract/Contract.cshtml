@@ -1,0 +1,130 @@
+﻿
+@{
+    ViewBag.Title = "Contract";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+@section myStyles{
+    <style>
+        .fix-container {
+            max-width: initial;
+        }
+    </style>
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mg-b-30">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item active" aria-current="page">Mẫu hợp đồng</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="new-post-wrap fix-container">
+    @using (Html.BeginForm("AddContract", "Contract", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+        <div class="row">
+            <div class="col-12 ">
+                <h4 class="">Điều chỉnh hợp đồng</h4>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea name="txt-content" class="raw-txt" id="post-content">@Html.Raw(ViewBag.Content)</textarea>
+        </div>
+        <div class="form-row mg-b-15 mg-t-15 align-items-center">
+            <div class="col-12 col-xs-4 col-md-12">
+                <div class="d-flex align-items-center justify-content-end">
+                    <button type="submit" class="btn btn-primary">Lưu lại</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+    <script>
+        function uploadImage() {
+            var editor = tinymce.activeEditor;
+            // create input element, call modal dialog w
+            var fileInput = document.createElement('input');
+            fileInput.setAttribute('type', 'file');
+            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+            // if file is submitted run our key code
+            fileInput.addEventListener('change', () => {
+
+                if (fileInput.files != null && fileInput.files[0] != null) {
+                    // create instance of FileReader()
+                    var formData = new FormData();
+                    formData.append("FileUpload", fileInput.files[0]);
+                    $.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: '/Admin/PostNewFeed/UploadFilePost',
+                        data: formData,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (msg) {
+                            editor.insertContent('<img src="' + msg.l + '"/>');
+                        },
+                        error: function (error) {
+                            console.log('error upload file audio');
+                        }
+                    });
+                }
+            });
+            fileInput.click()
+        }
+        tinymce.init({
+            selector: '#post-content',
+            oninit: "setPlainText",
+            plugins: 'paste autoresize stickytoolbar print autolink autosave save directionality fullscreen image link media charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern help charmap emoticons',
+            paste_as_text: true,
+            inline: false,
+            menubar: 'file edit insert view format table tools help',
+            toolbar: 'formatselect | fontsizeselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | removeformat',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                '/app-assets/zimv2/assets/css/dashforge.css',
+                '/app-assets/zimv2/assets/css/custom.css',
+                '/app-assets/zimv2/assets/css/dashforge.profile.css',
+                '/app-assets/zimv2/assets/dev/contractcss.css'
+            ],
+            height: 250,
+            images_dataimg_filter: function (img) {
+                return img.hasAttribute('internal-blob');
+            },
+            fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt"
+        });
+        //tinymce.init({
+        //    selector: '#post-content',
+        //    height: 250,
+        //    oninit: "setPlainText",
+        //    paste_as_text: true,
+        //    inline: false,
+        //    content_css: [
+        //        '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+        //        '/app-assets/zimv2/assets/css/dashforge.css',
+        //        '/app-assets/zimv2/assets/css/custom.css',
+        //        '/app-assets/zimv2/assets/css/dashforge.profile.css',
+        //        '/app-assets/zimv2/assets/dev/contractcss.css'
+        //    ],
+        //    images_dataimg_filter: function (img) {
+        //        return img.hasAttribute('internal-blob');
+        //    },
+        //    plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+        //    menubar: 'file edit insert view format table tools help',
+        //    toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+        //    setup: (editor) => {
+        //        editor.ui.registry.addButton('UploadImage', {
+        //            text: 'Image',
+        //            icon: 'image',
+        //            onAction: uploadImage
+        //        });
+        //    },
+        //    fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt"
+        //});
+    </script>
+}
+
+
+

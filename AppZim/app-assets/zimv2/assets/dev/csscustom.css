@@ -1,0 +1,139 @@
+﻿/*Toast Notification*/
+#cooltoast-container {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: auto;
+    z-index: 99999;
+    /*   font-family: 'Helvetica'; */
+}
+
+.cooltoast-toast {
+    background: #1fc500;
+    color: white;
+    position: relative;
+    padding: 8px 12px;
+    margin: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    animation-duration: .3s;
+    animation-name: cooltoast;
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.toast-content {
+    overflow: hidden;
+    padding-left: 15px;
+}
+
+.cooltoast-fadeOut {
+    animation-name: cooltoastFadeOut;
+    animation-duration: 1.5s;
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    animation-fill-mode: forwards;
+}
+
+#cooltoast-container p,
+#cooltoast-container h4 {
+    margin: 3px 0 !important;
+}
+
+.cooltoast-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.cooltoast-text {
+    font-size: 14px;
+    color: white;
+}
+
+.cooltoast-icon {
+    float: left;
+    font-size: 38px;
+}
+
+.cooltoast-toast a, .cooltoast-toast a:hover {
+    color: #549EDB !important;
+    text-decoration: none !important;
+}
+
+/** toast types */
+.cooltoast-success {
+    border-bottom: 2px solid #51C625;
+}
+
+.cooltoast-warning {
+    border-bottom: 2px solid #DB9215;
+}
+
+.cooltoast-error {
+    border-bottom: 2px solid #DB2B1D;
+}
+
+.cooltoast-info {
+    border-bottom: 2px solid #27ABDB;
+}
+
+@keyframes cooltoast {
+    from {
+        transform: translate3d(400px, 0, 0);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes cooltoastFadeOut {
+    from {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translate3d(400px, 0, 0);
+        opacity: 0;
+    }
+}
+
+
+/*PagedListPager*/
+nav div ul li a {
+    min-width: 36px;
+    height: 100%;
+    padding: 9px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0168fa;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid #cdd4e0;
+}
+
+.custom-checkbox .custom-control-input:disabled:checked ~ .custom-control-label::before {
+    background-color: rgba(160, 167, 176, 0.5);
+}
+
+
+#tab-notification table tr td:nth-child(3) {
+    max-width: 300px;
+    white-space: nowrap
+}
+#tab-notification table tr td:nth-child(2) {
+    max-width: 350px;
+}
+.teacher-list-icon .avatar {
+    position: relative;
+    width: 32px;
+    height: 32px;
+}
+
+
+
+
+

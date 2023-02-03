@@ -1,0 +1,206 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using System.Text;
+@model List<VietCoCo_configTeacherZoom_Result>
+@{
+    ViewBag.Title = "TeacherConfigZoom";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+
+    StringBuilder gv = new StringBuilder();
+    var ac = AccountTable.getall().Where(x => x.Status == 2 && (x.RoleID == 1 || x.RoleID == 4)).ToList();
+    if(aclog.RoleID == 4)
+    {
+        ac = ac.Where(x => x.ID == aclog.ID).ToList();
+    }
+    if (ac.Count() > 0)
+    {
+        foreach (var i in ac)
+        {
+            gv.Append("<option value=\"" + i.ID + "\">" + i.FullName + "</option>");
+        }
+    }
+
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách cấu hình</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@{
+    <div>
+        <a href="javascript:;" class="btn btn-primary btn-add-config"><i data-feather="plus"></i> Thêm</a>
+    </div>
+    if (aclog.RoleID == 1)
+    {
+        using (Html.BeginForm("TeacherConfigZoom", "ZoomMeeting", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-xl-flex align-items-center justify-content-between ">
+
+                <div class="d-xl-block">
+                    <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                        <div class="search-form mg-l-5 mg-r-5">
+                            <input type="search" list="browsers" class="form-control" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                            <datalist id="browsers">
+                                @Html.Raw(gv)
+                            </datalist>
+                            <button class="btn" type="submit"><i data-feather="search"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Giáo viên</th>
+                    <th>Số điện thoại</th>
+                    <th>API Key</th>
+                    <th>API Secrect</th>
+                    <th>Thời gian tạo</th>
+                    <th class="text-center"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    if (Model.Count() > 0)
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.FullName</td>
+                                <td>@item.Phone</td>
+                                <td>@item.APIKey</td>
+                                <td>@item.APISecrect</td>
+                                <td>@item.CreatedDate</td>
+                                <td class="text-center">
+                                    <a href="javascript:;" data-id="@item.ID" data-teacherID="@item.TeacherID" data-userID="@item.UserID" data-apiKey="@item.APIKey" data-apiSecrect="@item.APISecrect" data-token="@item.Token" class="btn btn-primary btn-icon btn-sm edit-config" data-toggle="tooltip" title="Cập nhật">
+                                        <i class="fas fa-user-edit"></i>
+                                    </a>
+                                    @*<a href="/Admin/ZoomMeeting/ListMeetingByTeacher?teacherId=@item.TeacherID.Value" class="btn btn-secondary btn-icon btn-sm" data-toggle="tooltip" title="Phòng học">
+                                            <i data-feather="home"></i>
+                                        </a>
+                                        <a href="/Admin/ZoomMeeting/ListRecording?idTeacherConfig=@item.TeacherID.Value" class="btn btn-success btn-icon btn-sm" data-toggle="tooltip" title="Chi tiết">
+                                            <i data-feather="video"></i>
+                                        </a>*@
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 mg-t-10 justify-content-end">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </ul>
+</nav>
+
+<div class="modal" id="div-config" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-500" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddUpdateConfig", "ZoomMeeting", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" value="0" />
+                <input type="hidden" name="txt-page" value="0" /> //1. trả về trang chi tiết, ngược lại là trang danh sách chung
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Cấu hình</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-uid">Giáo viên:</label>
+                                    <select name="txt-uid" id="txt-uid" required class="form-control select2">
+                                        @Html.Raw(gv.ToString())
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-userID">Tài khoản:</label>
+                                    <input id="txt-userID" name="txt-userID" required type="email" class="form-control" placeholder="taikhoanzoom@gmail.com" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-key">API Key:</label>
+                                    <input id="txt-key" name="txt-key" required type="text" onkeypress="return event.charCode != 32" class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-secrect">API Secret:</label>
+                                    <input id="txt-secrect" name="txt-secrect" required type="text" onkeypress="return event.charCode != 32" class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-token">Mã xác thực:</label>
+                                    <textarea id="txt-token" name="txt-token" type="text" onkeypress="return event.charCode != 32" class="form-control" placeholder="..." rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="/Admin/ZoomMeeting/RegistrationZoom" target="_blank" class="text-info"><i class="fas fa-info-circle"></i> Hướng dẫn</a>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block mg-t-10">Xác nhận</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $('.btn-add-config').click(function () {
+            $('input[name=hdfID]').val(0);
+            $('input[name=txt-uid]').val(0);
+            $('input[name=txt-userID]').val('');
+            $('input[name=txt-key]').val('');
+            $('input[name=txt-secrect]').val('');
+            $('textarea[name=txt-token]').val('');
+            $('#div-config').modal('show');
+        });
+        $(document).on("click", ".edit-config", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('select[name=txt-uid]').val($(this).attr('data-teacherID'));
+            $('input[name=txt-userID]').val($(this).attr('data-userID'));
+            $('input[name=txt-key]').val($(this).attr('data-apiKey'));
+            $('input[name=txt-secrect]').val($(this).attr('data-apiSecrect'));
+            $('textarea[name=txt-token]').val($(this).attr('data-token'));
+            $("#txt-uid").select2({
+                dropdownParent: $("#div-config")
+            });
+            $('#div-config').modal('show');
+        });
+    </script>
+}
+

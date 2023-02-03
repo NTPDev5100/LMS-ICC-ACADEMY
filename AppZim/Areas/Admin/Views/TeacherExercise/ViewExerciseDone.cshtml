@@ -1,0 +1,415 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions;
+@{
+    ViewBag.Title = "ExrciseDetailEssayFix";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+<style>
+    .feedback {
+        max-width: 270px;
+        width: 100%;
+        border-radius: 8px;
+        display: inline-block;
+        flex-direction: column;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .modal-footer {
+        border-top: none;
+    }
+
+    .content {
+        overflow: initial;
+    }
+
+    .question {
+        display: flex;
+        align-items: center;
+    }
+
+        .question h6 {
+            margin: 0;
+            padding: 0;
+        }
+
+        .question p {
+            margin: 0;
+            padding: 0;
+        }
+</style>
+
+<!-- Breadcrumb -->
+<div class="row mg-b-30">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("ExerciseDone", "TeacherExercise", new { area = "Admin" })">Dữ liệu bài tập</a></li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<!-- End breadcrumb -->
+<div class="row">
+    <div class="col-12 col-md-8">
+        <div class="exc-info">
+            <div class="question-wrap">
+                @if (Model.ExerciseID != 0)
+                {
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mg-b-5">Câu hỏi</h6>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="raw-txt">
+                                @Html.Raw(Model.ExerciseQuestion)
+                            </div>
+                        </div>
+                    </div>
+                }
+                <div class="card mg-t-10">
+                    <div class="card-header">
+                        <h6 class="mg-b-5">Học viên trả lời</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="raw-txt" id="student-raw-text">
+                            <div class="student-answer">
+                                @Html.Raw(Model.ParagraphAnswerFix)
+                            </div>
+                            @{
+                                if (Model.Type == 3 && Model.ExerciseID != 0)
+                                {
+                                    var laudio = ExerciseAddonStudentFileAudioTable.getbyexerciseaddonstudentID(Model.ID);
+                                    if (!string.IsNullOrEmpty(Model.FileAudio))
+                                    {
+                                        <audio controls>
+                                            <source src="@Model.FileAudio" type="audio/ogg">
+                                            <source src="@Model.FileAudio" type="audio/mpeg">
+                                        </audio>
+                                    }
+                                    foreach (var item in laudio)
+                                    {
+                                        <audio controls>
+                                            <source src="@item.LinkFile" type="audio/ogg">
+                                            <source src="@item.LinkFile" type="audio/mpeg">
+                                        </audio>
+                                        <br />
+                                    }
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="card mg-t-10">
+                    <div class="card-header">
+                        <h6 class="mg-b-5">Nhận xét</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="teacher-comment">
+                            @Html.Raw(Model.NoteFix)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mg-b-0">Thông tin</h6>
+            </div>
+            <div class="card-body">
+                <div class="information-block">
+                    <div class="student-info">
+                        <div class="student-course">
+                            @{
+                                tbl_Courses course = CoursesTable.getbyid(Model.CourseID);
+                                if (course != null)
+                                {
+                                    <p class="txt"><span class="lb">Trung tâm:</span> <span class="value">@course.SchoolName.ToString()</span></p>
+                                    <p class="txt"><span class="lb">Khóa học:</span> <span class="value">@course.ClassName.ToString()</span></p>
+                                    <p class="txt"><span class="lb">Ngày mở:</span> <span class="value">@course.OpeningDate.Value.ToString("dd/MM/yyyy")</span></p>
+                                }
+                            }
+                            <p class="txt"><span class="lb">Học viên:</span> <span class="value">@Model.StudentName</span></p>
+                            <p class="txt"><span class="lb">Giáo viên:</span> <span class="value">@Model.FullNameCreatedByExercise</span></p>
+                            <p class="txt"><span class="lb">Thời gian chấm:</span> <span class="value">@Model.ModifiedDate.ToString("dd/MM/yyyy HH:mm")</span></p>
+                        </div>
+                        <div class="w-100 mg-t-10 d-flex justify-content-between">
+                            @{
+                                if (ViewBag.Exercise != null && !string.IsNullOrEmpty(ViewBag.Exercise.LinkFile))
+                                {
+                                    <p>
+                                        <span class="title lb-fixed font-weight-600 black-text">
+                                            File:
+                                        </span>
+                                        <a href="@ViewBag.Exercise.LinkFile" download="download">@ViewBag.Exercise.FileName<span class="material-icons ml-1 cyan-text" style="vertical-align:bottom;">cloud_download</span></a>
+                                    </p>
+                                }
+                                if (Model.RateExercise != null)
+                                {
+                                    <p>
+                                        <span class="title lb-fixed font-weight-600 black-text">
+                                            Đánh giá:
+                                        </span>
+                                        @{
+                                            for (int i = 0; i < Model.RateExercise; i++)
+                                            {
+                                                <span class="material-icons" style="vertical-align:bottom; color:#FFEB3B!important;">star</span>
+                                            }
+                                        }
+                                    </p>
+                                }
+                            }
+                        </div>
+                        @{
+                            if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7 || aclog.RoleID == 8)
+                            {
+                                tbl_ExerciseAddonStudentCheckFix ck = ExerciseAddonStudentCheckFixTable.getbyExerciseAddonStudentID(Model.ID);
+                                if (ck != null)
+                                {
+                                    if (ck.StatusAcceptReject == 1)
+                                    {
+                                        <div class="w-100 mg-t-10 d-flex justify-content-between">
+                                            <a href="javascript:;" class="btn btn-success mg-r-10 check-done" data-id="2"><i data-feather="check-circle"></i> Xác nhận</a>
+                                            <a href="javascript:;" class="btn btn-danger check-done" data-id="3"><i data-feather="x-circle"></i> Từ chối</a>
+                                        </div>
+                                    }
+                                    if (ck.StatusAcceptReject == 2)
+                                    {
+                                        <i data-feather="check-circle" style="color:#10b759;"></i>
+                                    }
+                                    if (ck.StatusAcceptReject == 3)
+                                    {
+                                        <i data-feather="x-circle" style="color:#bd2130;"></i>
+                                    }
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="left-sticky">
+            <div class="card mg-t-10">
+                <div class="card-header">
+                    <h6 class="mg-b-0 d-flex align-items-end justify-content-between"><span>Nhận xét</span><span id="number-note">(@ViewBag.Fix.Count nhận xét)</span></h6>
+                </div>
+                <div class="card-body note-ps">
+                    <div id="list-note-wrap">
+                        @{
+                            foreach (var jtem in ViewBag.Fix)
+                            {
+                                tbl_ExerciseAddonStudentFix item = jtem;
+                                <div class="note-block" data-cmt="@item.DataCMT">
+                                    <div class="note-content">
+                                        @{
+                                            tbl_Account acif = AccountTable.getbyusername(item.CreatedBy);
+                                            <div class="comment-info d-flex">
+                                                <div class="avatar">
+                                                    @if (!string.IsNullOrEmpty(acif.AvatarThumbnail))
+                                                    {
+                                                        <img src="@acif.AvatarThumbnail" class="rounded-circle" alt="avatar">
+                                                    }
+                                                    else
+                                                    {
+                                                        <img src="/app-assets/zimv2/images/invis-user.png" class="rounded-circle" alt="avatar">
+                                                    }
+                                                </div>
+                                                <div class="meta mg-l-10 flex-grow-1 pd-r-30">
+                                                    <p class="name mg-b-0">@acif.FullName</p>
+                                                    <p class="date-time mg-b-10 tx-12 tx-color-03 mg-b-0">@AccountTable.getrolehtml(acif.RoleID.Value)</p>
+                                                </div>
+                                            </div>
+                                        }
+                                        <div class="comment-content" style="white-space:pre-line;" id="area-@item.ID">
+                                            @item.FixNote
+                                        </div>
+                                        @{
+                                            List<tbl_ExerciseAddonStudentFixLinkAudio> laudio = ExerciseAddonStudentFixLinkAudioTable.getbycmtid(item.ID);
+                                            if (!string.IsNullOrEmpty(item.LinkAudio))
+                                            {
+                                                tbl_ExerciseAddonStudentFixLinkAudio t = new tbl_ExerciseAddonStudentFixLinkAudio();
+                                                t.LinkFile = item.LinkAudio;
+                                                laudio.Add(t);
+                                            }
+                                            foreach (var link in laudio)
+                                            {
+                                                <div class="record-list">
+                                                    <div class="audio-result mg-t-10" data-index="0">
+                                                        <audio controls="" class="valign-center" style="display: block; width: 100%;">
+                                                            <source src="@link.LinkFile" type="audio/webm">
+                                                        </audio>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="card teacher-score mg-t-10">
+                <div class="card-header">
+                    <h6 class="mg-b-5">Ghi điểm</h6>
+                </div>
+                <div class="card-body d-flex flex-column-reverse">
+                    <div class="row-flex d-flex pd-r-40 align-items-center mg-t-10" style=" font-size: 30px; font-weight: 600;">
+                        <div class="label w-50">
+                            <span class="txt">Tổng điểm</span>
+                        </div>
+                        <div class="value w-50 ">
+                            @Model.Scores
+                        </div>
+                    </div>
+                    @{
+                        foreach (var item in ViewBag.Score)
+                        {
+
+                            <div class="row-flex d-flex pd-r-40 align-items-center mg-t-10">
+                                <div class="label w-50 pd-r-5">
+                                    @item.ScoreName
+                                </div>
+                                <div class="value w-50">
+                                    @item.Score
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section myScripts{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/jquery.scrollTo.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            hoverhighline();
+            const ps = new PerfectScrollbar(".note-ps", {
+                wheelSpeed: 2,
+                wheelPropagation: true,
+                minScrollbarLength: 20
+            });
+            var teacherComment = {
+                selector: '#teacher-comment',
+                menubar: false,
+                inline: false,
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste'
+                ],
+
+                mobile: {
+                    theme: 'silver',
+
+                },
+                readonly: 1,
+                paste_as_text: true,
+                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+            };
+            tinymce.init(teacherComment);
+            function hoverhighline() {
+                $('body').on('click', '.ct-comment', function (e) {
+                    e.preventDefault();
+                    var id = $(this).attr('id');
+                    var $blockControl = $('[data-cmt="' + id + '"]');
+                    //   console.log($blockControl);
+                    $(this).css({
+                        'background': ' #FAE168',
+                        'padding': '5px', 'transform': 'scale(1.4)',
+                        'color': '#000'
+                    });
+                    $('.ct-comment').not($(this)).attr('style', '');
+                    $('.note-ps').scrollTo($blockControl, 500, { offset: -50 });
+
+
+                    $('.note-block').each(function () {
+                        var idIn = $(this).attr("data-cmt");
+
+                        if (idIn == id) {
+                            $(this).css({
+                                'webkit-box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                                'box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                                'border-color': 'transparent',
+                                'background': 'rgba(255, 255, 255, 1)',
+                                'transform': 'scale(1.02) translate(-10px,-5px)'
+                            });
+                        } else {
+                            $(this).attr('style', '');
+                        }
+                    });
+                });
+
+                $('body').on('click', '.note-block', function (e) {
+                    var id = $(this).attr('data-cmt');
+                    $(this).css({
+                        'webkit-box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                        'box-shadow': 'rgba(53, 98, 200, 0.28) 0px 0px 11px 2px',
+                        'border-color': 'transparent',
+                        'background': 'rgba(255, 255, 255, 1)',
+                        'transform': 'scale(1.02) translate(-10px,-5px)'
+
+                    });
+                    $('.note-block').not($(this)).attr('style', '');
+                    $('.ct-comment').each(function () {
+                        var idIn = $(this).attr("id");
+                        if (idIn == id) {
+                            $(this).css({
+                                'background': ' #FAE168',
+                                'padding': '5px', 'transform': 'scale(1.4)',
+                                'color': '#000'
+                            });
+                        }
+                        else {
+                            $(this).attr('style', '');
+                        }
+                    });
+                })
+            }
+        });
+        $('.check-done').click(function () {
+            if (confirm('Are you sure?')) {
+                var status = $(this).attr('data-id');
+                var e = $(this);
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/TeacherExercise/CheckFix",
+                    data: '{id: ' + @Model.ID + ', status:' + status + '}',
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (msg) {
+                            if (msg.rs) {
+                                var dv = $(e).closest('div');
+                                dv.remove();
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Không thành công',
+                                    icon: 'notifications_active',
+                                    classBackground: 'noti-warning',
+                                    timeout: 3000
+                                })
+                            }
+                        },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error save draft");
+                    }
+                });
+            }
+        })
+    </script>
+}

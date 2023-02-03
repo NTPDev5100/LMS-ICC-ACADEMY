@@ -1,0 +1,779 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@using System.Text;
+@using System.Collections.Generic;
+@model List<getallcustomernew_Result>
+@{
+    ViewBag.Title = "CustomerList";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_Account> lsale = AccountTable.getall().Where(n => n.Status == 2 && (n.RoleID == 3 || n.RoleID == 6)).OrderBy(n => n.FullName).ToList();
+    List<tbl_AcademicPurposes> mucdich = AcademicPurposesTable.getall();
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var lLanguage = Language.GetAll();
+    List<tbl_SourceOfCustomer> sc = SourceOfCustomerTable.getall();
+    List<tbl_Job> jobs = JobTable.getall();
+    List<tbl_City> citys = LocationTable.getall();
+    StringBuilder tvv = new StringBuilder();
+    StringBuilder nguon = new StringBuilder();
+    foreach (var item in sc)
+    {
+        nguon.Append("<option value=\"" + item.ID + "\">" + item.SourceOfCustomer + "</option>");
+    }
+    StringBuilder viec = new StringBuilder();
+    foreach (var item in jobs)
+    {
+        viec.Append("<option value=\"" + item.ID + "\">" + item.JobName + "</option>");
+    }
+    StringBuilder tinh = new StringBuilder();
+    foreach (var item in citys)
+    {
+        tinh.Append("<option value=\"" + item.ID + "\">" + item.CityName + "</option>");
+    }
+    foreach (var item in lsale)
+    {
+        tvv.Append("<option value=\"" + item.ID + "\">" + item.FullName + "</option>");
+    }
+    StringBuilder mdich = new StringBuilder();
+    foreach (var item in mucdich)
+    {
+        mdich.Append("<option value=\"" + item.ID + "\">" + item.AcademicPurposesName + "</option>");
+    }
+    var trinhdo = AcademicLevelTable.getall();
+    var nations = NationTable.GetAll();
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách học viên</li>
+    </ol>
+</nav>
+@using (Html.BeginForm("CustomerList", "Customer", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    <div class="form-group col-md-4 col-6 col-xl-3">
+                        <label class="form-control-label">Tình trạng học tập</label>
+                        <select class="form-control select2" name="slStudy">
+                            <option value="0">-- Tất cả --</option>
+                            <option value="1">Chưa học</option>
+                            <option value="2">Đang học</option>
+                            <option value="3">Đã học xong</option>
+                        </select>
+                        <script>$('select[name=slStudy]').val(@ViewBag.Study)</script>
+                    </div>
+
+                    <div class="form-group col-md-4 col-6 col-xl-3">
+                        <label class="form-control-label">Trạng thái:</label>
+                        <select class="form-control select2" name="status">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                if (ViewBag.StatusID != null)
+                                {
+                                    if (ViewBag.StatusID == 1)
+                                    {
+                                        <option value="1" selected>Chưa kích hoạt</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="1">Chưa kích hoạt</option>
+                                    }
+                                    if (ViewBag.StatusID == 2)
+                                    {
+                                        <option value="2" selected>Hoạt động</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="2">Hoạt động</option>
+                                    }
+                                    if (ViewBag.StatusID == 3)
+                                    {
+                                        <option value="3" selected>Khóa</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="3">Khóa</option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="1">Chưa kích hoạt</option>
+                                    <option value="2">Hoạt động</option>
+                                    <option value="3">Khóa</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-group col-md-4 col-6 col-xl-3">
+                        <label>Thao tác:</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary"><i data-feather="search"></i> Tìm kiếm</button>
+                            <a href="~/app-assets/form.xlsx" download="download" class="btn btn-primary" style="background-color: cornflowerblue; border-color: cornflowerblue;" data-toggle="tooltip" data-placement="left" title="Mẫu excel"><i class="far fa-save"></i></a>
+                            @using (Html.BeginForm("ImportExcel", "Customer", FormMethod.Post, new { id = "f-import", @enctype = "multipart/form-data" }))
+                            {
+                                <label class="thumbnail-upload">
+                                    <input type="file" name="file" class="hidden upload-image-input" onchange="Submit()">
+                                    <span class="pos-relative rounded-5 overflow-hidden btn btn-primary waves-light"
+                                          data-toggle="tooltip" data-placement="left" title="Upload file excel">
+                                        <i class="far fa-file-excel"></i>
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th hidden>Tỉnh/TP</th>
+                    <th>Họ và tên</th>
+                    <th>SĐT</th>
+                    <th>Email</th>
+                    @{
+                        if (aclog.RoleID == 1)
+                        {
+                            <th class="no-wrap">Kênh lấy data</th>
+                        }
+                    }
+                    <th class="no-wrap">Trạng thái</th>
+                    <th>Tư vấn viên</th>
+                    <th>Tình trạng học tập</th>
+                    @*<th>Đã đăng kí</th>*@
+                    <th class="no-wrap text-center">@ViewBag.Total</th>
+                    @*<th class="text-center"></th>*@
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        tbl_Account jtem = AccountTable.getbyID(item.ID);
+                        string Birthday = "";
+                        string IdentityCardDate = "";
+                        string DateExam = "";
+                        if (jtem.Birthday != null)
+                        {
+                            Birthday = jtem.Birthday.Value.ToString("dd/MM/yyyy");
+                        }
+                        if (jtem.IdentityCardDate != null)
+                        {
+                            IdentityCardDate = jtem.IdentityCardDate.Value.ToString("dd/MM/yyyy");
+                        }
+                        if (jtem.DateExam != null)
+                        {
+                            DateExam = jtem.DateExam.Value.ToString("dd/MM/yyyy");
+                        }
+                                <tr class="tr-row">
+                                    <td><a href="javascript:;" class="collapse-toggle" data-id="@jtem.ID"><i class="fas fa-plus-square"></i></a></td>
+                                    <td hidden>@jtem.LocationName</td>
+                                    <td>@jtem.FullName</td>
+                                    <td class="no-wrap">@jtem.Phone</td>
+                                    <td>@jtem.Email</td>
+                                    @{
+                                        if (aclog.RoleID == 1)
+                                        {
+                                            <td class="no-wrap">@jtem.SourceName</td>
+                                        }
+                                    }
+                                    <td>
+                                        @{
+                                            if (jtem.Status.Value == 1)
+                                            {
+                                                <span class="badge badge-warning">@jtem.StatusName</span>
+                                            }
+                                            else if (jtem.Status.Value == 2)
+                                            {
+                                                <span class="badge badge-success">@jtem.StatusName</span>
+                                            }
+                                            else if (jtem.Status.Value == 3)
+                                            {
+                                                <span class="badge badge-danger">@jtem.StatusName</span>
+                                            }
+                                        }
+                                    </td>
+                                    <td>@jtem.SupportName</td>
+                                    <td>
+                                        @{
+                                            if (item.HideInExpired == 0 && item.Active == 0)
+                                            {
+                                                <span class="badge badge-info">Chưa học</span>
+                                            }
+                                            else if (item.Active > 0)
+                                            {
+                                                <span class="badge badge-success">Đang học</span>
+                                            }
+                                            else if (item.HideInExpired > 0 && item.Active == 0)
+                                            {
+                                                <span class="badge badge-danger">Đã học xong</span>
+                                            }
+                                        }
+                                    </td>
+                                    @*@{
+            if (item.LearningStatus == 2)
+            {
+                <td class="no-wrap">Chưa đăng kí</td>
+            }
+            else if (item.LearningStatus == 3)
+            {
+                <td class="no-wrap">Đã đăng kí</td>
+            }
+            else
+            {
+                <td class="no-wrap">Đã xong</td>
+            }
+        }*@
+                                    <td class="text-center">
+                                        <a href="@Url.Action("CustomerDetai", "Customer", new { area = "Admin", id = jtem.ID })" data-toggle="tooltip" data-placement="left" title="Chi tiết"><i class="fas fa-user-shield"></i></a>
+                                    </td>
+                                    @*<td class="text-center">
+            @if (aclog.RoleID == 1 || aclog.RoleID == 7)
+            {
+                <a href="javascript:;" class="btn btn-icon btn-sm btn-delete" style="background:#f52222;color:white" data-id="@item.ID" data-name="@item.FullName" data-toggle="tooltip" data-placement="top" title="Xóa">
+                    <i data-feather="trash-2"></i>
+                </a>
+            }
+        </td>*@
+                                </tr>
+                        <tr class="collapse-row">
+                            <td colspan="11">
+                                <div class="collapse-content">
+                                    <div class="schedule-test-form mg-t-30">
+                                        <div class="row" id="test-register">
+                                            <div class="col-12 col-md-12">
+                                                <fieldset class="form-fieldset">
+                                                    <legend>Thông tin chi tiết</legend>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Tài khoản:</label>
+                                                            <input type="text" class="form-control" id="ddl-username-@jtem.ID" value="@jtem.UserName" disabled>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="required">Kênh lấy data:</label>
+                                                            <select class="form-control select2" id="ddl-source-@jtem.ID">
+                                                                <option value="0">Tư Vấn Viên</option>
+                                                                @Html.Raw(nguon.ToString())
+                                                            </select>
+                                                            <script>
+                                                                                $('#ddl-source-@jtem.ID').val(@jtem.SourceID)
+                                                            </script>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="required">Hỗ trợ:</label>
+                                                            <select class="form-control select2" id="ddl-support-@jtem.ID">
+                                                                <option value="0">---</option>
+                                                                @Html.Raw(tvv.ToString())
+                                                                @*@{
+                                                                        foreach (var s in lsale)
+                                                                        {
+                                                                            if (jtem.SupportUID != null)
+                                                                            {
+                                                                                if (jtem.SupportUID == s.ID)
+                                                                                {
+                                                                                    <option value="@s.ID" selected>@s.FullName</option>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <option value="@s.ID">@s.FullName</option>
+                                                                                }
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@s.ID">@s.FullName</option>
+                                                                            }
+                                                                        }
+                                                                    }*@
+                                                            </select>
+                                                            <script>
+                                                                $('#ddl-support-@jtem.ID').val(@jtem.SupportUID)
+                                                            </script>
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group" hidden>
+                                                            <label class="">Tỉnh/TP:</label>
+                                                            <select class="form-control select2" id="ddl-city-@jtem.ID" data-id="@jtem.ID">
+                                                                <option value="0">---</option>
+                                                                @Html.Raw(tinh.ToString())
+                                                            </select>
+                                                            <script>
+                                                                            $('#ddl-city-@jtem.ID').val(@jtem.LocationID)
+                                                            </script>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="address" class="required">Ngôn ngữ theo học</label>
+                                                            <select class="form-control select2" id="dll-language-@jtem.ID">
+                                                                <option value="0"></option>
+                                                                @foreach (var ii in lLanguage)
+                                                                {
+                                                                    <option value="@ii.ID" @(ii.ID == jtem.Language ? "selected" : "")>@ii.Name</option>
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row" hidden>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Quận huyện:</label>
+                                                            <select class="form-control select2" id="ddl-district-@jtem.ID">
+                                                                <option value="0"></option>
+                                                                @{
+                                                                    if (jtem.DistrictID != null)
+                                                                    {
+                                                                        if (jtem.DistrictID != 0)
+                                                                        {
+                                                                            <option value="@jtem.DistrictID">@jtem.DistrictName</option>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Phường xã:</label>
+                                                            <select class="form-control select2" id="ddl-ward-@jtem.ID">
+                                                                <option value="0"></option>
+                                                                @{
+                                                                    if (jtem.WardID != null)
+                                                                    {
+                                                                        if (jtem.WardID != 0)
+                                                                        {
+                                                                            <option value="@jtem.WardID">@jtem.WardName</option>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Đường:</label>
+                                                            <select class="form-control select2" id="ddl-street-@jtem.ID">
+                                                                <option value="0"></option>
+                                                                @{
+                                                                    if (jtem.StreetID != null)
+                                                                    {
+                                                                        if (jtem.StreetID != 0)
+                                                                        {
+                                                                            <option value="@jtem.StreetID">@jtem.StreetName</option>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Số nhà:</label>
+                                                            <input type="text" class="form-control" id="txt-home-number-@jtem.ID" value="@jtem.HomeNumber">
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="required">Họ và tên:</label>
+                                                            <input type="text" class="form-control" id="txt-fullname-@jtem.ID" value="@jtem.FullName">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Số điện thoại:</label>
+                                                            <input type="number" class="form-control" id="txt-phone-@jtem.ID" value="@jtem.Phone">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="required">Email:</label>
+                                                            <input type="email" class="form-control" id="txt-email-@jtem.ID" value="@jtem.Email">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="required">Ngày sinh:</label>
+                                                            <input type="text" class="form-control datetimepicker date-only" id="txt-birthday-@jtem.ID" value="@Birthday">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group" hidden>
+                                                            <label class="">Số CMND:</label>
+                                                            <input type="number" class="form-control" id="txt-identity-@jtem.ID" value="@jtem.IdentityCard">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group" hidden>
+                                                            <label class="">Nơi cấp:</label>
+                                                            <select class="form-control select2" id="ddl-city-identity-@jtem.ID">
+                                                                @Html.Raw(tinh.ToString())
+                                                            </select>
+                                                            <script>
+                                                                            $('#ddl-city-identity-@jtem.ID').val(@jtem.IdentityCardCityID)
+                                                            </script>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group" hidden>
+                                                            <label class="">Ngày cấp:</label>
+                                                            <input type="text" class="form-control datetimepicker date-only" id="txt-date-identity-@jtem.ID" value="@IdentityCardDate">
+                                                        </div>
+
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Công việc:</label>
+                                                            <select class="form-control select2" id="ddl-job-@jtem.ID">
+                                                                @Html.Raw(viec.ToString())
+                                                            </select>
+                                                            <script>
+                                                                            $('#ddl-job-@jtem.ID').val(@jtem.JobID)
+                                                            </script>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="date_of_issued" class="">Đơn vị công tác/Học tập:</label>
+                                                            <input type="text" class="form-control" id="txt-work-place-@jtem.ID" value="@jtem.WorkPlace">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="address" class="">Địa chỉ:</label>
+                                                            <input type="text" class="form-control" id="txt-address-@jtem.ID" value="@jtem.Address">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Quốc gia:</label>
+                                                            <select class="custom-select select2" id="nation-@jtem.ID">
+                                                                @{
+                                                                    foreach (var n in nations)
+                                                                    {
+                                                                        <option value="@n.ID">@n.Nation</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>
+                                                                $('#nation-@jtem.ID').val(@jtem.NationID)
+                                                            </script>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Mục đích học tập:</label>
+                                                            <select class="form-control select2" id="ddl-muc-dich-@jtem.ID">
+                                                                <option value="0">---</option>
+                                                                @Html.Raw(mdich.ToString())
+                                                            </select>
+                                                            <script>
+                                                                            $('#ddl-muc-dich-@jtem.ID').val(@jtem.AcademicPurposesID)
+                                                            </script>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="date_of_issued" class="required">Đầu vào dự kiến:</label>
+                                                            <select class="custom-select select2" id="txt-in-scoure-@jtem.ID" name="in-point-hope">
+                                                                @{
+                                                                    foreach (var i in trinhdo)
+                                                                    {
+                                                                        <option value="@i.ID">@i.LevelName - @i.LanguageName</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>
+                                                                        $('#txt-in-scoure-@jtem.ID').val(@jtem.ScoreIn.ToInt(0))
+                                                            </script>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="date_of_issued" class="required">Đầu ra dự kiến:</label>
+                                                            <select class="custom-select select2" id="txt-out-scoure-@jtem.ID" name="out-point-hope">
+                                                                @{
+                                                                    foreach (var i in trinhdo)
+                                                                    {
+                                                                        <option value="@i.ID">@i.LevelName - @i.LanguageName</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>$('#txt-out-scoure-@jtem.ID').val(@jtem.ScoreOut.ToInt(0))</script>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="date_of_issued" class="">Người nhà</label>
+                                                            <input type="text" class="form-control" id="txt-home-@jtem.ID" value="@jtem.NoteHome">
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Loại đào tạo:</label>
+                                                            <select class="form-control select2" id="ddl-academic-@jtem.ID">
+                                                                @{
+                                                                    if (!string.IsNullOrEmpty(jtem.TypeOfEducation))
+                                                                    {
+                                                                        if (jtem.TypeOfEducation.Contains("Academic"))
+                                                                        {
+                                                                            <option selected value="Academic">Academic</option>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="Academic">Academic</option>
+                                                                        }
+                                                                        if (jtem.TypeOfEducation.Contains("General"))
+                                                                        {
+                                                                            <option selected value="General">General</option>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="General">General</option>
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="Academic">Academic</option>
+                                                                        <option value="General">General</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Ngày thi:</label>
+                                                            <input type="text" class="form-control datetimepicker date-only" id="txt-exam-@jtem.ID" placeholder="DD / MM / YYYY" value="@DateExam">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="date_of_issued" class="">Trạng thái:</label>
+                                                            <select class="form-control select2" id="ddl-status-@jtem.ID">
+                                                                @{
+                                                                    if (jtem.Status == 1)
+                                                                    {
+                                                                        <option value="1" selected>Chưa kích hoạt</option>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="1">Chưa kích hoạt</option>
+                                                                    }
+                                                                    if (jtem.Status == 2)
+                                                                    {
+                                                                        <option value="2" selected>Hoạt động</option>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="2">Hoạt động</option>
+                                                                    }
+                                                                    if (jtem.Status == 3)
+                                                                    {
+                                                                        <option value="3" selected>Khóa</option>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="3">Khóa</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="date_of_issued" class="">Mật khẩu mới:</label>
+                                                            <input type="password" class="form-control" id="txt-password-@jtem.ID" placeholder="*******">
+                                                        </div>
+                                                    </div>
+                                                    @{
+                                                        if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 6)
+                                                        {
+                                                            <div class="form-row text-center">
+                                                                <a href="javascript:;" class="btn btn-primary update-customer" data-id="@jtem.ID" style="margin:0 auto;">Cập nhật</a>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </fieldset>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </nav>
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).ready(function () {
+            $('.btn-delete').on('click', function () {
+                let id = $(this).attr('data-id');
+                let fullname = $(this).attr('data-name');
+                let $this = $(this);
+                if (confirm("Bạn có chắc chắn muốn xóa học viên " + fullname + "?")) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/Staff/DeleteUser?id=' + id,
+                        success: function (msg) {
+                            if (msg.rs) {
+                                $this.closest('tr').remove();
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Thành công',
+                                    icon: 'check',
+                                    classBackground: 'noti-success',
+                                    timeout: 3000
+                                })
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                })
+                            }
+                        }
+                    })
+
+                }
+                else {
+                    return false;
+                }
+            });
+        })
+
+        $('.update-customer').click(function () {
+            var id = $(this).attr('data-id');
+
+            var sourceid = $('#ddl-source-' + id + '').val();
+            var citydis = $('#ddl-city-' + id + '').val();
+
+            //var district = $('#ddl-district-' + id + '').val();
+            var district = 0;
+            //var ward = $('#ddl-ward-' + id + '').val();
+            var ward = 0;
+            //var street = $('#ddl-street-' + id + '').val();
+            var street = 0;
+            //var home = $('#txt-home-number-' + id + '').val();
+            var home = "";
+            var language = $('#dll-language-' + id + '').val();
+
+            var fullname = $('#txt-fullname-' + id + '').val();
+            var phone = $('#txt-phone-' + id + '').val();
+            var email = $('#txt-email-' + id + '').val();
+            var address = $('#txt-address-' + id + '').val();
+            var cmnd = $('#txt-identity-' + id + '').val();
+            var cmndcity = $('#ddl-city-identity-' + id + '').val();
+            var cmnddate = $('#txt-date-identity-' + id + '').val();
+            var birth = $('#txt-birthday-' + id + '').val();
+            var jobid = $('#ddl-job-' + id + '').val();
+            var workplace = $('#txt-work-place-' + id + '').val();
+            var mucdicid = $('#ddl-muc-dich-' + id + '').val();
+            var note = $('#txt-home-' + id + '').val();
+            var typeedu = $('#ddl-academic-' + id + '').val();
+            var scorein = $('#txt-in-scoure-' + id + '').val();
+            var scoreout = $('#txt-out-scoure-' + id + '').val();
+            var dateexam = $('#txt-exam-' + id + '').val();
+            var status = $('#ddl-status-' + id + '').val();
+            var supportid = $('#ddl-support-' + id + '').val();
+            var pass = $('#txt-password-' + id + '').val();
+            var nation = $('#nation-' + id + '').val();
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/UpdateCusAjax",
+                data: '{id: ' + id + ', sourceid:' + sourceid + ', citydis:' + citydis + ', fullname:"' + fullname
+                    + '", phone:"' + phone + '", email:"' + email + '", address:"' + address + '", cmnd:"' + cmnd
+                    + '", cmndcity:' + cmndcity + ', cmnddate:"' + cmnddate + '", birth:"' + birth + '", jobid:'
+                    + jobid + ', workplace:"' + workplace + '", mucdicid:' + mucdicid + ', note:"' + note + '", typeedu:"'
+                    + typeedu + '", scorein:"' + scorein + '", scoreout:"' + scoreout + '", dateexam:"' + dateexam
+                    + '", status:' + status + ', supportid:' + supportid + ', pass:"' + pass + '", district:' + district
+                    + ', ward:' + ward + ', street:' + street + ', home:"' + home + '", language:' + language
+                    + ', nation:' + nation + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    console.log(msg.rs);
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Cập nhật thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 2500
+                        })
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Cập nhật đầy đủ thông tin học viên',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                }
+            });
+        })
+
+        function loaddistrict(e) {
+            var id = $(e).attr('data-id');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/GetDistrict",
+                data: '{cityid: ' + $(e).val() + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#ddl-district-' + id + '').empty();
+                    $('#ddl-district-' + id + '').append(msg.d).trigger('change');
+                    $('#ddl-district-' + id + '').attr('data-id', id);
+                    loadwardstreet($('#ddl-district-' + id + ''));
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error load-district");
+                }
+            });
+        }
+        function loadwardstreet(e) {
+            var id = $(e).attr('data-id');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/GetWardStreet",
+                data: '{districtid: ' + $(e).val() + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#ddl-ward-' + id + '').empty();
+                    $('#ddl-street-' + id + '').empty();
+
+                    $('#ddl-ward-' + id + '').append(msg.w).trigger('change');
+                    $('#ddl-street-' + id + '').append(msg.s).trigger('change');
+                    //$('#ddl-district-' + id + '').trigger("change");
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error load-district");
+                }
+            });
+        }
+        function Submit() {
+            $('#f-import').submit();
+        }
+    </script>
+}

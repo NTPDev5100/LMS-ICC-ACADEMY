@@ -1,0 +1,332 @@
+﻿
+@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "AddCustomer";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+
+    List<tbl_SourceOfCustomer> sc = SourceOfCustomerTable.getall();
+    List<tbl_Job> jobs = JobTable.getall();
+    List<tbl_City> citys = LocationTable.getall();
+    List<tbl_Account> lsale = AccountTable.getbyrole(6).Where(n => n.Status == 2).OrderBy(n => n.FullName).ToList();
+    List<tbl_AcademicPurposes> mucdich = AcademicPurposesTable.getall();
+    var lLanguage = Language.GetAll();
+}
+
+@section myStyles{
+    <link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+    <style>
+        .list-student-course .table tr td:first-child {
+            background: transparent;
+        }
+
+        .config-teacher .table-responsive:last-child {
+            margin-bottom: 0px;
+        }
+
+        .d-flex .align-items-center:last-child {
+            margin-left: 10px;
+        }
+
+        @@media only screen and (max-width: 500px) {
+            .d-flex .align-items-center:last-child {
+                margin-left: 0px;
+                margin-top: 10px;
+            }
+
+            .d-flex {
+                display: block !important;
+            }
+
+                .d-flex .align-items-center input {
+                    width: 100%;
+                    margin-left: 0px;
+                }
+        }
+    </style>
+}
+
+<div class="media d-block d-lg-flex">
+    <div class="config-teacher" style="width:100%">
+        <div class="teacher-infomation mg-b-15">
+            <div class="collapse-content">
+                <div class="schedule-test-form mg-t-30">
+                    <div class="row" id="test-register">
+                        <form style="width:100%" action="#">
+                            <div class="col-12 col-md-12">
+                                <fieldset class="form-fieldset">
+                                    <legend>Thêm mới học viên</legend>
+                                    <div class="form-row">
+                                        <div class="col-sm-4 form-group">
+                                            <label class="">Kênh lấy data:</label>
+                                            <select class="form-control select2" id="ddl-source">
+                                                <option value="0">Tư Vấn Viên</option>
+                                                @{
+                                                    foreach (var s in sc)
+                                                    {
+                                                        <option value="@s.ID">@s.SourceOfCustomer</option>
+                                                    }
+                                                }
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-4 form-group">
+                                            <label class="">Hỗ trợ:</label>
+                                            <select class="form-control select2" id="ddl-support" required>
+                                                <option value="">---</option>
+                                                @{
+                                                    foreach (var s in lsale)
+                                                    {
+                                                        <option value="@s.ID">@s.FullName</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-4 form-group">
+                                            <label class="">Tỉnh/TP:</label>
+                                            <select class="form-control select2" required id="ddl-city" data-id="111" onchange="loaddistrict(this)">
+                                                <option value="">---</option>
+                                                @{
+                                                    foreach (var c in citys)
+                                                    {
+                                                        <option value="@c.ID">@c.CityName</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row" hidden>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Quận huyện:</label>
+                                            <select class="form-control select2" id="ddl-district-111" data-id="111" onchange="loadwardstreet(this)"></select>
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Phường xã:</label>
+                                            <select class="form-control select2" id="ddl-ward-111"></select>
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Đường:</label>
+                                            <select class="form-control select2" id="ddl-street-111"></select>
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Số nhà:</label>
+                                            <input type="text" class="form-control" id="txt-home-number" value="">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Họ và tên:</label>
+                                            <input type="text" class="form-control" required id="txt-fullname" value="">
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Số điện thoại:</label>
+                                            <input type="number" class="form-control" required id="txt-phone" value="">
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Email:</label>
+                                            <input type="email" class="form-control" required id="txt-email" value="">
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Ngày sinh:</label>
+                                            <input type="text" class="form-control datetimepicker date-only" required id="txt-birthday" value="" placeholder="DD / MM / YYYY">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="col-sm-8 form-group">
+                                            <label for="address" class="">Địa chỉ: <span class="text-info">(Áp dụng đối với các trường hợp không có địa chỉ rõ ràng)</span></label>
+                                            <input type="text" class="form-control" id="txt-address" value="">
+                                        </div>
+                                        <div class="col-sm-4 form-group">
+                                            <label for="address" class="">Ngôn ngữ theo học</label>
+                                            <select class="form-control" id="dll-language">
+                                                @foreach (var item in lLanguage)
+                                                {
+                                                    <option value="@item.ID">@item.Name</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Số CMND:</label>
+                                            <input type="number" class="form-control" id="txt-identity" required value="">
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Nơi cấp:</label>
+                                            <select class="form-control select2" required id="ddl-city-identity">
+                                                @{
+                                                    foreach (var c in citys)
+                                                    {
+                                                        <option value="@c.ID">@c.CityName</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Ngày cấp:</label>
+                                            <input type="text" class="form-control datetimepicker date-only" required id="txt-date-identity" value="" placeholder="DD / MM / YYYY">
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Công việc:</label>
+                                            <select class="form-control select2" id="ddl-job">
+                                                @{
+                                                    foreach (var j in jobs)
+                                                    {
+                                                        <option value="@j.ID">@j.JobName</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-sm-12 form-group">
+                                            <label for="date_of_issued" class="">Đơn vị công tác/Học tập:</label>
+                                            <input type="text" class="form-control" id="txt-work-place" value="">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Mục đích học tập:</label>
+                                            <select class="form-control select2" id="ddl-muc-dich">
+                                                <option value="0">---</option>
+                                                @{
+                                                    foreach (var ac in mucdich)
+                                                    {
+                                                        <option value="@ac.ID">@ac.AcademicPurposesName</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-9 form-group">
+                                            <label for="date_of_issued" class="">Người nhà: <span class="text-info">(Nhập thông tin người nhà để liên lạc khi cần thiết)</span></label>
+                                            <input type="text" class="form-control" id="txt-home" value="">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-sm-3 form-group">
+                                            <label class="">Loại đào tạo:</label>
+                                            <select class="form-control select2" id="ddl-academic">
+                                                <option value="Academic">Academic</option>
+                                                <option value="General">General</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-2 form-group">
+                                            <label for="date_of_issued" class="">Đầu vào:</label>
+                                            <input type="text" class="form-control" id="txt-in-scoure" value="" data-type="currency">
+                                        </div>
+                                        <div class="col-sm-2 form-group">
+                                            <label for="date_of_issued" class="">Đầu ra:</label>
+                                            <input type="text" class="form-control" id="txt-out-scoure" value="" data-type="currency">
+                                        </div>
+                                        <div class="col-sm-2 form-group">
+                                            <label class="">Ngày thi:</label>
+                                            <input type="text" class="form-control datetimepicker date-only" id="txt-exam" placeholder="DD / MM / YYYY" value="">
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label for="date_of_issued" class="">Trạng thái:</label>
+                                            <select class="form-control" id="ddl-status">
+                                                <option value="1">Chưa kích hoạt</option>
+                                                <option value="2" selected>Hoạt động</option>
+                                                <option value="3">Khóa</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    @{
+                                        if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 6)
+                                        {
+                                            <div class="form-row text-center">
+                                                @*<a href="javascript:;" class="btn btn-primary add-customer" style="margin:0 auto;"><i data-feather="save"></i> Thêm mới</a>*@
+                                                <button type="submit" class="btn btn-primary add-customer" style="margin:0 auto;"> <i data-feather="save"></i> Thêm mới</button>
+                                            </div>
+                                        }
+                                    }
+
+                                </fieldset>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- media -->
+@section myScripts{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/jqueryui/jquery-ui.min.js"></script>
+    <script>
+
+        $('.add-customer').click(function () {
+            var sourceid = $('#ddl-source').val();
+            var citydis = $('#ddl-city').val();
+
+            var district = $('#ddl-district-111').val();
+            var ward = $('#ddl-ward-111').val();
+            var street = $('#ddl-street-111').val();
+            var home = $('#txt-home-number').val();
+
+            var language = $('#dll-language').val();
+
+            var fullname = $('#txt-fullname').val();
+            var phone = $('#txt-phone').val();
+            var email = $('#txt-email').val();
+            var address = $('#txt-address').val();
+            var cmnd = $('#txt-identity').val();
+            var cmndcity = $('#ddl-city-identity').val();
+            var cmnddate = $('#txt-date-identity').val();
+            var birth = $('#txt-birthday').val();
+            var jobid = $('#ddl-job').val();
+            var workplace = $('#txt-work-place').val();
+            var mucdicid = $('#ddl-muc-dich').val();
+            var note = $('#txt-home').val();
+            var typeedu = $('#ddl-academic').val();
+            var scorein = $('#txt-in-scoure').val();
+            var scoreout = $('#txt-out-scoure').val();
+            var dateexam = $('#txt-exam').val();
+            var status = $('#ddl-status').val();
+            var supportid = $('#ddl-support').val();
+            //var pass = $('#txt-password').val();
+            var pass = "";
+
+            //Bắt nhập đủ mới chạy ajax update
+            if (ckstring(supportid) || ckstring(citydis) || ckstring(fullname) || ckstring(phone) || ckstring(email)) {
+                return;
+            }
+            if (ckstring(birth) || ckstring(cmnd) || ckstring(cmndcity) || ckstring(cmnddate) || ckstring(fullname) || ckstring(phone)) {
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/AddCusAjax",
+                data: '{sourceid:' + sourceid + ', citydis:' + citydis + ', fullname:"' + fullname + '", phone:"' + phone + '", email:"' + email + '", address:"' + address + '", cmnd:"' + cmnd + '", cmndcity:' + cmndcity + ', cmnddate:"' + cmnddate + '", birth:"' + birth + '", jobid:' + jobid + ', workplace:"' + workplace + '", mucdicid:' + mucdicid + ', note:"' + note + '", typeedu:"' + typeedu + '", scorein:"' + scorein + '", scoreout:"' + scoreout + '", dateexam:"' + dateexam + '", status:' + status + ', supportid:' + supportid + ', pass:"' + pass + '", district:' + district + ', ward:' + ward + ', street:' + street + ', home:"' + home + '", language:'+ language +'}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 2500
+                        })
+                        window.location.reload();
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Cập nhật đầy đủ thông tin học viên, Quận Huyện, Phường Xã, công việc',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                }
+            });
+        })
+    </script>
+}
+

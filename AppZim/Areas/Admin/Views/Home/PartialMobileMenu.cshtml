@@ -1,0 +1,200 @@
+﻿@*<li class="active bold">
+        <a class="collapsible-header waves-cyan " href="#"><i class="material-icons">settings_input_svideo</i><span class="menu-title" data-i18n="">Dashboard</span><span class="badge badge pill red float-right mr-10">3</span></a>
+        <div class="collapsible-body">
+            <ul class="collapsible collapsible-sub" data-collapsible="accordion">
+                <li>
+                    <a class="collapsible-body" href="dashboard-modern.html" data-i18n=""><i class="material-icons">radio_button_unchecked</i><span>Modern</span></a>
+                </li>
+                <li>
+                    <a class="collapsible-body" href="dashboard-ecommerce.html" data-i18n=""><i class="material-icons">radio_button_unchecked</i><span>eCommerce</span></a>
+                </li>
+                <li class="active">
+                    <a class="collapsible-body active" href="dashboard-analytics.html" data-i18n=""><i class="material-icons">radio_button_unchecked</i><span>Analytics</span></a>
+                </li>
+            </ul>
+        </div>
+    </li>
+
+    <li class="bold">
+        <a class="waves-cyan " href="https://pixinvent.ticksy.com/"><i class="material-icons">help_outline</i><span class="menu-title" data-i18n="">Support</span></a>
+    </li>*@
+
+@using AppZim.TableSql
+@using AppZim.Models
+@{
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    else
+    {
+        string cfb = "";
+        var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+        if (aclog != null)
+        {           
+            if (aclog.RoleID == 1)// admin
+            {
+                <li class="bold">
+                    <a class="waves-cyan " href="@Url.Action("Dashboard", "Home", new { area = "Admin" })">
+                        <i class="material-icons">dashboard</i>
+                        <span class="menu-title" data-i18n="">Dashboard</span>
+                    </a>
+                </li>
+                <li class="bold">
+                    <a class="collapsible-header waves-cyan" href="#"><i class="material-icons">dvr</i><span class="menu-title" data-i18n="">Khóa học</span></a>
+                    <div class="collapsible-body">
+                        <ul class="collapsible collapsible-sub" data-collapsible="accordion">
+                            <li data-menu="">
+                                <a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })">Tạo khóa học</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("CreatecourseSelfStudy", "Course", new { area = "Admin" })">Tạo khóa tự học</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">Danh sách khóa học</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })">Khóa tự học</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })">Kiểm tra lịch trống phòng</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })">Kiểm tra lịch trống giáo viên</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <li class="bold">
+                    <a class="collapsible-header waves-cyan" href="#"><i class="material-icons">group</i><span class="menu-title" data-i18n="">Khách hàng</span></a>
+                    <div class="collapsible-body">
+                        <ul class="collapsible collapsible-sub">
+
+                            <li data-menu="">
+                                <a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })">Dữ liệu Khách hàng</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })">Khách hẹn đăng ký</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })">Học viên nợ học phí</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })">Khách mua dịch vụ</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })">Thêm lịch hẹn test</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })">Danh sách khách hẹn test</a>
+                            </li>
+                            <li data-menu="">
+                                <a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })">Phiếu thu</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="bold">
+                    <a class="collapsible-header waves-cyan" href="#"><i class="material-icons">person</i><span>Nhân viên<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                    <ul class="collapsible collapsible-sub">
+                        <li data-menu="">
+                            <a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })">Danh sách nhân viên</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })">Nhân viên sale</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="bold">
+                    <a href="@Url.Action("CampaignSale", "Staff", new { area = "Admin" })">
+                        <i class="material-icons">show_chart</i>
+                        <span>Chiến dịch sale</span>
+                    </a>
+                </li>
+                <li class="bold">
+                    <a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })">
+                        <i class="material-icons">school</i>
+                        <span>Giáo viên</span>
+                    </a>
+                </li>
+                <li class="bold">
+                    <a href="@Url.Action("ListForms", "FormSubmitInfomationCustomer", new { area = "Admin" })">
+                        <i class="material-icons">error_outline</i>
+                        <span>Form thông tin</span>
+                    </a>
+                </li>
+                <li class="bold">
+                    <a class="collapsible-header waves-cyan" href="#"><i class="material-icons">chrome_reader_mode</i><span>Báo cáo<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                    <ul class="collapsible collapsible-sub">
+                        <li data-menu="">
+                            <a href="#">Báo cáo 1</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="#">Báo cáo 2</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="bold">
+                    <a class="collapsible-header waves-cyan" href="#"><i class="material-icons">settings</i><span>Cấu hình<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                    <ul class="collapsible collapsible-sub">
+                        <li data-menu="">
+                            <a href="@Url.Action("Center", "Option", new { area = "Admin" })">Trung tâm</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("Grade", "Option", new { area = "Admin" })">Khối học</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("Shift", "Option", new { area = "Admin" })">Ca học</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("ClassList", "Class", new { area = "Admin" })">Lớp học</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("Location", "Option", new { area = "Admin" })">Tỉnh/Thành Phố</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("District", "Option", new { area = "Admin" })">Quận Huyện</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("Discount", "Option", new { area = "Admin" })">Mã khuyễn mãi</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("SourceOfCustomer", "Option", new { area = "Admin" })">Nguồn Khách hàng</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("DayOff", "Option", new { area = "Admin" })">Ngày nghỉ</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("Jobs", "Option", new { area = "Admin" })">Nghề nghiệp</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("Services", "Option", new { area = "Admin" })">Dịch vụ</a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("CategoryFeedback", "Option", new { area = "Admin" })">Loại phản hồi</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="bold">
+                    <a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })">
+                        <i class="material-icons">mood @Html.Raw(cfb)</i>
+                        <span>Phản hồi</span>
+                    </a>
+                </li>
+                <li class="bold">
+                    <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })">
+                        <i class="material-icons">notifications_active</i>
+                        <span>Tạo thông báo</span>
+                    </a>
+                </li>
+            }
+            <li class="bold">
+                <a class="waves-cyan " href="@Url.Action("Signout", "Login", new { area = "" })">
+                    <i class="material-icons">dashboard</i>
+                    <span class="menu-title" data-i18n="">input</span>
+                </a>
+            </li>
+        }
+    }
+}

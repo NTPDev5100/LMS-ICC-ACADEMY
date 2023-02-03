@@ -1,0 +1,1 @@
+PageError: SetPackageController    FunctionError: GetInfoExerciseChoice    loginUID: 1    MessageError: An error occurred while executing the command definition. See the inner exception for details.    08/09/2020 11:51

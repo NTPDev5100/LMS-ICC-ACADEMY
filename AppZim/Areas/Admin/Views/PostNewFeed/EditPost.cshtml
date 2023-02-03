@@ -1,0 +1,112 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@{
+    ViewBag.Title = "PostNew";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_PostContent po = PostContentTable.getbyid(ViewBag.ID);
+}
+@section myStyles{
+    <style>
+    </style>
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mg-b-30">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item"><a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })">Bài viết</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Chỉnh sửa</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="new-post-wrap fix-container" style="max-width:inherit">
+    @using (Html.BeginForm("AddPost", "PostNewFeed", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="hdfID" id="hdfID" value="@po.ID" />
+        <div class="row">
+            <div class="col-12 ">
+                <h4 class="pd-b-15 bd-b mg-b-15">Chỉnh sửa bài viết</h4>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="filetitle" class="d-block">Hình ảnh mới</label>
+            <input type="file" class="form-control dropify" id="filetitle" name="filetitle">
+        </div>
+        <div class="form-group">
+            <label for="txt-title" class="d-block">Tiêu đề</label>
+            <input type="text" class="form-control" id="txt-title" name="txt-title" required placeholder="Title..." value="@po.TitlePost">
+        </div>
+        <div class="editor-wrap">
+            <textarea name="txt-content" class="raw-txt" id="post-content">
+                        @Html.Raw(po.ContentPost)
+                    </textarea>
+        </div>
+        <div class="form-row mg-b-15 mg-t-15 align-items-center">
+            <div class="col-12 col-xs-4 col-md-12">
+                <div class="d-flex align-items-center justify-content-end">
+                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+    <script>
+        function uploadImage() {
+            var editor = tinymce.activeEditor;
+            // create input element, call modal dialog w
+            var fileInput = document.createElement('input');
+            fileInput.setAttribute('type', 'file');
+            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+            // if file is submitted run our key code
+            fileInput.addEventListener('change', () => {
+
+                if (fileInput.files != null && fileInput.files[0] != null) {
+                    // create instance of FileReader()
+                    var formData = new FormData();
+                    formData.append("FileUpload", fileInput.files[0]);
+                    $.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: '/Admin/PostNewFeed/UploadFilePost',
+                        data: formData,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (msg) {
+                            console.log(msg.l);
+                            editor.insertContent('<img src="' + msg.l + '"/>');
+                        },
+                        error: function (error) {
+                            console.log('error upload file audio');
+                        }
+                    });
+                }
+            });
+            fileInput.click()
+        }
+        tinymce.init({
+            selector: '#post-content',
+            oninit: "setPlainText",
+            plugins: 'paste autoresize stickytoolbar print autolink autosave save directionality fullscreen image link media charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern help charmap emoticons',
+            paste_as_text: true,
+            inline: false,
+            menubar: false,
+            toolbar: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+            ],
+            height: 250,
+            images_dataimg_filter: function (img) {
+                return img.hasAttribute('internal-blob');
+            },
+            setup: (editor) => {
+                editor.ui.registry.addButton('UploadImage', {
+                    text: 'Image',
+                    icon: 'image',
+                    onAction: uploadImage
+                });
+            }
+        });
+    </script>
+}

@@ -1,0 +1,259 @@
+﻿
+@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@using System.Threading.Tasks;
+@{
+    ViewBag.Title = "SendMail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    ZimEntities db = new ZimEntities();
+}
+<style>
+    .table .tr-row + .collapse-row {
+        background: white;
+    }
+
+    .tox-tinymce {
+        min-height: 70vh;
+    }
+
+    .boxshawdowntd {
+        box-shadow: 0 5px 17px 2px rgb(0 0 0 / 14%), 0 3px 14px 2px rgb(0 0 0 / 12%), 0 5px 5px -3px rgb(0 0 0 / 20%);
+    }
+</style>
+
+<div>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1">
+            <li class="breadcrumb-item active" aria-current="page">Tùy chọn gửi mail</li>
+        </ol>
+    </nav>
+    @using (Html.BeginForm("funtionSendMail", "Email", FormMethod.Post, new { id = "form-create-noti" }))
+    {
+        <input type="hidden" id="hdfcontent" name="hdfcontent" />
+        <div class="row">
+            <div class="col-sm-5 form-group">
+                <label for="ddl-course" class="">Danh sách khóa học</label>
+                <select name="ddl-course" id="ddl-course" class="form-control select2" required style="width:100%">
+                    <option value="">-- Chọn khóa học --</option>
+                    @{
+                        var listCourse = db.tbl_Courses.Where(x => x.CourseSelfStudy == false && x.IsDelete == false).Select(i => new { i.ID, i.CourseName, i.TypeCourseName, i.OpeningDate }).OrderByDescending(x => x.ID).ToList();
+                        if (listCourse.Count() > 0)
+                        {
+                            foreach (var i in listCourse)
+                            {
+                                <option value="@i.ID">@("["+i.TypeCourseName+"]") @i.CourseName - Ngày mở @i.OpeningDate.Value.ToString("dd/MM/yyyy")</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-sm-5 form-group">
+                <label for="ddl-type" class="">Dữ liệu mail mẫu</label>
+                <select name="ddl-type" id="ddl-type" class="form-control select2" required style="width:100%">
+                    <option value="">-- Lựa chọn --</option>
+                    @{
+                        var listTem = db.tbl_EmailTemplate.Select(i => new { i.ID, i.TypeName, i.EmailTitle }).OrderBy(x => x.ID).ToList();
+                        if (listTem.Count() > 0)
+                        {
+                            foreach (var i in listTem)
+                            {
+                                <option value="@i.ID">@i.TypeName - @i.EmailTitle</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-sm-2 form-group">
+                <label for="" class="">Ngày khai giảng <i class="fas fa-info-circle" style="vertical-align:middle" data-toggle="tooltip" title="Không bắt buộc, nếu không chọn sẽ mặc định là ngày học đầu tiên"></i></label>
+                <input type="text" name="txt-ngaykhaigiang" id="txt-ngaykhaigiang" class="datetimepicker date-only form-control" placeholder="__/__/____" required>
+            </div>
+        </div>
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">Tiêu đề Email</span>
+            </div>
+            <input type="text" name="txt-title" id="txt-title" aria-label="First name" class="form-control" placeholder="..." required>
+        </div>
+        <div class="message-editor-wrap mg-y-20">
+            <div id="content-editor">
+            </div>
+            <div class="d-flex justify-content-between mg-t-20">
+                <button type="button" id="btn-check" class="btn btn-success boxshawdowntd"><i class="fas fa-paper-plane"></i> Xác nhận gửi</button>
+            </div>
+        </div>
+    }
+</div>
+
+@section myScripts
+{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#content-editor',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            });
+        });
+
+        $('#btn-check').click(function () {
+            // Save it!
+            var counttext = tinymce.editors[0].contentDocument.activeElement.innerText;
+            var content = tinymce.editors[0].contentDocument.activeElement.innerHTML;
+            $('input[name=hdfcontent]').val(content);
+            if (counttext.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập nội dung',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                })
+            }
+            else {
+                if (ckstring($('#ddl-type').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn loại email',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    })
+                    $('#ddl-type').focus();
+                }
+                if (ckstring($('#txt-title').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập tiêu đề',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    })
+                    $('#txt-title').focus();
+                }
+                else {
+                    $(this).attr('disabled', true);
+                    $('#form-create-noti').submit();
+                }
+            }
+        })
+
+        $(document).on("change", "#ddl-course", function () {
+            loademailtemplate();
+        });
+        $(document).on("change", "#ddl-type", function () {
+            loademailtemplate();
+        });
+        $(document).on("change", "#txt-ngaykhaigiang", function () {
+            loademailtemplate();
+        });
+
+        function loademailtemplate() {
+            let temId = $('#ddl-type').val();
+            let courseId = $('#ddl-course').val();
+            var ngaykhaigiang = "";
+            if (!ckstring($('#txt-ngaykhaigiang').val())) {
+                ngaykhaigiang = $('#txt-ngaykhaigiang').val();
+            }
+            if (ckstring(temId) || ckstring(courseId)) {
+                $('#txt-title').val('');
+                $('#txt-ngaykhaigiang').val('');
+                tinyMCE.activeEditor.setContent('');
+            }
+            /*console.log(ngaykhaigiang);*/
+            if (!ckstring(temId) && !ckstring(courseId)) {
+                /*  alert(temId + " " + courseId);*/
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Email/loadtemplate",
+                    data: '{"courseId": ' + courseId + ',temId:"' + temId + '",datekhaigiang:"' + ngaykhaigiang + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            $('#txt-title').val(msg.title);
+                            $('#txt-ngaykhaigiang').val(msg.khaigiang);
+                            tinyMCE.activeEditor.setContent(msg.content);
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.m,
+                                icon: 'notifications_active',
+                                classBackground: 'noti-error',
+                                timeout: 2500
+                            })
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(errorthrow);
+                    }
+                });
+            }
+        }
+    </script>
+}
+
+
+

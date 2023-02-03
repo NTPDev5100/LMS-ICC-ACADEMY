@@ -1,0 +1,97 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+
+@{
+    ViewBag.Title = "NoteCourse";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    List<tbl_TeacherCourse> teacher = TeacherCourseTable.getbycourseid(Model.ID);
+    var totalLesson = CoursesScheduleTable.getbycourseid(ViewBag.Course.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(ViewBag.Course.ID, 1).Count;// số buổi đã học
+    int remainLesson = totalLesson - learnedLesson;
+    List<tbl_CoursesNote> l = CoursesNoteTable.getbycourseid(Model.ID);
+    l = l.OrderByDescending(n => n.CreatedDate).ToList();
+}
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+<style>
+    .timeline-time {
+        width: 100px !important;
+    }
+
+    .timeline-label {
+        margin-left: 100px !important;
+    }
+
+    .timeline-item + .timeline-item::before {
+        left: 100px !important;
+    }
+
+    img {
+        width: unset;
+    }
+</style>
+<div class="row">
+    <div class="col-12 col-sm-12 col-md-4 col-lg-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@ViewBag.Course.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Tổng số buổi học">@totalLesson</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseDetail", "StudentCourse", new { area = "", ViewBag.Course.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseDocument", "StudentCourse", new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="book"></i>Tài liệu</a>
+                    </li>
+                    <li class="menu-item active">
+                        <a href="@Url.Action("NoteCourse", "StudentCourse", new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="flag"></i>TimeLine</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("CourseNotification","StudentCourse",  new { area = "", id = ViewBag.Course.ID })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("VideoCourse","StudentCourse",  new { area = "", id = Model.ID })" class="menu-link"><i data-feather="video"></i>Video buổi học</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","StudentCourse",  new { area = "", id = Model.ID })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        @{Html.RenderAction("PartialNextLession", "StudentCourse", new { id = ViewBag.Course.ID });}
+
+    </div>
+    <div class="col-12 colsm-12 col-md-8 col-lg-9" style="background-color:white;">
+        <div class="notification__wrap">
+            <div class="tab-content bd-gray-300 bd-t-0 pd-y-20" id="tab-notification">
+                <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                    <div class="table-responsive">
+                        <div class="media d-block d-lg-flex">
+                            <div class="media-body">
+                                <div class="timeline-group tx-13">
+                                    <div class="timeline-label">Thời gian</div>
+                                    @{
+                                        foreach (var item in l)
+                                        {
+                                            var ac = AccountTable.getbyusername(item.CreatedBy);
+                                            <div class="timeline-item">
+                                                <div class="timeline-time">@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                                                <div class="timeline-body">
+                                                    <h6 class="mg-b-0">@ac.FullName</h6>
+                                                    <p><a href="">@AccountTable.getrolehtml(ac.RoleID.Value)</a></p>
+                                                    @Html.Raw(item.Note)
+                                                </div><!-- timeline-body -->
+                                            </div><!-- timeline-item -->
+                                        }
+                                    }
+                                </div><!-- timeline-group -->
+                            </div><!-- media-body -->
+                        </div><!-- media -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+}
+

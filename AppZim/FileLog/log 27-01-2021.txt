@@ -1,0 +1,17 @@
+PageError: CustomerController    FunctionError: PaidDebts    loginUID: 1    MessageError: The parameter 'address' cannot be an empty string.
+Parameter name: address    27/01/2021 10:34
+PageError: CustomerController    FunctionError: PaidDebts    loginUID: 1    MessageError: The parameter 'address' cannot be an empty string.
+Parameter name: address    27/01/2021 10:38
+PageError: CustomerController    FunctionError: ChangeCourseStudent    loginUID: 1    MessageError: The parameter 'address' cannot be an empty string.
+Parameter name: address    27/01/2021 11:19
+PageError: CustomerController    FunctionError: CourseStudent    loginUID: 1    MessageError: An error occurred while preparing the command definition. See the inner exception for details.    27/01/2021 11:48
+PageError: CustomerController    FunctionError: CourseStudent    loginUID: 1    MessageError: An error occurred while preparing the command definition. See the inner exception for details.    27/01/2021 11:56
+PageError: CustomerController    FunctionError: CourseStudent    loginUID: 1    MessageError: An error occurred while preparing the command definition. See the inner exception for details.    27/01/2021 12:02
+PageError: CustomerController    FunctionError: CourseStudent    loginUID: 1    MessageError: An error occurred while preparing the command definition. See the inner exception for details.    27/01/2021 12:02
+PageError: CustomerController    FunctionError: PaidDebts    loginUID: 1    MessageError: Object reference not set to an instance of an object.    27/01/2021 13:23
+PageError: CustomerController    FunctionError: CustomerDebts    loginUID: 1    MessageError: Nullable object must have a value.    27/01/2021 17:51
+PageError: CustomerController    FunctionError: CustomerDebts    loginUID: 1    MessageError: Nullable object must have a value.    27/01/2021 17:51
+PageError: CustomerController    FunctionError: CustomerDebts    loginUID: 1    MessageError: Nullable object must have a value.    27/01/2021 17:51
+PageError: CustomerController    FunctionError: CustomerDebts    loginUID: 1    MessageError: Nullable object must have a value.    27/01/2021 17:51
+PageError: CustomerController    FunctionError: CustomerDebts    loginUID: 1    MessageError: Nullable object must have a value.    27/01/2021 17:54
+PageError: AccountController    FunctionError: ProfileUser    loginUID: 1    MessageError: An error occurred while executing the command definition. See the inner exception for details.    27/01/2021 17:57

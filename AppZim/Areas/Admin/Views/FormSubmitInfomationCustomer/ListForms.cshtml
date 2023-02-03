@@ -1,0 +1,319 @@
+﻿@using AppZim.TableSql
+@using PagedList.Mvc
+@using MB.Extensions
+@model PagedList.IPagedList<AppZim.Models.tbl_FormReceiveInfoSetting>
+@{
+    ViewBag.Title = "TeacherList";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var lsaler = AccountTable.getbyrole(6).Where(n => n.Status == 2).ToList();
+    var ls = SourceOfCustomerTable.getall();
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Tạo mẫu mới</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="email-form-template mg-t-30">
+    <div class="row">
+        <div class="col-12 col-md-8">
+            <fieldset class="form-fieldset">
+                <legend>Email template</legend>
+                <div id="content-editor"></div>
+            </fieldset>
+        </div>
+        <div class="col-12 col-md-4 mg-t-15 mg-md-t-0">
+            @using (Html.BeginForm("AddSettingForm", "FormSubmitInfomationCustomer", FormMethod.Post, new { id = "form-setting" }))
+            {
+                <input type="hidden" name="hdfID" />
+                <input type="hidden" name="hdfanswer" />
+                <fieldset class="form-fieldset">
+                    <legend>Form information</legend>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Title form</label>
+                            <input type="text" name="txt-title" class="form-control" placeholder="Form title">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label for="role-receive" class="">Role receive email</label>
+                            <select class="form-control select2" name="ddl-role">
+                                <option value="0">---Role nhận thông báo submit form---</option>
+                                <option value="1">Admin</option>
+                                <option value="2">Manager</option>
+                                <option value="3">Cashier</option>
+                                <option value="4">Teacher</option>
+                                <option value="6">Seler</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label for="sc_supporter" class="">Supporter</label>
+                            <select class="form-control select2" name="ddl-saler">
+                                <option value="0">---Danh sách tư vấn viên---</option>
+                                @{
+                                    foreach (var item in lsaler)
+                                    {
+                                        <option value="@item.ID">@item.FullName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label for="sc_source" class="">Source</label>
+                            <select class="form-control select2" name="ddl-source">
+                                <option value="0">---Nguồn học viên---</option>
+                                @{
+                                    foreach (var item in ls)
+                                    {
+                                        <option value="@item.ID">@item.SourceOfCustomer</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label for="sc_branch" class="">Note</label>
+                            <textarea name="txt-note" rows="3" placeholder="" class="form-control"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 pd-b-0">
+                            <button type="button" style="width:100%;" id="btn-check" class="btn btn-primary">Tạo, cập nhật nội dung form</button>
+                        </div>
+                    </div>
+                </fieldset>
+            }
+        </div>
+    </div>
+
+    <div class="row mg-b-30">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mg-b-0">Template lists</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter table-bordered table-striped">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Note</th>
+                                    <th>Source</th>
+                                    <th>Saler</th>
+                                    <th>Recieve</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (var item in Model)
+                                    {
+                                        string nguon = "";
+                                        string saler = "";
+                                        if (item.SourceCustomerID != null)
+                                        {
+                                            var s = SourceOfCustomerTable.getbyID(item.SourceCustomerID.Value);
+                                            if (s != null)
+                                            {
+                                                nguon = s.SourceOfCustomer;
+                                            }
+                                        }
+                                        if (item.SalerID != null)
+                                        {
+                                            var sler = AccountTable.getbyID(item.SalerID.Value);
+                                            if (sler != null)
+                                            {
+                                                saler = sler.FullName;
+                                            }
+                                        }
+                                        var ac = AccountTable.getbyusername(item.CreatedBy);
+                                        <tr>
+                                            <td>@item.TitileForm</td>
+                                            <td>@item.Note</td>
+                                            <td>@nguon</td>
+                                            <td>@saler</td>
+                                            <td class="text-center"><span class="badge badge-info">@AccountTable.getrolehtml(item.RoleNoti.Value)</span></td>
+                                            <td>
+                                                <div class="dropdown dropdown-icon">
+                                                    <a href="javascript:;" class="material-icons" id="dropdown-id-3"
+                                                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">more_vert</a>
+                                                    <div class="dropdown-menu" aria-labelledby="dropdown-id-3">
+                                                        <a class="dropdown-item btn-icon view-email" href="javascript:;" data-id="@item.ID"><i data-feather="eye"></i> View</a>
+                                                        <a class="dropdown-item btn-icon copy-link" href="javascript:;" data-id="@item.ID"><i data-feather="copy"></i>Iframe</a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Page navigation" class="mg-t-10">
+                        @Html.PagedListPager(Model, page => Url.Action("indexdoc", new { page, search = ViewBag.Search, sort = ViewBag.Sort }),
+                        new PagedListRenderOptions
+                        {
+                            UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+                        })
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section myScripts
+{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/FormSubmitInfomationCustomer/UploadFileImage',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+
+                        //var reader = new FileReader();
+                        //// create event triggered after successful reading operation
+                        //reader.onloadend = (e) => {
+                        //    // insert content in TinyMCE
+                        //    editor.insertContent('<img src="' + e.target.result + '"/>');
+                        //    fileInput.value = '';
+                        //};
+                        //console.log(fileInput.files);
+                        //reader.readAsDataURL(fileInput.files[0]);
+
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#content-editor',
+                height: 515,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            });
+        });
+
+        $('#btn-check').click(function () {
+            if (confirm('Tạo, cập nhật thông tin form?')) {
+                // Save it!
+                var counttext = tinymce.editors[0].contentDocument.activeElement.innerText;
+                var content = tinymce.editors[0].contentDocument.activeElement.innerHTML;
+
+                $('input[name=hdfanswer]').val(content);
+                if (counttext.length == 1) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập nội dung email',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                }
+                else {
+                    $('#form-setting').submit();
+                }
+            }
+        })
+
+        $('.copy-link').click(function () {
+            var id = $(this).attr('data-id');
+            var f = '<iframe src="' + window.location.origin + '/Admin/FormSubmitInfomationCustomer/SaveInfo/' + id + '"></iframe>';
+            alert(f);
+        })
+
+        $(document).on("click", ".view-email", function () {
+            var id = $(this).attr('data-id');
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('#content-editor').empty();
+            console.log(id);
+            $.ajax({
+                type: 'POST',
+                url: '/Admin/FormSubmitInfomationCustomer/GetInfoForm',
+                contentType: "application/json; charset=utf-8",
+                data: '{id: ' + id + '}',
+                dataType: 'json',
+                success: function (msg) {
+                    if (!msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không tìm thấy dữ liệu',
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 4000
+                        })
+                    }
+                    else {
+                        $('select[name=ddl-role]').val(msg.l.RoleNoti);
+                        $('select[name=ddl-role]').trigger("change");
+                        $('select[name=ddl-saler]').val(msg.l.SalerID);
+                        $('select[name=ddl-saler]').trigger("change");
+                        $('select[name=ddl-source]').val(msg.l.SourceCustomerID);
+                        $('select[name=ddl-source]').trigger("change");
+                        $('input[name=txt-title]').val(msg.l.TitileForm);
+
+                        $('textarea[name=txt-note]').val(msg.l.Note);
+                        //   $('#content-editor').append(msg.l.ContentForm);
+                        tinyMCE.activeEditor.setContent(msg.l.ContentForm);
+                        console.log(msg.l.ContentForm);
+                        $('input[name=txt-title]').focus();
+                    }
+                },
+                error: function (error) {
+                    console.log('view mail');
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,907 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using WebUI.Business
+@using System.Data.SqlClient;
+@using System.Data;
+@{
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    else
+    {
+        var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+        if (aclog.SchoolID == null)
+        {
+            aclog.SchoolID = 0;
+        }
+
+        int location = 0;
+        int supportid = 0;
+
+        if (aclog.RoleID == 6)//tvv
+        {
+            supportid = aclog.ID;
+        }
+
+        if (aclog.RoleID == 2 || aclog.RoleID == 8)//manager||quan ly chuyen mon
+        {
+            location = aclog.LocationID.Value;
+        }
+        get_bagde_notification_Result rs = new get_bagde_notification_Result();
+        using (var db = new ZimEntities())
+        {
+            rs = db.get_bagde_notification(aclog.RoleID, location, supportid, aclog.ID).FirstOrDefault();
+        }
+
+        int feedbackcount = rs.feedback.Value;
+        int checkfix = rs.checkfix.Value;
+        int checkfb = rs.checkfeedback.Value;
+        int postnew = rs.postnew.Value;
+        int warning = rs.totalwarning.Value;
+        int news = rs.ex_new.Value;
+
+        int pending = rs.ex_pendding.Value;
+        int redo = rs.ex_redo.Value;
+        int all = rs.ex_all.Value;
+        int TotalExamcoming = rs.totalexamcomming.Value;
+        int contract = rs.total_contract.Value;
+        int contractsub = rs.contractsub.Value;
+        //if (aclog.RoleID == 6)//tvv
+        //{
+        //    feedbackcount = FeedBackTable.getnotdone(6, aclog.ID);
+        //}
+        //var checkfix = ExerciseAddonStudentCheckFixTable.getnew();
+        //var checkfb = FeedBackCheckSolutionTable.getnew();
+        //if (aclog.RoleID == 8)
+        //{
+        //    checkfix = checkfix.Where(n => n.UIDCheckFix == aclog.ID).ToList();
+        //    checkfb = checkfb.Where(n => n.UIDCheckFix == aclog.ID).ToList();
+        //}
+        //if (aclog.RoleID == 6)//chuyên môn
+        //{
+
+        //}
+        //int postnew = PostContentTable.getbyall().Where(n => n.Status == 1 && n.StatusPost != true).ToList().Count;
+
+        //SqlParameter[] warparameters =
+        //{
+        //            new SqlParameter("@centerid", SqlDbType.Int) { Value = aclog.SchoolID.Value },
+        //            new SqlParameter("@role", SqlDbType.Int) { Value = aclog.RoleID },
+        //            new SqlParameter("@uid", SqlDbType.Int) { Value = aclog.ID },
+        //            new SqlParameter("@Type", SqlDbType.Int) { Value = 2 },//2 đếm
+        //            };
+        //var rswarning = SqlHelper.ExecuteDataTable("getallwarning", warparameters);
+        //int warning = 0;
+        //warning = Convert.ToInt32((from rw in rswarning.AsEnumerable() select rw["Total"]).FirstOrDefault().ToString());
+        //IEnumerable<tbl_ExerciseAddonStudent> exnew = ExerciseAddonStudentTable.getbystatus(1).Where(n => n.StatusDone == 1 && (n.Type == 1 || n.Type == 3)).ToList();
+        //IEnumerable<tbl_TeacherCourse> teachercourse = TeacherCourseTable.getbyteacherid(aclog.ID).Where(n => n.TeacherUID == aclog.ID && n.isHide != true).ToList();
+
+        ////lấy ra nhưng bài tập có thể nhận được
+        //var l = from ex in exnew
+        //        join teacher in teachercourse on ex.CourseID equals teacher.CourseID
+        //        select ex;
+        //int news = l.Count();
+        //int pending = ExerciseAddonStudentTable.getbystatus(2).Where(n => n.UIDFix == aclog.ID && (n.Type == 1 || n.Type == 3)).Count();
+        //int redo = ExerciseAddonStudentTable.getbystatus(4).Where(n => n.UIDFix == aclog.ID && (n.Type == 1 || n.Type == 3)).Count();
+        //int all = news + pending + redo;
+
+        //int TotalExamcoming = 0;
+        //int location = 0;
+        //int supportid = 0;
+
+        //SqlParameter[] parameters =
+        //{
+        //new SqlParameter("@qsearch", SqlDbType.NVarChar,2000) { Value = "" },
+        //new SqlParameter("@count", SqlDbType.Int) { Value = 1 },
+        //new SqlParameter("@Location", SqlDbType.Int) { Value = location },
+        //new SqlParameter("@supportID", SqlDbType.Int) { Value = supportid },
+        //new SqlParameter("@roleID", SqlDbType.Int) { Value = aclog.RoleID },
+        //new SqlParameter("@aclogID", SqlDbType.Int) { Value = aclog.ID },
+        //};
+        //var rs = SqlHelper.ExecuteDataTable("Get_Student_ReadyTo_Test", parameters);
+        //TotalExamcoming = Convert.ToInt32((from rw in rs.AsEnumerable() select rw["SL"]).FirstOrDefault().ToString());
+
+        //int contract = 0;
+        //int contractsub = 0;
+        //using (var ctx = new ZimEntities())
+        //{
+        //    contract = ctx.tbl_CoursesStudent
+        //                        .SqlQuery("SELECT * FROM dbo.tbl_CoursesStudent cs WHERE cs.Contract = 1 AND cs.ID NOT IN(SELECT CourseStudentID FROM dbo.tbl_ContractCustomer)")
+        //                        .ToList<tbl_CoursesStudent>().Count;
+        //    contractsub = ctx.tbl_ContractCustomer
+        //                .SqlQuery("SELECT * FROM dbo.tbl_ContractCustomer cc WHERE Status = 1")
+        //                .ToList<tbl_ContractCustomer>().Count;
+        //}
+
+
+        <ul class="nav navbar-menu">
+            @if (aclog.RoleID == 1)// khác học viên
+            {
+                <li class="nav-label pd-l-20 pd-lg-l-25 d-lg-none">Trang điều hướng</li>
+                <li class="nav-item"><a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a></li>
+                <li class="nav-item"><a href="@Url.Action("Dashboard", "Home", new { area = "Admin" })" class="nav-link"><i data-feather="bar-chart"></i> Dashboard</a></li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="book"></i> Khoá học</a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-plus"></i>Tạo khoá học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CreatecourseSelfStudy", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-plus"></i>Tạo khoá tự học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>DS khoá học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>DS khoá tự học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Lịch trống giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacherAll", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Kiểm tra lịch nhiều giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra nhiều ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTimeSingle", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra một ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Kiểm tra phòng</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="layers"></i> Khách hàng @{ if ((warning + TotalExamcoming) > 0)
+                            {<span class="badge-noti">@(warning + TotalExamcoming)</span> }
+                        }
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-label">Học viên</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Dữ liệu học viên</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Học viên (TVV nghỉ)</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV trong khoá</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV chuyển khoá </a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV hẹn đăng ký</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV bảo lưu</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerAdvisory", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="smile"></i> HV cần tư vấn</a></li>
+                                <li class="nav-label mg-t-20">Dịch vụ, hẹn test, thi</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Khách mua dịch vụ</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách đăng ký thi</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Thêm lịch hẹn test</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách khách hẹn test</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Customer", "SetPackage", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách khách mua gói</a></li>
+                            </ul>
+                            <ul>
+                                <li class="nav-label">Báo cáo học viên</li>
+                                <li class="nav-sub-item" style="position:relative;">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="alert-triangle"></i> Cảnh báo học viên
+                                        @{if (warning > 0)
+                                            {<span style="right: -20px;" class="badge-noti">@warning</span> }
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item" style="position:relative">
+                                    <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="user"></i> HV sắp thi @{if (TotalExamcoming > 0)
+                                            {<span style="right: 20px;" class="badge-noti">@TotalExamcoming</span>}
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item">
+                                    <a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="user"></i> Kết quả thi thực tế
+                                    </a>
+                                </li>
+                                <li class="nav-label  mg-t-20">Tài chính</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Nợ học phí</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Yêu cầu hoàn tiền</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Phiếu thu</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Phiếu chi</a></li>
+
+                                <li class="nav-label  mg-t-20">Hợp đồng</li>
+                                <li class="nav-sub-item" style="position:relative">
+                                    <a href="@Url.Action("CustomerContractList", "Contract", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="file-text"></i> Học viên có HĐ
+                                        @{if (contract > 0)
+                                            {
+                                                <span style="right: 0px;" class="badge-noti">@contract</span>
+                                            }
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item" style="position:relative">
+                                    <a href="@Url.Action("CensorshipContract", "Contract", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="file-text"></i> Duyệt HĐ
+                                        @{if (contractsub > 0)
+                                            {
+                                                <span style="right: 40px;" class="badge-noti">@contractsub</span>
+                                            }
+                                        }
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div><!-- nav-sub -->
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="user"></i> Nhân viên
+                        @{
+                            if (checkfix > 0)
+                            {
+                                <span class="badge-noti">@checkfix</span>
+                            }
+                        }
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-label">Nhân viên</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i>Danh sách nhân viên</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Danh sách saler</a></li>
+                                <li class="nav-sub-item" style="position:relative;">
+                                    <a href="@Url.Action("FeedbackCheckSolution", "FeedBack", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="check-circle"></i>Duyệt feedback
+                                        @{
+                                            if (checkfb > 0)
+                                            {
+                                                <span class="badge-noti">@checkfb</span>
+                                            }
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-label mg-t-20">Giáo viên</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i> Giáo viên</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("TeacherExerciseFix", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link"><i data-feather="edit-3"></i>Bài đã chấm</a></li>
+                                <li class="nav-sub-item" style="position:relative;">
+                                    <a href="@Url.Action("ExerciseCheckFix", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="check-circle"></i>Duyệt bài
+                                        @{
+                                            if (checkfix > 0)
+                                            {
+                                                <span class="badge-noti">@checkfix</span>
+                                            }
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ListExaminer", "SetPackage", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i>Danh sách chấm gói bài</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("TeachHours", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i>Giờ dạy giáo viên</a></li>
+                            </ul>
+                            <ul>
+                                <li class="nav-label">Lương saler</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CampaignSale", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="bar-chart"></i>Chiến dịch sale</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SalaryReview", "SalaryStaff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Duyệt lương saler</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SalaryStaff", "SalaryStaff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Lịch sử duyệt</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="javascript:;" class="nav-link">
+                        <i data-feather="settings"></i> Cấu hình @{ if (postnew > 0)
+                            { <span class="badge-noti">@postnew</span> }}
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-sub-item"><a href="@Url.Action("Center", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Trung tâm</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Grade", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="book-open"></i>Khối học</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Shift", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="book-open"></i>Ca học</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ClassList", "Class", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Chương trình</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Location", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="map-pin"></i>Tỉnh/Thành phố</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("District", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="map-pin"></i>Quận huyện</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Discount", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="tag"></i>Mã khuyến mãi</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SourceOfCustomer", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Nguồn khách hàng</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("DayOff", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Ngày nghỉ</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Jobs", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="globe"></i>Nghề nghiệp</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Services", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="hard-drive"></i>Dịch vụ</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CategoryFeedback", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="message-circle"></i>Loại phản hồi</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SupplierList", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Nhà cung cấp</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("AcademicPurposesList", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="slack"></i>Mục đích học</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SettingSalary", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Lương saler</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Exams", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Đợt thi</a></li>
+                                <li class="nav-sub-item" style="position:relative;">
+                                    <a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="edit-2"></i>Kiểm duyệt bài viết
+                                        @{
+                                            if (postnew > 0)
+                                            {
+                                                <span class="badge-noti">@postnew</span>
+                                            }
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item">
+                                    <a href="@Url.Action("ListForms", "FormSubmitInfomationCustomer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="info"></i> Form thông tin</a>
+                                </li>
+                                <li class="nav-sub-item">
+                                    <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })" class="nav-sub-link"><i data-feather="book"></i> Tạo thông báo</a>
+                                </li>
+                                <li class="nav-sub-item"><a href="@Url.Action("IdiomsList", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="heart"></i>Thành ngữ lịch</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Contract", "Contract", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>Hợp đồng</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("TermOfService", "Contract", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>Điều khoản</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ListSetPackage", "SetPackage", new { area = "Admin" })" class="nav-sub-link"><i data-feather="package"></i>Gói bài</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ListTopic", "Topic", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>Topic</a></li>
+
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item"><a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })" style="position:relative;" class="nav-link"><i data-feather="message-circle"></i> Phản hồi <span class="badge-noti">@feedbackcount</span></a></li>
+            }
+            @if (aclog.RoleID == 2)// khác học viên
+            {
+
+                <li class="nav-label pd-l-20 pd-lg-l-25 d-lg-none">Trang điều hướng</li>
+                <li class="nav-item">
+                    <a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a>
+                </li>
+                <li class="nav-item"><a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Lịch dạy trung tâm</a></li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="book"></i> Khoá học</a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-plus"></i>Tạo khoá học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CreatecourseSelfStudy", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-plus"></i>Tạo khoá tự học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>DS khoá học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>DS khoá tự học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Lịch trống giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra nhiều ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTimeSingle", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra một ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacherAll", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Kiểm tra lịch nhiều giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Kiểm tra phòng</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="layers"></i> Khách hàng
+                        @{if ((warning + TotalExamcoming) > 0)
+                            {
+                                <span class="badge-noti">@((warning + TotalExamcoming))</span>
+                            }}
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-label">Học viên</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Dữ liệu học viên</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Học viên (TVV nghỉ)</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV trong khoá</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV chuyển khoá </a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV hẹn đăng ký</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV bảo lưu</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerAdvisory", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="smile"></i> HV cần tư vấn</a></li>
+                                <li class="nav-label mg-t-20">Dịch vụ, hẹn test, thi</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Khách mua dịch vụ</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách đăng ký thi</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Thêm lịch hẹn test</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách khách hẹn test</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Customer", "SetPackage", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách khách mua gói</a></li>
+                            </ul>
+                            <ul>
+                                <li class="nav-label">Báo cáo học viên</li>
+                                <li class="nav-sub-item" style="position:relative;">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="alert-triangle"></i> Cảnh báo học viên
+                                        @{if (warning > 0)
+                                            {<span style="right: -20px;" class="badge-noti">@warning</span> }
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item" style="position:relative">
+                                    <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="user"></i> HV sắp thi @{if (TotalExamcoming > 0)
+                                            {<span style="right: 20px;" class="badge-noti">@TotalExamcoming</span>}
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item">
+                                    <a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="user"></i> Kết quả thi thực tế
+                                    </a>
+                                </li>
+                                <li class="nav-label mg-t-20">Tài chính</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Nợ học phí</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Yêu cầu hoàn tiền</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Phiếu thu</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Phiếu chi</a></li>
+                            </ul>
+                        </div>
+                    </div><!-- nav-sub -->
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="user"></i> Nhân viên  @{if (checkfix > 0)
+                            { <span class="badge-noti">@checkfix</span> } }
+                    </a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i>Danh sách nhân viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Danh sách saler</a></li>
+                        <li class="nav-sub-item" style="position:relative;">
+                            <a href="@Url.Action("FeedbackCheckSolution", "FeedBack", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="check-circle"></i>Duyệt feedback
+                                @{
+                                    if (checkfb > 0)
+                                    {
+                                        <span class="badge-noti">@checkfb</span>
+                                    }
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-sub-item"><a href="@Url.Action("TeachHours", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i>Giờ dạy giáo viên</a></li>
+                        <li class="nav-label mg-t-20">Giáo viên</li>
+                        <li class="nav-sub-item"><a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i> Giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("TeacherExerciseFix", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link"><i data-feather="edit-3"></i>Bài đã chấm</a></li>
+                        <li class="nav-sub-item" style="position:relative;">
+                            <a href="@Url.Action("ExerciseCheckFix", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="check-circle"></i>Duyệt bài
+                                @{
+                                    if (checkfix > 0)
+                                    {
+                                        <span class="badge-noti">@checkfix</span>
+                                    }
+                                }
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item with-sub">
+                    <a href="javascript:;" class="nav-link"><i data-feather="dollar-sign"></i> Lương</a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("SalaryReview", "SalaryStaff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Duyệt lương saler</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("SalaryStaff", "SalaryStaff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Lịch sử duyệt</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="javascript:;" class="nav-link">
+                        <i data-feather="settings"></i> Cấu hình @{ if (postnew > 0)
+                            { <span class="badge-noti">@postnew</span> }}
+                    </a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("Grade", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="book-open"></i>Khối học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("Shift", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="book-open"></i>Ca học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ClassList", "Class", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Chương trình</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("Discount", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="tag"></i>Mã khuyến mãi</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("SourceOfCustomer", "Option", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Nguồn khách hàng</a></li>
+                        <li class="nav-sub-item">
+                            <a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="edit-2"></i>Kiểm duyệt bài viết
+                                @{
+                                    if (postnew > 0)
+                                    {
+                                        <span class="badge-noti">@postnew</span>
+                                    }
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-sub-item">
+                            <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })" class="nav-sub-link"><i data-feather="book"></i> Tạo thông báo</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a href="@Url.Action("RankUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="activity"></i> Rank</a></li>
+                <li class="nav-item"><a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })" style="position:relative;" class="nav-link"><i data-feather="message-circle"></i> Phản hồi <span class="badge-noti">@feedbackcount</span></a></li>
+
+            }
+            else if (aclog.RoleID == 3)// cashier
+            {
+                <li class="nav-item"><a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a></li>
+                <li class="nav-item"><a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Lịch dạy trung tâm</a></li>
+                <li class="nav-item"><a href="@Url.Action("RegisterCourse", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Đăng ký học</a></li>
+                <li class="nav-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Khóa học</a></li>
+                <li class="nav-item"><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="alert-triangle"></i> Hẹn test</a></li>
+                <li class="nav-item"><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="alert-triangle"></i> Danh sách hẹn test</a></li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="book"></i> Khách hàng  @{if (warning > 0)
+                            {<span class="badge-noti">@warning</span> }}
+                    </a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Dữ liệu học viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Học viên (TVV nghỉ)</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Học viên trong khóa</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Học viên chuyển khóa</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Khách hẹn đăng ký</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Bảo lưu</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Học viên nợ học phí</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Khách mua dịch vụ</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách đăng ký thi</a></li>
+                        <li class="nav-sub-item" style="position:relative;">
+                            <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="alert-triangle"></i> Cảnh báo học viên    @{if (warning > 0)
+                                    {<span style="right: 25px;" class="badge-noti">@warning</span> }}
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-link"><i data-feather="edit-3"></i> Viết bài</a>
+                </li>
+            }
+            else if (aclog.RoleID == 4)// giáo viên
+            {
+                <li class="nav-item"><a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a></li>
+                <li class="nav-item"><a href="@Url.Action("Schedule", "TeacherCourse", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Schedule</a></li>
+                <li class="nav-item"><a href="@Url.Action("DayOffTeacher", "TeacherCourse", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Off</a></li>
+                <li class="nav-item"><a href="@Url.Action("CourseList", "TeacherCourse", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Courses</a></li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="book"></i> Exercises<span class="badge-noti">@all</span></a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item" style="position: relative;">
+                            <a href="@Url.Action("ExerciseList", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="award"></i>News@{if (news > 0)
+                                    {<span style="right: 25px;" class="badge-noti">@news</span>}}
+                            </a>
+                        </li>
+                        <li class="nav-sub-item" style="position: relative;">
+                            <a href="@Url.Action("ExerciseProcess", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="edit-3"></i>Pending@{if (pending > 0)
+                                    {<span style="right: 25px;" class="badge-noti">@pending</span>}}
+                            </a>
+                        </li>
+                        <li class="nav-sub-item" style="position: relative;">
+                            <a href="@Url.Action("ExerciseRedoFix", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="rotate-ccw"></i>Redo@{if (redo > 0)
+                                    {<span style="right: 25px;" class="badge-noti">@redo</span>}}
+                            </a>
+                        </li>
+                        <li class="nav-sub-item" style="position: relative;">
+                            <a href="@Url.Action("ExerciseDone", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="check-circle"></i>Done
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="book"></i> Student Report @if (warning + TotalExamcoming > 0)
+                        {<span class="badge-noti">@(warning + TotalExamcoming)</span>}
+                    </a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item" style="position:relative;">
+                            <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="alert-triangle"></i> Warning @if (warning > 0)
+                                {<span style="right: 50px;" class="badge-noti">@warning</span>}
+                            </a>
+                        </li>
+                        <li class="nav-sub-item" style="position:relative">
+                            <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="user"></i> HV sắp thi @{if (TotalExamcoming > 0)
+                                    {<span style="right: 20px;" class="badge-noti">@TotalExamcoming</span>}
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-sub-item">
+                            <a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="user"></i> Test Result
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="plus-circle"></i> Appointment </a></li>
+
+                <li class="nav-item"><a href="@Url.Action("FeedBack", "FeedBack", new { area = "Admin" })" class="nav-link"><i data-feather="flag"></i> Ticket</a></li>
+                @*<li class="nav-item"><a href="@Url.Action("RankUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="activity"></i> Rank</a></li>*@
+                <li class="nav-item"><a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-link"><i data-feather="edit-3"></i> Post</a></li>
+            }
+            else if (aclog.RoleID == 5)//học viên
+            {
+                <li class="nav-item"><a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a></li>
+                <li class="nav-item"><a href="@Url.Action("Dashboard", "Home", new { area = "" })" class="nav-link"><i data-feather="calendar"></i> Schedule</a></li>
+                <li class="nav-item"><a href="@Url.Action("Exercise", "StudentExrcise", new { area = "" })" class="nav-link"><i data-feather="calendar"></i> Exercise</a></li>
+                <li class="nav-item"><a href="@Url.Action("MySet", "StudentSet", new { area = "" })" class="nav-link"><i data-feather="calendar"></i> My Set</a></li>
+                <li class="nav-item"><a href="@Url.Action("Store", "SetPackage", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Set Store</a></li>
+                <li class="nav-item"><a href="@Url.Action("CourseList", "StudentCourse", new { area = "" })" class="nav-link"><i data-feather="bar-chart"></i> Course</a></li>
+                <li class="nav-item"><a href="@Url.Action("FeedBack", "FeedBack", new { area = "Admin" })" class="nav-link"><i data-feather="flag"></i> Ticket</a></li>
+
+            }
+            else if (aclog.RoleID == 6)// tư vấn viên
+            {
+                <li class="nav-item"><a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a></li>
+                <li class="nav-item"><a href="@Url.Action("DashboardSaler", "Home", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Chiến dịch</a></li>
+                <li class="nav-item"><a href="@Url.Action("RegisterCourse", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Đăng ký học</a></li>
+                <li class="nav-item"><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Hẹn test</a></li>
+                <li class="nav-item with-sub" style="position:relative">
+                    <a href="" class="nav-link">
+                        <i data-feather="book"></i> Khách hàng @{ if (warning > 0)
+                            {<span class="badge-noti">@(warning)</span> }}
+                    </a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Dữ liệu học viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Học viên trong khóa</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Học viên chuyển khóa</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Hẹn đăng ký</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="refresh-cw"></i>Bảo lưu</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="alert-circle"></i>Nợ học phí</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="tag"></i>Mua dịch vụ</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách đăng ký thi</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="edit-3"></i>Khách hẹn test</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Phiếu thu</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Phiếu chi</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CustomerAdvisory", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="smile"></i> HV cần tư vấn</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="smile"></i> Danh sách hoàn tiền</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("Customer", "SetPackage", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách khách mua gói</a></li>
+
+                        <li class="nav-label mg-t-20">Báo cáo học viên</li>
+                        <li class="nav-sub-item" style="position:relative;">
+                            <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="alert-triangle"></i> Cảnh báo học viên
+                                @{if (warning > 0)
+                                    {<span style="right: 5px;" class="badge-noti">@warning</span> }
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-sub-item" style="position:relative">
+                            <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="user"></i> HV sắp thi @{if (TotalExamcoming > 0)
+                                    {<span style="right: 20px;" class="badge-noti">@TotalExamcoming</span>}
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-sub-item">
+                            <a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="user"></i> Kết quả thi thực tế
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="book"></i> Khoá học</a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-plus"></i>Tạo khoá học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>DS khoá học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Lịch trống giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra nhiều ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTimeSingle", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra một ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Kiểm tra phòng</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="book"></i> Ticket <span class="badge-noti">@feedbackcount</span></a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("FeedBack", "FeedBack", new { area = "Admin" })" class="nav-sub-link"><i data-feather="flag"></i> Ticket </a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })" style="position:relative;" class="nav-sub-link"><i data-feather="message-circle"></i> Phản hồi <span class="badge-noti">@feedbackcount</span></a></li>
+                    </ul>
+                </li>
+
+                @*<li class="nav-item"><a href="@Url.Action("RankUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="activity"></i> Rank</a></li>*@
+                @*<li class="nav-item"><a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-link"><i data-feather="edit-3"></i> Viết bài</a></li>*@
+                <li class="nav-item"><a href="@Url.Action("CustomerContractList", "Contract", new { area = "Admin" })" class="nav-link"><i data-feather="edit-3"></i> Hợp đồng</a></li>
+            }
+            else if (aclog.RoleID == 7)//manager academic học vụ
+            {
+                <li class="nav-item"><a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a></li>
+                <li class="nav-item"><a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Lịch dạy trung tâm</a></li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="book"></i> Khóa học</a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="book"></i>Tạo khóa học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CreatecourseSelfStudy", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="bookmark"></i>Tạo khóa tự học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="layers"></i>Danh sách khóa học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="flag"></i>Khóa tự học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra nhiều ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTimeSingle", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra một ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Kiểm tra lịch giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacherAll", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Kiểm tra lịch nhiều giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Kiểm tra phòng</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="layers"></i> Khách hàng@{if (warning > 0)
+                            {<span class="badge-noti">@warning</span> }}
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-label">Học viên</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Dữ liệu học viên</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Học viên (TVV nghỉ)</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV trong khoá</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV chuyển khoá </a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV hẹn đăng ký</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV bảo lưu</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerAdvisory", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="smile"></i> HV cần tư vấn</a></li>
+                                <li class="nav-label mg-t-20">Dịch vụ, hẹn test, thi</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Khách mua dịch vụ</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách đăng ký thi</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Thêm lịch hẹn test</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách khách hẹn test</a></li>
+                                <li class="nav-label mg-t-20">Báo cáo học viên</li>
+                                <li class="nav-sub-item" style="position:relative;">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="alert-triangle"></i> Cảnh báo học viên    @{if (warning > 0)
+                                            {<span style="right: 25px;" class="badge-noti">@warning</span> }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div><!-- nav-sub -->
+                </li>
+                <li class="nav-item"><a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })" class="nav-link"><i data-feather="alert-triangle"></i> Giáo viên</a></li>
+                <li class="nav-item"><a href="@Url.Action("TeachHours", "Staff", new { area = "Admin" })" class="nav-link"><i data-feather="activity"></i> Giờ dạy giáo viên</a></li>
+                <li class="nav-item"><a href="@Url.Action("RankUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="activity"></i> Rank</a></li>
+                <li class="nav-item"><a href="@Url.Action("ClassList", "Class", new { area = "Admin" })" class="nav-link"><i data-feather="alert-triangle"></i> Chương trình</a></li>
+                <li class="nav-item"><a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })" class="nav-link"><i data-feather="book"></i> Tạo thông báo</a></li>
+                <li class="nav-item"><a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-link"><i data-feather="edit-3"></i> Viết bài</a></li>
+            }
+            else if (aclog.RoleID == 8)//manager academic chuyên môn
+            {
+                <li class="nav-item">
+                    <a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a>
+                </li>
+                <li class="nav-item">
+                    <a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })" class="nav-link"><i data-feather="calendar"></i> Lịch dạy trung tâm</a>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="layers"></i> Khách hàng@{if ((warning + TotalExamcoming) > 0)
+                            {<span class="badge-noti">@(warning + TotalExamcoming)</span> }}
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-label">Báo cáo học viên</li>
+                                <li class="nav-sub-item" style="position: relative;">
+                                    <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="user"></i> HV sắp thi @{if (TotalExamcoming > 0)
+                                            {<span style="right: 40px;" class="badge-noti">@TotalExamcoming</span>}}
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item" style="position: relative;">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="alert-triangle"></i> Warning
+                                        @{if (warning > 0)
+                                            {<span style="right: 45px" class="badge-noti">@warning</span> }}
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item" style="position:relative">
+                                    <a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="user"></i> Kết quả thi thực tế
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div><!-- nav-sub -->
+                </li>
+
+                <li class="nav-item with-sub">
+                    <a href="javascript:;" class="nav-link">
+                        <i data-feather="user"></i> Giáo viên
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-sub-item"><a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i>Danh sách Giáo viên</a></li>
+                            </ul>
+
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="book"></i> Khóa học</a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="layers"></i>Danh sách khóa học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="flag"></i>Khóa tự học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra nhiều ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTimeSingle", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra một ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Kiểm tra lịch giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacherAll", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Kiểm tra lịch nhiều giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Kiểm tra phòng</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="check-circle"></i> Bài chấm <span class="badge-noti">@checkfix</span></a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("TeacherExerciseFix", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link"><i data-feather="edit-3"></i>Bài đã chấm</a></li>
+                        <li class="nav-sub-item" style="position:relative;">
+                            <a href="@Url.Action("ExerciseCheckFix", "TeacherExercise", new { area = "Admin" })" class="nav-sub-link">
+                                <i data-feather="check-circle"></i>Duyệt bài
+                                @{
+                                    if (checkfix > 0)
+                                    { <span class="badge-noti">@checkfix</span>
+                                }
+                                }
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })" class="nav-link"><i data-feather="book"></i> Tạo thông báo</a></li>
+                <li class="nav-item"><a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-link"><i data-feather="edit-3"></i> Viết bài</a></li>
+            }
+            else if (aclog.RoleID == 9)
+            {
+                <li class="nav-label pd-l-20 pd-lg-l-25 d-lg-none">Trang điều hướng</li>
+                <li class="nav-item"><a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link"><i data-feather="bookmark"></i> News</a></li>
+                <li class="nav-item"><a href="@Url.Action("Dashboard", "Home", new { area = "Admin" })" class="nav-link"><i data-feather="bar-chart"></i> Dashboard</a></li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link"><i data-feather="book"></i> Khoá học</a>
+                    <ul class="navbar-menu-sub">
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>DS khoá học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i>DS khoá tự học</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Lịch trống giáo viên</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra nhiều ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleStudyTimeSingle", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="calendar"></i>Kiểm tra một ca</a></li>
+                        <li class="nav-sub-item"><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })" class="nav-sub-link"><i data-feather="home"></i>Kiểm tra phòng</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="layers"></i> Khách hàng @{ if ((warning + TotalExamcoming) > 0)
+                            {<span class="badge-noti">@(warning + TotalExamcoming)</span> }
+                        }
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-label">Học viên</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Dữ liệu học viên</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Học viên (TVV nghỉ)</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV trong khoá</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV chuyển khoá </a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV hẹn đăng ký</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> HV bảo lưu</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerAdvisory", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="smile"></i> HV cần tư vấn</a></li>
+                                <li class="nav-label mg-t-20">Dịch vụ, hẹn test, thi</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Khách mua dịch vụ</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách đăng ký thi</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Thêm lịch hẹn test</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách khách hẹn test</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("Customer", "SetPackage", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i> Danh sách khách mua gói</a></li>
+                            </ul>
+                            <ul>
+                                <li class="nav-label">Báo cáo học viên</li>
+                                <li class="nav-sub-item" style="position:relative;">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="alert-triangle"></i> Cảnh báo học viên
+                                        @{if (warning > 0)
+                                            {<span style="right: 25px;" class="badge-noti">@warning</span> }
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item" style="position:relative">
+                                    <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="user"></i> HV sắp thi @{if (TotalExamcoming > 0)
+                                            {<span style="right: 20px;" class="badge-noti">@TotalExamcoming</span>}
+                                        }
+                                    </a>
+                                </li>
+                                <li class="nav-sub-item">
+                                    <a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })" class="nav-sub-link">
+                                        <i data-feather="user"></i> Kết quả thi thực tế
+                                    </a>
+                                </li>
+                                <li class="nav-label mg-t-20">Tài chính</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Nợ học phí</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Yêu cầu hoàn tiền</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Phiếu thu</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })" class="nav-sub-link"><i data-feather="file-text"></i> Phiếu chi</a></li>
+
+                            </ul>
+                        </div>
+                    </div><!-- nav-sub -->
+                </li>
+                <li class="nav-item with-sub">
+                    <a href="" class="nav-link">
+                        <i data-feather="user"></i> Nhân viên
+                        @{
+                            if (checkfix > 0)
+                            {
+                                <span class="badge-noti">@checkfix</span>
+                            }
+                        }
+                    </a>
+                    <div class="navbar-menu-sub">
+                        <div class="d-lg-flex">
+                            <ul>
+                                <li class="nav-label">Nhân viên</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i>Danh sách nhân viên</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="user"></i>Danh sách saler</a></li>
+                                <li class="nav-label mg-t-20">Giáo viên</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i> Giáo viên</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("TeachHours", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="users"></i>Giờ dạy giáo viên</a></li>
+                            </ul>
+                            <ul>
+                                <li class="nav-label">Lương saler</li>
+                                <li class="nav-sub-item"><a href="@Url.Action("CampaignSale", "Staff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="bar-chart"></i>Chiến dịch sale</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SalaryReview", "SalaryStaff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Duyệt lương saler</a></li>
+                                <li class="nav-sub-item"><a href="@Url.Action("SalaryStaff", "SalaryStaff", new { area = "Admin" })" class="nav-sub-link"><i data-feather="dollar-sign"></i>Lịch sử duyệt</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item"><a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })" class="nav-link"><i data-feather="book"></i> Tạo thông báo</a></li>
+            }
+            <li class="nav-item"><a href="@Url.Action("DocumentList", "ZimDocument", new { area = "Admin" })" class="nav-link"><i data-feather="book"></i> Document</a></li>
+        </ul>
+    }
+}

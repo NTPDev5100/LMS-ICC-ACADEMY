@@ -1,0 +1,419 @@
+﻿@using AppZim.Areas.Admin.Controllers;
+@{
+    var projectname = BaseController.ProjectName;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico">
+    <style>
+        /*@@media print {*/
+        /**
+        * Print stylesheet for nhaphang45
+        * @@lastmodified    11.06.2019
+        */
+        /** Setting margins */
+        @@page { 
+            margin: 2cm 1cm 4cm;
+        }
+
+        body {
+            font: 13pt "Times New Roman", Times, serif;
+            line-height: 1.3;
+            background: #fff !important;
+            color: #000;
+        }
+
+        h1 {
+            font-size: 24pt;
+        }
+
+        h2,
+        h3,
+        h4 {
+            font-size: 14pt;
+            margin-top: 25px;
+        }
+        /* Defining all page breaks */
+        a {
+            page-break-inside: avoid;
+        }
+
+        blockquote {
+            page-break-inside: avoid;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        img {
+            page-break-inside: avoid;
+            page-break-after: avoid;
+        }
+
+        table,
+        pre {
+            page-break-inside: avoid;
+        }
+
+        ul,
+        ol,
+        dl {
+            page-break-before: avoid;
+        }
+
+            ul li {
+                list-style: none;
+            }
+
+        ul {
+            padding: 0;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+        /* Displaying link color and link behaviour */
+        a:link,
+        a:visited,
+        a {
+            background: transparent;
+            color: #520;
+            font-weight: bold;
+            text-decoration: underline;
+            text-align: left;
+        }
+
+        a {
+            page-break-inside: avoid;
+        }
+
+            a[href^="http"]:after {
+                content: " < " attr(href) "> ";
+            }
+
+            a:after > img {
+                content: "";
+            }
+
+        article a[href^="#"]:after {
+            content: "";
+        }
+
+        a:not(:local-link):after {
+            content: " < " attr(href) "> ";
+        }
+
+        .row,
+        .col {
+            margin: 0;
+            padding: 0;
+        }
+
+            .row:after {
+                content: "";
+                display: table;
+                clear: both;
+            }
+
+        .card-panel {
+            padding: 0;
+        }
+
+        .print-header {
+            position: relative;
+        }
+
+            .print-header p {
+                margin: 0;
+                font-size: 10pt;
+            }
+
+            /*.print-header .hd-left {
+                max-width: 150px;
+            }*/
+
+            .print-header .hd-right {
+                position: absolute;
+                max-width: 200px;
+                text-align: right;
+                right: 0;
+                top: 0;
+            }
+
+            .print-header .barcode img {
+                width: 100px;
+                height: 100px;
+            }
+
+            .print-header .hd-right .content {
+                text-align: center;
+            }
+
+            .print-header .print-title {
+                text-align: center;
+                /*margin-bottom: 30px;*/
+            }
+
+                .print-header .print-title h1 {
+                    margin-top: 15px;
+                    margin-bottom: 15px;
+                    text-transform: uppercase;
+                    font-family: "Times New Roman", Times, serif;
+                }
+
+        .print-footer {
+            /*padding-top: 30px;*/
+            padding-bottom: 60px;
+            page-break-inside: avoid;
+        }
+
+            .print-footer .signature {
+                display: flex;
+                justify-content: space-around;
+            }
+
+                .print-footer .signature .col {
+                    text-align: center;
+                }
+
+                    .print-footer .signature .col p {
+                        margin: 0;
+                    }
+
+        .print-header,
+        .print-footer,
+        .print-content {
+            display: block;
+        }
+
+        .row-dots p {
+            border-bottom: 1px dotted #000;
+            padding-bottom: 3px;
+        }
+
+            .row-dots p span {
+                font-weight: 500;
+            }
+
+        .row-dots .seperate {
+            display: flex;
+        }
+
+            .row-dots .seperate > p {
+                width: 50%;
+            }
+
+        .print-content .content-wrap .row-flex .information li {
+            padding: 5px 0;
+        }
+
+        .print-content .content-wrap .row-flex .information > li {
+            display: flex;
+            list-style-type: disc;
+        }
+
+            .print-content .content-wrap .row-flex .information > li .content {
+                border-bottom: 1px dotted;
+                flex-grow: 1;
+                order: 2;
+                padding-left: 5px;
+            }
+
+            .print-content .content-wrap .row-flex .information > li.full {
+                height: 32px;
+                align-items: center;
+                padding-left: 5px;
+            }
+
+                .print-content .content-wrap .row-flex .information > li.full:before {
+                    content: " ";
+                    line-height: 1;
+                }
+
+            .print-content .content-wrap .row-flex .information > li:last-child {
+                flex-flow: wrap;
+            }
+
+        .content {
+            font-weight: normal;
+        }
+
+        .print-content
+        .content-wrap
+        .row-flex
+        .information > li:last-child
+        .title {
+            order: 0;
+        }
+
+        .print-content
+        .content-wrap
+        .row-flex
+        .information > li:last-child
+        .content {
+            border-bottom: 0;
+        }
+
+        .print-content .content-wrap .row-flex .information > li:before {
+            content: "\2022";
+            font-weight: bold;
+            margin-right: 20px;
+        }
+
+        .print-content .content-wrap .row-flex .information > li .title {
+            order: 1;
+            font-weight: bold;
+        }
+
+            .print-content .content-wrap .row-flex .information > li .title.italic {
+                font-weight: normal;
+                font-style: italic;
+            }
+
+            .print-content .content-wrap .row-flex .information > li .title.half {
+                width: 30%;
+                display: flex;
+            }
+
+                .print-content .content-wrap .row-flex .information > li .title.half.italic {
+                    width: 70%;
+                    display: flex;
+                }
+
+                .print-content
+                .content-wrap
+                .row-flex
+                .information > li
+                .title.half
+                .content {
+                    border-bottom: 1px dotted;
+                    flex-grow: 1;
+                    order: 2;
+                    padding-left: 5px;
+                }
+
+        .print-content .content-wrap .row-flex .information > li ul.note {
+            width: 100%;
+            padding-left: 30px;
+        }
+
+            .print-content .content-wrap .row-flex .information > li ul.note > li {
+                padding-left: 30px;
+                background-image: url(https://static.thenounproject.com/png/711167-200.png);
+                background-size: 20px;
+                background-repeat: no-repeat;
+                background-position: 0 5px;
+                -webkit-print-color-adjust: exact;
+            }
+
+        .center {
+            text-align: center;
+            font-weight: bold;
+        }
+        /*}*/
+    </style>
+</head>
+<body>
+    <div class="print-section">
+        <div class="print-header">
+            <div class="row">
+                <div class="col s12">
+                    <div class="hd-left">
+                        <div class="barcode">
+                            <p style="font-size:15px;font-weight:bold">@projectname</p>
+                            <p>Địa chỉ: No 12, Hoàng gia Tower, Tô Hiệu, Quang Trung, Hà Đông, Hà Nội</p>
+                            <p class="mg-b-0 tx-12">MST: </p>
+                        </div>
+                    </div>
+                    <div class="hd-right">
+                        <div class="barcode">
+                            <img src="@ViewBag.QrCode" alt="barcode" />
+                        </div>
+                        <p class="center">@ViewBag.NumberInvoice</p>
+                    </div>
+                    <div class="print-title">
+                        <h1>PHIẾU CHI</h1>
+                        @*<p>@ViewBag.SchoolInvoice @ViewBag.Date</p>*@
+                        <p>@ViewBag.Date</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="print-content">
+            <div class="content-wrap">
+                <div class="row-flex">
+                    <ul class="information">
+                        <li>
+                            <div class="title">Họ và tên:</div>
+                            <div class="content">
+                                <span>@ViewBag.Fullname</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="title">Số điện thoại liên hệ:</div>
+                            <div class="content">@ViewBag.Phone</div>
+                        </li>
+                        <li>
+                            <div class="title half">
+                                CMND:<span class="content">@ViewBag.IdentityCard</span>
+                            </div>
+                            <div class="title half" style="width:35%;">
+                                Ngày cấp: <span class="content">@ViewBag.IdentityCardDate</span>
+                            </div>
+                            <div class="title half" style="width:35%;">
+                                Nơi cấp: <span class="content">@ViewBag.IdentityCardCity</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="title">Địa chỉ:</div>
+                            <div class="content">@ViewBag.Address</div>
+                        </li>
+                        <li>
+                            <span class="title">Lý do chi:</span><span class="content">@ViewBag.Note</span>
+                        </li>
+                        <li>
+                            <div class="title half">
+                                Số tiền đã chi:<span class="content">@ViewBag.Money</span>
+                            </div>
+                            <div class="title half italic">
+                                (Viết bằng chữ)<span class="content">@ViewBag.Moneytext</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="title half">
+                                Số tiền còn lại:<span class="content">@ViewBag.Moneyleft</span>
+                            </div>
+                            <div class="title half italic">
+                                (Viết bằng chữ)<span class="content">@ViewBag.Moneytextleft</span>
+                            </div>
+                        </li>
+
+                        <li style="display:none;"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="print-footer">
+            <div class="signature">
+                <div class="col">
+                    <p class="bold">Người nhận tiền</p>
+                    <p>(Ký và ghi rõ họ tên)</p>
+                </div>
+                <div class="col">
+                    <p class="bold">Người xuất phiếu</p>
+                    <p>(Ký và ghi rõ họ tên)</p>
+                    <p style="text-transform: uppercase; padding-top:10px;">@ViewBag.CreateInvoice</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

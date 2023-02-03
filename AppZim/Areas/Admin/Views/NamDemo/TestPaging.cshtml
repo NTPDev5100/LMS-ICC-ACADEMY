@@ -1,0 +1,43 @@
+﻿@model IEnumerable<AppZim.Models.tbl_PostContent>
+@{
+    ViewBag.Title = "News";
+}
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<div class="container">
+
+    <table class="table table-striped">
+        <tr>
+            <th>
+              Haha
+            </th>
+            <th>
+               Hình
+            </th>
+            <th>
+               TitlePost
+            </th>
+            <th>
+               CreatedBy
+            </th>
+        </tr>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ID)
+                </td>
+                <td>
+                    <img style="height:30px;width:30px" src="@Html.DisplayFor(modelItem => item.PostIMG)"/>                   
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TitlePost)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CreatedBy)
+                </td>
+            </tr>
+        }
+
+    </table>
+    @Html.Raw(ViewBag.Paging)
+</div>

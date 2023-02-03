@@ -1,0 +1,1 @@
+PageError: AccountController    FunctionError: InsertDevicetoken    loginUID: 1    MessageError: An error occurred while executing the command definition. See the inner exception for details.    12/05/2021 12:00

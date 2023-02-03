@@ -1,0 +1,1419 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using MB.Extensions
+@{
+    ViewBag.Title = "CreateCourse";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var center = SchoolTable.getall();
+    List<tbl_Account> hocvu = AccountTable.getall().Where(n => n.Status == 2 && n.RoleID == 7 && n.IsDelete == false).ToList();// học vụ
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    if (aclog.SchoolID != null)
+    {
+        if (aclog.SchoolID != 0)
+        {
+            hocvu = hocvu.Where(n => n.SchoolID == aclog.SchoolID).ToList();
+        }
+    }
+}
+
+@section myStyles{
+    <style>
+        .input-group {
+            padding: 0 0.5rem 0 0;
+        }
+    </style>
+    <link href="~/app-assets/mycalendar/Calender.css" rel="stylesheet" />
+    <script src="~/app-assets/mycalendar/js/moment.min.js"></script>
+    <script src="~/app-assets/mycalendar/js/myCalendar.js"></script>
+    <script src="~/app-assets/mycalendar/js/jquery-ui.min.js"></script>
+    <script src="~/app-assets/mycalendar/js/master.js"></script>
+    <style>
+        #calendar {
+            float: right;
+            width: unset;
+        }
+
+        ul {
+            list-style-position: inside
+        }
+
+            ul#draggablelist li > ul {
+                padding-left: 20px
+            }
+
+        .draggable-item {
+            z-index: 10
+        }
+
+        #draggablelist {
+            float: left;
+            display: block;
+            padding: 10px;
+            min-width: 200px;
+            min-height: 40px
+        }
+
+            #draggablelist .draggable-item {
+                padding: 5px 0
+            }
+
+            #draggablelist.ui-droppable-active {
+                background-color: #e1e1e1
+            }
+
+            #draggablelist.ui-droppable-hover {
+                background-color: beige
+            }
+
+        #calendar {
+            float: right
+        }
+
+            #calendar .header h1 {
+                color: white
+            }
+
+            #calendar .details {
+                height: 180px
+            }
+
+            #calendar .events {
+                height: 180px
+            }
+
+            #calendar .entry {
+                padding: 0 25px 0 25px
+            }
+
+        #draggablelist {
+            float: left;
+            display: block;
+            padding: 10px;
+            min-width: 200px;
+            list-style: none;
+            width: 100%;
+            height: 100%;
+            min-height: 300px !important;
+            margin-top: 0;
+            background: #424242;
+            -webkit-box-shadow: 10px 10px 44px -37px rgba(0,0,0,0.75);
+            -moz-box-shadow: 10px 10px 44px -37px rgba(0,0,0,0.75);
+            box-shadow: 10px 10px 44px -37px rgba(0,0,0,0.75)
+        }
+
+            #draggablelist li.draggable-item.event {
+                background: #fff;
+                margin: 10px 0;
+                border-radius: 2px;
+                padding: 10px
+            }
+
+        #calendar .events {
+            display: flex;
+            flex-flow: wrap;
+            justify-content: space-between
+        }
+
+            #calendar .events .event {
+                font-size: 0.85rem;
+                line-height: 1.3;
+                letter-spacing: .5px;
+                padding: 1rem;
+                vertical-align: top;
+                width: calc((100% / 2) - 1rem);
+                background: #fff;
+                color: #000;
+                margin: 0.5rem;
+                border-radius: 2px
+            }
+
+                #calendar .events .event > span {
+                    line-height: 2rem
+                }
+
+        .fcontrol {
+            border: 1px solid #000;
+            margin-left: 10px;
+            height: 2rem;
+            float: right
+        }
+
+        #calendar .events .event .cl-ul-tiet {
+            margin-bottom: 0;
+            display: flex;
+            padding: 0 1rem;
+            padding-top: 10px;
+            margin: 10px -1rem -10px;
+            list-style: none;
+            flex-flow: wrap;
+            justify-content: space-between;
+            border-top: 1px solid #d1d1d1
+        }
+
+            #calendar .events .event .cl-ul-tiet li {
+                margin: 0.5rem;
+                width: calc((100% / 2) - 1rem)
+            }
+
+        #calendar .events .event .tiethoc:after, #calendar .events .event .tiethoc:before {
+            display: table;
+            content: '';
+            clear: both
+        }
+
+        #calendar .event select {
+            margin-bottom: 10px
+        }
+    </style>
+}
+<div class="row bg-white pd-t-20 pd-b-30 rounded">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item active" aria-current="page">Tạo khóa học</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-12 pd-b-10 mg-b-20">
+        <div class="row" style="padding-top:10px;">
+            <div class="col-12 d-md-flex align-items-center justify-content-between">
+                <div class="left-action d-flex">
+                    <div class="input-group no-wrap">
+                        <a href="#modal-add-day" data-toggle="modal" class="btn btn-primary btn-block"><i data-feather="clipboard"></i> Thông tin khóa</a>
+                    </div>
+                    <div class="input-group no-wrap">
+                        <a href="#modal-div-view" data-toggle="modal" id="btnview" class="btn btn-success btn-block "><i data-feather="save"></i> Lưu lại</a>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="no-wrap justify-content-end">
+                        <a href="/admin/Course/CreateCoursenew" class="btn btn-secondary btn-block "><i class="fas fa-undo-alt"></i> Tạo khóa nhanh</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <ul id="draggablelist" class="ui-droppable"></ul>
+    </div>
+    <div class="col-12 col-md-8">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+@using (Html.BeginForm("AddCourse", "Course", FormMethod.Post, new { id = "form-create" }))
+{
+    <div class="modal fade" id="modal-div-view" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered " role="document">
+            <div class="modal-content">
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" id="btn-close-create" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Thông tin khóa học</h4>
+                        <div class="form-group" id="divview">
+
+                        </div>
+                        <a id="btn-save" href="javascript:;" class="btn btn-primary btn-block">Cập nhật</a>
+                    </div>
+                </div><!-- modal-body -->
+            </div><!-- modal-content -->
+        </div><!-- modal-dialog -->
+    </div><!-- modal -->
+    <input type="hidden" id="hdflistCalender" name="hdflistCalender" />
+
+
+    <div class="modal fade" id="modal-add-day" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+            <div class="modal-content">
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" id="btn-close" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Thông tin khóa học</h4>
+                        <div class="form-group">
+                            <label>Trung tâm:</label>
+                            <select id="ddl-school" name="ddl-school" class="form-control select2">
+                                <option value="0">---</option>
+                                @{
+                                    foreach (var item in center)
+                                    {
+                                        <option value="@item.ID">@item.SchoolName </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Học vụ:</label>
+                            <select id="ddl-hocvu" name="ddl-hocvu" class="form-control select2">
+                                <option value="0">---</option>
+                                @{
+                                    foreach (var item in hocvu)
+                                    {
+                                        <option value="@item.ID">@item.FullName </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Phòng học:</label>
+                            <select id="ddl-room" name="ddl-room" multiple class="form-control select2">
+                                <option value="0">---</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ca học:</label>
+                            <select id="ddl-studytime" name="ddl-studytime" multiple class="form-control select2">
+                                <option value="0">---</option>
+                                @{
+                                    var cas = StudyTimeTable.getall().OrderBy(n => n.sTime).ToList();
+                                    foreach (var item in cas)
+                                    {
+                                        <option value="@item.ID">@item.sTime - @item.eTime</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Chuyên môn:</label>
+                            <select id="ddl-grade" name="ddl-grade" class="form-control">
+                                <option value="0">---</option>
+                                @{
+                                    var gra = GradeTable.getall();
+                                    foreach (var item in gra)
+                                    {
+                                        <option value="@item.ID">@item.GradeName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Lớp học:</label>
+                            <select id="ddl-class" name="ddl-class" required class="form-control">
+                                <option value="0">---</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Giáo trình:</label>
+                            <select id="ddl-cru" name="ddl-cru" required class="form-control">
+                                <option value="0">---</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-12">
+                                    <label>Ngày mở:</label>
+                                    <input id="txt-start-date" name="txt-start-date" required type="text" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY" value="@GetDateTime.Now.ToString("dd/MM/yyyy")">
+                                </div>
+                                @*<div class="col-6">
+                                        <label>Số tiền:</label>
+                                        <input id="txt-price" name="txt-price" type="text" oninput="moneyfm(this)" class="validate form-control" placeholder="20,000,000" required>
+                                    </div>*@
+
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Tên khóa:</label>
+                            <input id="txt-course-name" name="txt-course-name" class="form-control" type="text" value="" placeholder="...">
+                        </div>
+                        <a href="javascript:;" id="btn-view" class="btn btn-primary btn-block">Xem lịch</a>
+                    </div>
+                </div><!-- modal-body -->
+            </div><!-- modal-content -->
+        </div><!-- modal-dialog -->
+    </div><!-- modal -->
+}
+@section myScripts{
+
+    <script>
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+        jQuery(document).ready(function () {
+            //        new WOW().init();
+
+            var data = [];
+            var caObj = {};
+            var calendar = new Calendar('#calendar', data);
+            initDraggablelist();
+            function initDraggablelist() {
+                $(".draggable-item", $("#draggablelist")).draggable({
+                    scroll: true,
+                    //            containment: "#calendar .details",
+                    refreshPositions: false,
+                    axis: "",
+                    revert: true,
+                    zIndex: 10,
+                    start: function (e, ui) {
+                        var monthEl = calendar.month;
+                        $(monthEl.querySelector('.details')).droppable({
+                            accept: ".draggable-item",
+                            over: function (event, ui) {
+                                var detailsBox = this;
+                                var lim = parseInt(detailsBox.getAttribute('data-limit'));
+                                var eventsCount = detailsBox.querySelector('.events').childElementCount;
+
+                                if (eventsCount >= lim) {
+                                    $(detailsBox).addClass('outSlot');
+                                } else {
+                                    $(detailsBox).removeClass('outSlot');
+                                }
+                            },
+                            drop: function (event, ui) {
+
+                                var $item = ui.draggable;
+                                var detailsBox = this;
+                                var lim = parseInt(detailsBox.getAttribute('data-limit'));
+                                var eventsCount = detailsBox.querySelector('.events').childElementCount;
+                                var date = detailsBox.getAttribute('data-for');
+                                if (eventsCount >= lim) {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: 'Không còn chỗ',
+                                        icon: 'notifications_active',
+                                        classBackground: 'noti-warning',
+                                        timeout: 2500
+                                    })
+                                } else {
+                                    moveToCalendar($item, { limit: lim, date: date });
+                                }
+
+                            }
+                        });
+                    },
+                    drag: function (e, ui) {
+
+                    },
+                    stop: function (e, ui) {
+
+                    }
+                });
+            }
+
+            $('#draggablelist').droppable({
+                accept: "#calendar .details .event",
+                over: function (event, ui) {
+
+                },
+                drop: function (event, ui) {
+                    var $item = ui.draggable;
+                    var $detail = $item.closest('.details');
+                    var lim = $detail.attr('data-limit');
+                    var date = $detail.attr('data-for');
+                    //          console.log($item);
+                    moveToList($item, { limit: lim, date: date });
+                }
+            });
+
+
+            calendar.renderEventsCB = function (detail, evs) {
+                var $event = $(detail).find('.event:not(.empty)');
+
+                evs.forEach(function (ev) {
+                    //load tutor
+                    var evIndex = calendar.events.findIndex(function (item) {
+
+                        return item.id === ev.id && item.color != 'blank';
+                    });
+                    //console.log(evIndex);
+
+                    var $eventEl = $event.find('input[name="id"][value="' + ev.id + '"]').parent('.event');
+                    var $tutorSelect = $('<select class="cl-select-tutor form-control"></select>');
+
+                    var $roomSelect = $('<select class="cl-select-room form-control tai-giao-vien" data-monid="' + ev.monid + '" data-date="' + ev.date._i + '"></select>');
+
+                    var $studySelect = $('<select class="cl-select-study form-control tai-phong"></select>');
+
+                    if (!ev.hasOwnProperty('study')) {
+                        // chua co load ajax len nhe
+                        //console.log(ev.date._i);
+
+                        //lấy dữ liệu ngày đã chọn
+                        var arrCa = calendar.events.filter(function (element) {
+                            return element.caID && element.date._i == ev.date._i;
+                        });
+
+                        var cadachon = '';
+                        if (arrCa.length > 0) {
+                            $(arrCa).each(function (index) {
+                                cadachon += arrCa[index].caID + ',';
+                            })
+                        }
+                        console.log(cadachon);
+
+                        $.ajax({
+                            type: "POST",
+                            url: "/Admin/Course/TaiCaHoc",
+                            //data: '{SchoolID: ' + $("#ddl-school").val() + ',MonID: ' + ev.monid + ', CaID: "' + $("#ddl-studytime").val() + '", CaDaChon:"' + cadachon + '", Date: "' + ev.date._i + '", RoomID: "' + $("#ddl-room").val() + '"}',
+                            data: '{CaID: "' + $("#ddl-studytime").val() + '", CaDaChon:"' + cadachon + '"}',
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs == false) {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: 'Không có ca :(, không thể tạo lịch khi ca trống',
+                                        icon: 'notifications_active',
+                                        classBackground: 'noti-warning',
+                                        timeout: 2500
+                                    })
+                                }
+                                else {
+                                    // dữ liệu ca học
+                                    var data = msg.study;
+                                    calendar.events[evIndex].study = {
+                                        selected: data[0],
+                                        list: data
+                                    };
+                                    //calendar.events[evIndex].caID = msg.CaID;
+                                    calendar.events[evIndex].study.list.map(function (item) {
+                                        $studySelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    });
+                                    //$studySelect.parent('.event').attr('data-ca-id', calendar.events[evIndex].id);
+
+                                    ////console.log(calendar.events[evIndex]);
+
+                                    //// dữ liệu phòng
+                                    //calendar.events[evIndex].room = {
+                                    //    selected: r[0],
+                                    //    list: r
+                                    //};
+                                    //calendar.events[evIndex].caID = msg.CaID;
+                                    //calendar.events[evIndex].room.list.map(function (item) {
+                                    //    $roomSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    //});
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+                                console.log("e: TaiCaHoc");
+                            }
+                        });
+
+
+
+
+                    } else {
+                        //  co roi lay ra thoi
+                        //  calendar.events[evIndex].tutor
+                        //  console.log(calendar.events[evIndex]);
+                        //console.log(calendar.events[evIndex]);
+                        if (typeof calendar.events[evIndex].study !== "undefined") {
+                            var selectedItemStudy = calendar.events[evIndex].study.selected;
+                            calendar.events[evIndex].study.list.map(function (item) {
+                                //console.log(item.id);
+                                //console.log(selectedItemStudy.id);
+                                var isSLStdy = selectedItemStudy.id === item.id ? "selected" : "";
+                                //console.log(isSLStdy);
+                                $studySelect.append('<option value="' + item.id + '" ' + isSLStdy + '>' + item.name + '</option>');
+
+                            });
+                        }
+
+                        if (typeof calendar.events[evIndex].tutor !== "undefined") {
+                            var selectedItem = calendar.events[evIndex].tutor.selected;
+                            calendar.events[evIndex].tutor.list.map(function (item) {
+                                var isSL = selectedItem.id === item.id ? "selected" : "";
+                                $tutorSelect.append('<option value="' + item.id + '" ' + isSL + '>' + item.name + '</option>');
+
+                            });
+                        }
+
+                        if (typeof calendar.events[evIndex].room !== "undefined") {
+                            var selectedItemRoom = calendar.events[evIndex].room.selected;
+                            calendar.events[evIndex].room.list.map(function (item) {
+                                var isSLRoom = selectedItemRoom.id === item.id ? "selected" : "";
+
+                                $roomSelect.append('<option value="' + item.id + '" ' + isSLRoom + '>' + item.name + '</option>');
+
+                            });
+                        }
+                    }
+
+                    $tutorSelect.on('change', function () {
+                        calendar.events[evIndex].tutor.selected = {
+                            id: parseInt($(this).children(':selected').val()),
+                            name: $(this).children(':selected').text()
+                        }
+                    });
+
+                    var idca = 0;
+                    $roomSelect.on('change', function () {
+                        calendar.events[evIndex].room.selected = {
+                            id: parseInt($(this).children(':selected').val()),
+                            name: $(this).children(':selected').text()
+                        }
+                        var idphong = $(this).val();
+                        var p = $(this).closest('.event');
+                        var te = p.find('.cl-select-tutor');
+                        if (idca == 0) {
+                            var selectca = p.find('.cl-select-study');
+                            idca = parseInt($(selectca).val());
+                        }
+
+                        $tutorSelect.empty();
+                        $.ajax({
+                            type: "POST",
+                            url: "/Admin/Course/TaiGiaoVien",
+                            data: '{SchoolID: ' + $("#ddl-school").val() + ',MonID: ' + ev.monid + ', CaID: ' + idca + ', Date: "' + ev.date._i + '", RoomID: ' + idphong + '}',
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs == false) {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: 'Không có giáo viên :(, không thể tạo lịch khi ca trống',
+                                        icon: 'notifications_active',
+                                        classBackground: 'noti-warning',
+                                        timeout: 2500
+                                    })
+                                }
+                                else {
+                                    // dữ liệu giáo viên
+                                    var data = msg.l;
+
+
+                                    //dữ liệu giáo viên
+                                    calendar.events[evIndex].tutor = {
+                                        selected: data[0],
+                                        list: data
+                                    };
+                                    // calendar.events[evIndex].caID = msg.CaID;
+                                    $(te).empty();
+                                    calendar.events[evIndex].tutor.list.map(function (item) {
+                                        $(te).append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    });
+                                    //   $(te).parent('.event').attr('data-ca-id', calendar.events[evIndex].id);
+                                    //console.log(calendar.events[evIndex]);
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+                                console.log("e: TaiGiaoVien");
+                            }
+                        });
+                    });
+                    var previous;
+                    $studySelect.on('focus', function () {
+                        previous = $(this).val();
+                        console.log(previous);
+                    }).change(function () {
+                        idca = parseInt($(this).val());
+                        //lấy dữ liệu ngày đã chọn
+                        var arrCa = calendar.events.filter(function (element) {
+                            return element.caID == idca && element.date._i == ev.date._i && element != $(this);
+                        });
+
+                        console.log(arrCa);
+                        if (arrCa.length > 0) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Ca đã được chọn',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                            $studySelect.empty();
+                            calendar.events[evIndex].study.list.map(function (item) {
+                                var isSLStdy = parseInt(previous) === item.id ? "selected" : "";
+                                $studySelect.append('<option value="' + item.id + '" ' + isSLStdy + '>' + item.name + '</option>');
+                            });
+                            previous = null;
+                            $(this).blur();
+                            return;
+                        }
+
+                        //================================================================
+
+                        calendar.events[evIndex].study.selected = {
+                            id: parseInt($(this).children(':selected').val()),
+                            name: $(this).children(':selected').text()
+                        }
+
+                        //idca = parseInt($(this).val());
+                        var p = $(this).parent();
+                        var rs = p.find('.cl-select-room');
+
+                        $.ajax({
+                            type: "POST",
+                            url: "/Admin/Course/TaiPhong",
+                            data: '{CaID: ' + idca + ', Date: "' + ev.date._i + '", RoomID: "' + $("#ddl-room").val() + '"}',
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs == false) {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: 'Không có phòng :(, không thể tạo lịch khi phòng trống',
+                                        icon: 'notifications_active',
+                                        classBackground: 'noti-warning',
+                                        timeout: 2500
+                                    })
+                                }
+                                else {
+                                    // dữ liệu giáo viên
+                                    var data = msg.r;
+                                    //dữ liệu giáo viên
+                                    calendar.events[evIndex].room = {
+                                        selected: data[0],
+                                        list: data
+                                    };
+                                    calendar.events[evIndex].caID = idca;
+                                    $(rs).empty();
+                                    calendar.events[evIndex].room.list.map(function (item) {
+                                        $(rs).append('<option value="' + item.id + '">' + item.name + '</option>');
+
+                                    });
+                                    //   $(rs).parent('.event').attr('data-ca-id', calendar.events[evIndex].id);
+                                    //console.log(calendar.events[evIndex]);
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+                                console.log("e: TaiPhong");
+                            }
+
+                        });
+
+                    })
+                    //$studySelect.on('change', function () {
+
+                    //});
+
+                    //$eventEl.attr('data-ca-id', calendar.events[evIndex].caID);
+
+                    //$tutorSelect.insertAfter($eventEl.children('span'));
+                    //$roomSelect.insertAfter($eventEl.children('span'));
+                    //$studySelect.insertAfter($eventEl.children('span'));
+
+                    var $selectWrap = $('<div class="wrap-select">');
+
+                    $selectWrap.append($studySelect);
+                    $selectWrap.append($roomSelect);
+                    $selectWrap.append($tutorSelect);
+
+                    $selectWrap.insertAfter($eventEl.children('span'));
+                    // reload tiet hoc
+
+                    var ulTiet = $('<ul class="cl-ul-tiet"></ul>');
+                    if (ev.hasOwnProperty('tiet')) {
+                        ev.tiet.map(function (item) {
+                            ulTiet.append('<li>' + item.name + '</li>');
+                        });
+                        $eventEl.append(ulTiet);
+                    }
+
+                    var monid = $('<input type="hidden" name="monid" value="' + ev.monid + '">');
+                    $eventEl.append(monid);
+
+                    //// tải phòng
+                    //$(document).on("change", ".tai-phong", function () {
+
+                    //    var caloadphong = $(this).val();
+
+                    //    var p = $(this).parent();
+                    //    var rs = p.find('.cl-select-room');
+
+                    //    console.log(rs);
+                    //    $.ajax({
+                    //        type: "POST",
+                    //        url: "/Admin/Course/TaiPhong",
+                    //        data: '{CaID: ' + caloadphong + ', Date: "' + ev.date._i + '", RoomID: "' + $("#ddl-room").val() + '"}',
+                    //        contentType: "application/json; charset=utf-8",
+                    //        dataType: "json",
+                    //        success: function (msg) {
+                    //            if (msg.rs == false) {
+                    //                toast.create({
+                    //                    title: 'Thông báo!',
+                    //                    text: 'Không có giáo viên :(, không thể tạo lịch khi giáo viên trống',
+                    //                    icon: 'notifications_active',
+                    //                    classBackground: 'noti-warning',
+                    //                    timeout: 2500
+                    //                })
+                    //            }
+                    //            else {
+                    //                // dữ liệu giáo viên
+                    //                var data = msg.r;
+                    //                //dữ liệu giáo viên
+                    //                calendar.events[evIndex].room = {
+                    //                    selected: data[0],
+                    //                    list: data
+                    //                };
+                    //                //      calendar.events[evIndex].caID = msg.CaID;
+                    //                $(rs).empty();
+                    //                calendar.events[evIndex].room.list.map(function (item) {
+                    //                    $(rs).append('<option value="' + item.id + '">' + item.name + '</option>');
+
+                    //                });
+                    //                //   $(rs).parent('.event').attr('data-ca-id', calendar.events[evIndex].id);
+                    //                //console.log(calendar.events[evIndex]);
+                    //            }
+                    //        },
+                    //        error: function (xmlhttprequest, textstatus, errorthrow) {
+                    //            console.log("e: TaiGiaoVien");
+                    //        }
+                    //    });
+                    //});
+
+                    //// tải giáo viên
+                    //$(document).on("change", ".tai-giao-vien", function () {
+                    //    var monid = $(this).attr('data-monid');
+                    //    var date = $(this).attr('data-date');
+
+
+                    //    var p = $(this).closest('.event');
+                    //    var te = p.find('.cl-select-tutor');
+
+
+                    //    $tutorSelect.empty();
+
+                    //    $.ajax({
+                    //        type: "POST",
+                    //        url: "/Admin/Course/TaiGiaoVien",
+                    //        data: '{SchoolID: ' + $("#ddl-school").val() + ',MonID: ' + monid + ', CaID: "' + $("#ddl-studytime").val() + '", CaDaChon:"", Date: "' + date + '", RoomID: "' + $("#ddl-room").val() + '"}',
+                    //        contentType: "application/json; charset=utf-8",
+                    //        dataType: "json",
+                    //        success: function (msg) {
+                    //            if (msg.rs == false) {
+                    //                toast.create({
+                    //                    title: 'Thông báo!',
+                    //                    text: 'Không có giáo viên :(, không thể tạo lịch khi giáo viên trống',
+                    //                    icon: 'notifications_active',
+                    //                    classBackground: 'noti-warning',
+                    //                    timeout: 2500
+                    //                })
+                    //            }
+                    //            else {
+                    //                // dữ liệu giáo viên
+                    //                var data = msg.l;
+
+
+                    //                //dữ liệu giáo viên
+                    //                calendar.events[evIndex].tutor = {
+                    //                    selected: data[0],
+                    //                    list: data
+                    //                };
+                    //                // calendar.events[evIndex].caID = msg.CaID;
+                    //                $(te).empty();
+                    //                calendar.events[evIndex].tutor.list.map(function (item) {
+                    //                    $(te).append('<option value="' + item.id + '">' + item.name + '</option>');
+                    //                });
+                    //                //   $(te).parent('.event').attr('data-ca-id', calendar.events[evIndex].id);
+                    //                //console.log(calendar.events[evIndex]);
+                    //            }
+                    //        },
+                    //        error: function (xmlhttprequest, textstatus, errorthrow) {
+                    //            console.log("e: TaiGiaoVien");
+                    //        }
+                    //    });
+                    //});
+                });
+
+
+
+                $event.draggable({
+                    scroll: true,
+                    refreshPositions: false,
+                    axis: "",
+                    revert: true,
+                    zIndex: 10,
+                    helper: "clone",
+                    appendTo: "#main-wrap",
+                    revertDuration: 0,
+                    start: function (e, ui) {
+
+                    },
+                    drag: function (e, ui) {
+
+                    },
+
+                    stop: function (e, ui) {
+
+                    }
+                });
+            }
+
+            function moveToCalendar(el, data) {
+                data.eventName = el.find('[name="eventName"]').val();
+                data.calendar = el.find('[name="calendar"]').val();
+                data.color = el.find('[name="color"]').val();
+                data.id = parseInt(el.find('[name="id"]').val());
+                data.tiet = [];
+                data.monid = el.find('[name="monid"]').val();
+
+                el.find('.tiethoc-ul li').each(function (i, ele) {
+                    data.tiet.push({
+                        id: $(ele).find('[name="tId"]').val(),
+                        name: $(ele).find('[name="tName"]').val()
+                    });
+                });
+
+
+                calendar.pushEvent(data);
+                el.remove();
+                //   console.log(calendar.removeBlank(calendar.events));
+            }
+            function moveToList(el, data) {
+                console.log(data);
+                data.eventName = el.find('span').html();
+                data.id = parseInt(el.find('[name="id"]').val());
+                data.calendar = el.find('[name="calendar"]').val();
+                data.color = el.find('.event-category')[0].className.replace('event-category', '').trim();
+                data.monid = parseInt(el.find('[name="monid"]').val());
+                //    console.log(data.monid);
+
+                $('#draggablelist').append(`<li class="draggable-item event">${data.eventName}
+                                                                               <input type="hidden" name="eventName" value="${data.eventName}">
+                                                                               <input type="hidden" name="calendar" value="${data.calendar}">
+                                                                               <input type="hidden" name="color" value="${data.color}">
+                                                                               <input type="hidden" name="id" value="${data.id}">
+                                                                               <input type="hidden" name="monid" value="${data.monid}">
+                                                                <ul class="tiethoc-ul">${el.find('[name="tT"]').map(function (i, element) {
+
+                        return '<li>' + element.value.split(',')[1] + '<input type="hidden" name="tId" value="' + element.value.split(',')[0] + '"><input type="hidden" name="tName" value="' + element.value.split(',')[1] + '"></li>'
+
+                    }).toArray().join('')}</ul>
+                                                                </li>`);
+
+                initDraggablelist();
+
+                calendar.ejectEvent(data);
+                calendar.removeBlank(calendar.events);
+                console.log(calendar.removeBlank(calendar.events));
+            }
+
+
+
+
+            //Nam=============================================================================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+            //Goi ham
+            $('#ddl-school').on('change', function () {
+                LoadRoom($(this).val());
+            });
+            $('#ddl-grade').on('change', function () {
+                LoadClass($(this).val());
+            });
+            $('#ddl-class').on('change', function () {
+                if ($("#ddl-class").val() != '0' && $("#ddl-studytime").val() != '0') {
+                    LoadGiaoTrinh();
+                }
+            });
+            $('#ddl-studytime').on('change', function () {
+                if ($("#ddl-class").val() != '0' && $("#ddl-studytime").val() != '0') {
+                    LoadGiaoTrinh();
+                }
+            });
+
+
+
+            document.getElementById('btn-view').addEventListener('click', function (e) {
+                if ($("#ddl-school").val() == '0') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn trung tâm',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+
+                if ($("#ddl-grade").val() == '0') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn khối',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#ddl-studytime").val() == '0') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn ca học',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#ddl-class").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn lớp',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#ddl-cru").val() == '0') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn giáo trình',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#txt-start-date").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập ngày bắt đầu khóa học',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#txt-course-name").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập tên khóa học',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#txt-price").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập giá khóa học',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                LoadTietHoc(e);
+                $('#btn-close').click();
+            });
+
+            document.getElementById('btnview').addEventListener('click', function (e) {
+                Preview(e);
+            });
+
+            //
+            function LoadRoom(id) {
+                $("#ddl-room").empty();
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Course/LoadRoom",
+                    data: '{schoolid: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#ddl-room').append(msg.rs);
+                        //$("#ddl-room").formSelect();
+                        $("#ddl-room").trigger("change");
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error :) ");
+                    }
+                });
+            }
+
+
+            function LoadClass(id) {
+                $("#ddl-class").empty();
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Course/LoadClass",
+                    data: '{gradeid: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#ddl-class').append(msg.rs);
+                        //$('#ddl-class').formSelect();
+                        $("#ddl-class").trigger("change");
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error :) ");
+                    }
+                });
+            }
+
+
+            function LoadGiaoTrinh() {
+                if ($("#ddl-class").val() == "0") {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn lớp học',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                $("#ddl-cru").empty();
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Course/LoadGiaoTrinh",
+                    data: '{classid: ' + $('#ddl-class').val() + ', studyid: "' + $("#ddl-studytime").val() + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#ddl-cru').append(msg.rs);
+                        //$('#ddl-cru').formSelect();
+                        $("#ddl-cru").trigger("change");
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error :) ");
+                    }
+                });
+            }
+
+
+            function LoadTietHoc(e) {
+                $("#draggablelist").empty();
+                //xóa cmn hêt nè
+                calendar.events = [];
+                $(calendar.month).find('.day-events').html('');
+                $(calendar.month).find('.events.in').html('');
+
+                var op = "";
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Course/LoadTietHoc",
+                    data: '{GiaoTrinhID: ' + $("#ddl-cru").val() + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        var data = msg.d;
+                        if (data == null) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Không có dữ liệu',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                        }
+                        else {
+                            for (var i = 0; i < data.length; i++) {
+                                op += "<li class=\"draggable-item event\">Ngày học " + data[i].ID + "";
+                                op += "<input type=\"hidden\" name=\"eventName\" value=\"" + data[i].eventName + "\">";
+                                op += "<input type=\"hidden\" name=\"calendar\" value=\"" + data[i].calendar + "\">";
+                                op += "<input type=\"hidden\" name=\"color\" value=\"" + data[i].Color + "\">";
+                                op += "<input type=\"hidden\" name=\"id\" value=\"" + data[i].ID + "\">";
+                                op += "<input type=\"hidden\" name=\"monid\" value=\"" + data[i].MonID + "\">";
+                                op += "<ul class=\"tiethoc-ul\">";
+
+                                for (var j = 0; j < data[i].Tiet.length; j++) {
+                                    op += "<li>Tiết " + data[i].Tiet[j].TenTietvsMon + "";
+                                    op += "<input type=\"hidden\" name=\"tId\" value=\"" + data[i].Tiet[j].TietID + "\">";
+                                    op += "<input type=\"hidden\" name=\"tName\" value=\"Tiết " + data[i].Tiet[j].TenTietvsMon + "\">";
+                                    op += "</li>";
+                                }
+
+                                op += "</ul>";
+                                op += "</li>";
+                            }
+                            $('#draggablelist').append(op);
+                            initDraggablelist();
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error :) LoadTietHoc");
+                    }
+                });
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Course/TaiNgayHoc",
+                    data: '{RoomID: "' + $("#ddl-room").val() + '", CaID: "' + $("#ddl-studytime").val() + '", Date: "' + $("#txt-start-date").val() + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        var data = msg.d;
+                        if (data == null) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Đã kín lịch, ko thể tạo',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                        }
+                        else {
+                            for (var i = 0; i < data.length; i++) {
+                                //var dString = data[i].Day.split(',');
+                                //var obj = {};
+                                //dString.forEach(function (it) {
+                                //    obj[it.split(':')[0].trim()] = it.split(':')[1];
+                                //});
+                                //obj.id = parseInt(obj.id.trim());
+                                //obj.limit = parseInt(obj.limit.trim());
+                                //obj.date = obj.date.trim();
+                                //obj.calendar = obj.calendar.trim();
+                                //calendar.pushEvent(obj);
+                                //console.log(data[i].Day);
+                                var d = JSON.parse(data[i].Day);
+                                calendar.pushEvent(d);
+                            }
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error :) TaiNgayHoc");
+                    }
+                });
+            }
+
+            $('#btn-save').click(function () {
+                if ($("#ddl-school").val() == '0') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn trung tâm',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#ddl-hocvu").val() == '0') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn học vụ quản lý khóa',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#draggablelist")[0].childElementCount) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng xếp xong lịch học cho khóa học này :(',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                var sdata = '';
+                var errors = '';
+                var check = true;
+                var evs = calendar.removeBlank(calendar.events);
+
+                for (var i = 0; i < evs.length; i++) {
+                    var Ngay = evs[i].date;
+                    //console.log(Ngay._i);
+
+                    var checkday = true;
+                    //giáo viên
+                    var giaovien = 0;
+                    if (typeof evs[i].tutor !== "undefined") {
+                        var lGV = evs[i].tutor;
+                        var GV = lGV.selected;
+                        if (GV.id == 0) {
+                            checkday = false;
+                        }
+                        giaovien = GV.id;
+                    }
+                    else {
+                        checkday = false;
+                    }
+                    //phòng
+                    var phong = 0;
+                    if (typeof evs[i].room !== "undefined") {
+                        var lROOM = evs[i].room;
+                        var room = lROOM.selected;
+                        phong = room.id;
+                        if (room.id == 0) {
+                            checkday = false;
+                        }
+                    }
+                    else {
+                        checkday = false;
+                    }
+                    //ca
+                    var ca = 0;
+                    if (typeof evs[i].study !== "undefined") {
+                        var lSTUDY = evs[i].study;
+                        var study = lSTUDY.selected;
+                        ca = study.id;
+                        if (study.id == 0) {
+                            checkday = false;
+                        }
+                    }
+                    else {
+                        checkday = false;
+                    }
+
+                    var TietID = '';
+                    var lTiet = evs[i].tiet;
+                    for (var j = 0; j < lTiet.length; j++) {
+                        if (j != lTiet.length - 1) {
+                            TietID += lTiet[j].id + '.';
+                        }
+                        else {
+                            TietID += lTiet[j].id;
+                        }
+                    }
+                    //console.log(TietID);
+
+                    if (i != evs.length - 1) {
+                        sdata += Ngay._i + ',' + giaovien + ',' + TietID + ',' + ca + ',' + phong + '|';
+                    }
+                    else {
+                        sdata += Ngay._i + ',' + giaovien + ',' + TietID + ',' + ca + ',' + phong;
+                    }
+                    if (!checkday) {
+                        errors += Ngay._i + ", ";
+                        check = false;
+                    }
+                }
+                if (check) {
+                    console.log(sdata);
+                    $("#hdflistCalender").val(sdata);
+                    $('#form-create').submit();
+                    $('#btn-close-create').click();
+                    $(this).attr('disabled', true);
+                }
+                else {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn đủ dữ liễu cho ngày học: ' + errors + '',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3500
+                    })
+                }
+            })
+
+            function Preview(e) {
+                var days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+                $("#divview").empty();
+
+                var sdata = $("#ddl-school option:selected").text();
+                sdata += " - Phòng " + $("#ddl-room option:selected").text();
+                sdata += " - " + $("#ddl-studytime option:selected").text() + "<br />";
+
+                sdata += "Lớp " + $("#ddl-class option:selected").text();
+                sdata += " - " + $("#ddl-cru option:selected").text() + "<br />";
+
+                sdata += $("#txt-course-name").val();
+                sdata += "Ngày bắt đầu " + $("#txt-start-date").val();
+                sdata += " - Học phí " + $("#txt-price").val() + "<br /><br />";
+
+                var evs = calendar.removeBlank(calendar.events);
+                for (var i = 0; i < evs.length; i++) {
+                    var Ngay = evs[i].date;
+
+                    var d = new Date(Ngay._i);
+                    var dayName = days[d.getDay()];
+
+                    var checkday = true;
+                    //giáo viên
+                    var giaovien = '';
+                    if (typeof evs[i].tutor !== "undefined") {
+                        var lGV = evs[i].tutor;
+                        var GV = lGV.selected;
+                        if (GV.id == 0) {
+                            checkday = false;
+                        }
+                    }
+                    else {
+                        checkday = false;
+                    }
+                    //phòng
+                    var phong = '';
+                    if (typeof evs[i].room !== "undefined") {
+                        var lROOM = evs[i].room;
+                        var room = lROOM.selected;
+                        phong = room.name;
+                        if (room.id == 0) {
+                            checkday = false;
+                        }
+                    }
+                    else {
+                        checkday = false;
+                    }
+                    //ca
+                    var ca = '';
+                    if (typeof evs[i].study !== "undefined") {
+                        var lSTUDY = evs[i].study;
+                        var study = lSTUDY.selected;
+                        ca = study.name
+                        if (study.id == 0) {
+                            checkday = false;
+                        }
+                    }
+                    else {
+                        checkday = false;
+                    }
+                    if (!checkday) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Vui lòng chọn ca, phòng và giáo viên cho ngày ' + Ngay._i + '',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 3500
+                        })
+                    }
+                    sdata += dayName + " - Ngày " + Ngay._i + " - " + phong + " - " + ca + "<br />";
+                }
+                $("#divview").append(sdata);
+            }
+        });//end ready
+
+        function ShowImagePreview(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#<%=imgDaiDien.ClientID%>').prop('src', e.target.result)
+                        //.width(240)
+                        .height(40);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        var ngu = "";
+        $('#ddl-studytime').on('change', function () {
+            var ardata = $('#ddl-studytime').val();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Course/KiemTraSoTietCa",
+                data: '{listafter: "' + ardata + '", listbefore: "' + ngu + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (!msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Ca bạn chọn không phù hợp với ca đã chọn trước đó',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        })
+                        var index = ardata.indexOf("" + msg.id + "");
+
+                        if (index > -1) {
+                            ardata.splice(index, 1);
+                        }
+                        ngu = ardata;
+                        $('#ddl-studytime').val(ardata);
+
+                        //$('select').formSelect();
+
+                        $("#ddl-studytime").trigger("change");
+                    }
+                    else {
+                        ngu = ardata;
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error :) Kiem tra so tiet");
+                }
+            });
+        });
+    </script>
+}

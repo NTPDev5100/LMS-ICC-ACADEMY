@@ -1,0 +1,2 @@
+PageError: NamDemo    FunctionError: Index    LoginID: 100    MessageError: Lỗi rồi nhé    09/01/2020 13:42
+PageError: NamDemo    FunctionError: Index    LoginID: 100    MessageError: Lỗi rồi nhé    09/01/2020 13:43

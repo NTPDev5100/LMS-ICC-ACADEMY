@@ -1,0 +1,4 @@
+PageError: StudentSetController    FunctionError: CheckTimeUp    loginUID: 2546    MessageError: An error occurred while executing the command definition. See the inner exception for details.    23/09/2020 10:31
+PageError: StudentSetController    FunctionError: CheckTimeUp    loginUID: 2546    MessageError: An error occurred while executing the command definition. See the inner exception for details.    23/09/2020 10:53
+PageError: StudentSetController    FunctionError: DoneTest    loginUID: 2587    MessageError: The underlying provider failed on Open.    23/09/2020 16:13
+PageError: AccountController    FunctionError: ProfileUser    loginUID: 2587    MessageError: An error occurred while reading from the store provider's data reader. See the inner exception for details.    23/09/2020 16:33

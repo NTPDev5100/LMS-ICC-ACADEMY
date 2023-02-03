@@ -1,0 +1,388 @@
+﻿@using AppZim.Models
+@using PagedList.Mvc;
+@using AppZim.ZIM
+@model PagedList.IPagedList<tbl_Document>
+@{
+    ViewBag.Title = "Tài liệu";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+@section myStyles{
+    <style>
+        .collapse-row > td .collapse-content {
+            padding: 5px 0px;
+        }
+    </style>
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item"><a href="@Url.Action("ClassList", "Class", new { area = "Admin" })">Danh sách lớp</a></li>
+        <li class="breadcrumb-item"><a href="@Url.Action("DetailClass", "ClassDetail", new { area = "Admin", id = ViewBag.ClassID.ClassID })">@ViewBag.ClassID.CurriculumsName</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Tài liệu</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("DocumentClass", "ClassDetail", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="javascript:;" class="btn btn-primary btn-add-document">
+                <i data-feather="upload-cloud"></i> Tải lên
+            </a>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+
+                <div class="sort-by">
+                    <select name="sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Trạng thái --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Ẩn</option>
+                            }
+                            else
+                            {
+                                <option value="1">Ẩn</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Hiện</option>
+                            }
+                            else
+                            {
+                                <option value="2">Hiện</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th>Tên tài liệu</th>
+                    <th class="text-center">Tải xuống</th>
+                    <th>Chỉnh sửa</th>
+                    <th>Thời gian sửa</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var gtem in Model)
+                {
+                    tbl_Document item = gtem;
+                    <tr class="tr-row">
+                        <td><a href="javascript:;" data-toggle="collapse" data-target="#collapseme-@item.ID"><i class="fas fa-plus-square"></i></a></td>
+                        <td class="truncate no-wrap">@item.Name</td>
+                        <td class="text-center">
+                            @{
+                                if (!string.IsNullOrEmpty(item.DocumentLink))
+                                {
+                                    <a href="@item.DocumentLink" download="" data-toggle="tooltip" data-placement="top" title="@item.FileName"><i data-feather="download-cloud"></i></a>
+                                }
+                            }
+                        </td>
+                        <td>@item.ModifiedBy</td>
+                        <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">
+                            @{
+                                if (!item.isHide.Value)
+                                {
+                                    <a href="javascript:;" data-id="@item.ID" class="btn btn-success edit-show">
+                                        <i data-feather="unlock"></i> Hiện
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a href="javascript:;" data-id="@item.ID" class="btn btn-danger edit-hide">
+                                        <i data-feather="lock"></i> Ẩn
+                                    </a>
+                                }
+                            }
+                        </td>
+                        <td class="text-center">
+                            <a href="#div-add-district" data-toggle="modal" class="btn btn-icon btn-sm btn-primary btn-edit" data-id="@item.ID">
+                                <i data-feather="edit"></i>
+                            </a>
+                            <a href="javascript:;" class="btn btn-icon btn-sm btn-delete" style="background:#f52222;color:white" data-id="@item.ID" data-name="@item.DocumentName">
+                                <i data-feather="trash-2"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="collapse-row">
+                        <td colspan="7">
+                            <div class="collapse out" id="collapseme-@item.ID">
+                                <span class="bold">@Html.Raw(item.DocumentName)</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @Html.PagedListPager(Model, page => Url.Action("DocumentClass", new
+    {
+        page,
+        search = ViewBag.Search,
+        sort = ViewBag.Sort,
+    }),
+    new PagedListRenderOptions
+    {
+        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+    })
+</nav>
+
+<div class="modal" id="div-add-district" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpFileDocument", "ClassDetail", FormMethod.Post, new { @enctype = "multipart/form-data", id = "create-doc" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfCruID" value="@ViewBag.ID" />
+                <input type="hidden" name="hdfDocumentName" />
+                <input type="hidden" name="hdfDocumentID" value="" />
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Tài liệu chương trình</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-info-full" class="">Nội dung tài liệu:</label>
+                                    <input type="text" class="form-control" id="content-editor">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-exam">Tệp đính kèm: <span class="text-info">(Giới hạn file 50Mb)</span></label>
+                                    <input type="file" class="dropify" name="fileupload" id="fileupload" multiple required data-max-file-size="50M" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-exam">Tên tài liệu:</label>
+                                    <input type="text" class="form-control" name="name" placeholder="..." required />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" id="btn-check">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@using (Html.BeginForm("HiddenDocument", "ClassDetail", FormMethod.Post, new { id = "form-hide", @enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken();
+    <input type="hidden" name="hdfID" id="hdfID" required />
+}
+@section myScripts
+{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).on("click", ".edit-show", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            if (confirm('Bạn có chắc chắn muốn ẩn tài liệu này?')) {
+                $('#form-hide').submit();
+            }
+        });
+        $(document).on("click", ".edit-hide", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            if (confirm('Bạn có chắc chắn muốn hiện tài liệu này?')) {
+                $('#form-hide').submit();
+            }
+        });
+
+        //Bùa chèn được link trong form trên modal
+        $(document).on('focusin', function (e) {
+            if ($(e.target).closest(".tox-dialog").length) {
+                e.stopImmediatePropagation();
+            }
+        });
+
+        //thêm tài liệu
+        $('.btn-add-document').click(function () {
+            $('input[name=hdfDocumentID]').val(0);
+            tinymce.get('content-editor').getBody().innerHTML = "";
+            $('input[name=name]').val("");
+            $('#div-add-district').modal('show');
+        });
+
+        //load detail tài liệu
+        $('.btn-edit').click(function () {
+            const id = $(this).attr('data-id');
+            $('input[name=hdfDocumentID]').val(id);
+            $.ajax({
+                type: "POST",
+                url: "/ClassDetail/LoadDocumentDetail?id=" + id + "",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == true) {
+                        tinymce.get('content-editor').getBody().innerHTML = msg.l.DocumentName;
+                        $('input[name=name]').val(msg.l.Name);
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: '' + msg.message + '',
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: éc éc oạc oạc");
+                }
+            });
+        });
+
+        $(document).ready(function () {
+            $('.btn-delete').on('click', function () {
+                let id = $(this).attr('data-id');
+                let fullname = $(this).attr('data-name');
+                let $this = $(this);
+                if (confirm("Bạn có chắc chắn muốn xóa tài liệu " + fullname + "?")) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/ClassDetail/DeleteDocument?id=' + id,
+                        success: function (msg) {
+                            if (msg.rs) {
+                                $this.closest('tr').remove();
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Thành công',
+                                    icon: 'check',
+                                    classBackground: 'noti-success',
+                                    timeout: 3000
+                                })
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                })
+                            }
+                        }
+                    })
+
+                }
+                else {
+                    return false;
+                }
+            });
+        })
+
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/ClassDetail/UploadFileExercise',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#content-editor',
+                plugin: "autosave",
+                menubar: false,
+                oninit: "setPlainText",
+                plugins: "paste media",
+                paste_as_text: true,
+                inline: false,
+                menubar: 'file edit insert view format table tools help',
+                toolbar: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            });
+        });
+        $('#btn-check').click(function () {
+            var counttext = tinymce.editors[0].contentDocument.activeElement.innerText;
+            var content = tinymce.editors[0].contentDocument.activeElement.innerHTML;
+            $('input[name=hdfDocumentName]').val(content);
+            if (counttext.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Nhập nội dung tài liệu',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                })
+                return;
+            }
+            const nameDoc = $('input[name=name]').val();
+            if (nameDoc.length == 0) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Nhập tên tài liệu',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                })
+                return;
+            }
+            $('#create-doc').submit();
+        });
+    </script>
+}

@@ -1,0 +1,153 @@
+﻿@using AppZim.Models
+@{
+    tbl_ContractCustomer ct = Model;
+}
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <title>Xem hợp đồng</title>
+    <link rel="apple-touch-icon" href="~/app-assets/images/favicon/apple-touch-icon-152x152.png">
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- vendor css -->
+    <link href="~/app-assets/zimv2/lib/@("@fortawesome")/fontawesome-free/css/all.min.css" rel="stylesheet">
+    <link href="~/app-assets/zimv2/lib/ionicons/css/ionicons.min.css" rel="stylesheet">
+    <link href="~/app-assets/zimv2/lib/datetimepicker-2.5.20/jquery.datetimepicker.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/app-assets/vendors/dropify/css/dropify.min.css">
+    <link href="~/app-assets/zimv2/assets/select2/css/select2.min.css" rel="stylesheet" />
+    <!-- DashForge CSS -->
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/dashforge.css?v=1.0">
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/custom.css?v=1.2">
+    <link href="~/app-assets/zimv2/assets/dev/csscustom.css" rel="stylesheet" />
+
+    <script src="~/app-assets/zimv2/lib/jquery/jquery.min.js"></script>
+</head>
+
+<link rel="stylesheet" href="assets/css/dashforge.profile.css">
+<style>
+    footer.footer {
+        display: none;
+    }
+
+    .content {
+        margin-top: 0;
+    }
+
+    p.note-line {
+        margin-bottom: 0;
+        padding-left: 10px;
+        margin-left: 15px;
+        position: relative;
+        font-size: 12px;
+    }
+
+    .label-print {
+        display: none;
+    }
+
+    p.note-line:before {
+        content: '-';
+        position: absolute;
+        right: 100%;
+    }
+
+    .contract-content {
+        counter-reset: section;
+    }
+
+    ul.list-mark {
+        margin-bottom: 1rem;
+    }
+
+    .title-section {
+        font-size: 1.15rem;
+        counter-reset: subsection;
+        font-weight: bold;
+    }
+
+        .title-section::before {
+            counter-increment: section;
+            content: "Điều " counter(section) ": ";
+        }
+
+    .subtitle-section {
+        font-weight: bold;
+    }
+
+        .subtitle-section::before {
+            counter-increment: subsection;
+            content: counter(section) "." counter(subsection) " /";
+            margin-right: 5px;
+        }
+
+    ul.list-mark > li.icon-dot {
+        list-style: disc;
+    }
+
+    ul.list-mark > li.icon-dash {
+        list-style-type: none;
+        position: relative;
+        padding-left: 15px;
+    }
+
+        ul.list-mark > li.icon-dash:before {
+            content: "-";
+            position: absolute;
+            left: 0;
+        }
+
+    @@media print {
+        body {
+            background: white;
+            font-size: 12pt;
+        }
+
+        .hide-on-print {
+            display: none;
+        }
+
+        .label-print {
+            display: block;
+        }
+
+        @@page {
+            size: auto;
+        }
+
+        .container {
+            width: auto;
+            border: 0;
+        }
+
+        .barcode-wrap img {
+            border: 0;
+        }
+    }
+</style>
+<div class="page-invoice-wrap">
+    <div class="page-invoice-top">
+        <div class="d-sm-flex align-items-center justify-content-between">
+            <div class="flex-print hide-on-print">
+                <h4 class="mg-b-0">Hợp đồng </h4>
+            </div>
+            <div class="mg-t-20 mg-sm-t-0">
+                <button class="btn btn-white btn-print hide-on-print">
+                    <i data-feather="printer"
+                       class="mg-r-5"></i> Print
+                </button>
+                <span class="tx-color-04 label-print tx-bold"></span>
+            </div>
+        </div>
+    </div>
+    @Html.Raw(ct.ContractContent)
+</div>
+<script>
+    $(document).ready(function () {
+        $('.btn-print').on('click', function () {
+            window.print();
+        })
+    });</script>

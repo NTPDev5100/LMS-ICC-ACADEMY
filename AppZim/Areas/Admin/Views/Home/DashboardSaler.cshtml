@@ -1,0 +1,232 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@using AppZim.Areas.Admin.Controllers;
+@model PagedList.IPagedList<tbl_CampaignSale>
+@{
+    ViewBag.Title = "";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item active" aria-current="page">Chiến dịch</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("DashboardSaler", "Home", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between mg-t-30">
+        <div>
+            <h4 class="mg-b-0">Danh sách chiến dịch</h4>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap row mg-x-0">
+                @*<div class="sort-by mg-l-5 mg-r-5">
+                        <select class="custom-select" name="sort" onchange="pagesearch()">
+                            <option value="0">-- Sắp xếp --</option>
+                            @{
+                                if (ViewBag.Sort == 1)
+                                {
+                                    <option value="1" selected>Bắt đầu (giảm)</option>
+                                }
+                                else
+                                {
+                                    <option value="1">Bắt đầu (giảm)</option>
+                                }
+                                if (ViewBag.Sort == 2)
+                                {
+                                    <option value="2" selected>Bắt đầu (tăng)</option>
+                                }
+                                else
+                                {
+                                    <option value="2">Bắt đầu (tăng)</option>
+                                }
+                                if (ViewBag.Sort == 3)
+                                {
+                                    <option value="3" selected>Đang mở</option>
+                                }
+                                else
+                                {
+                                    <option value="3">Đang mở</option>
+                                }
+                                if (ViewBag.Sort == 4)
+                                {
+                                    <option value="4" selected>Hoàn thành</option>
+                                }
+                                else
+                                {
+                                    <option value="4">Hoàn thành</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class=" mg-l-5 mg-r-5">
+                        <input type="text" name="from" value="@ViewBag.From" class="form-control datetimepicker date-only from-date" placeholder="DD / MM / YYYY">
+                    </div>
+                    <div class="sort-by mg-l-5 mg-r-5">
+                        <input type="text" name="to" value="@ViewBag.To" class="form-control datetimepicker date-only to-date" placeholder="DD / MM / YYYY">
+                    </div>
+                    <button type="submit" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0 transparent">
+                        <i data-feather="search"></i>
+                    </button>*@
+            </div>
+        </div>
+    </div>
+}
+<div class="post-manager mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped fixed">
+            <thead class="thead-light">
+                <tr>
+                    <th>Chiến dịch</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th data-toggle="tooltip" data-placement="left" title="Hoa hồng = Doanh thu thực * Phần trăm hoa hồng">Hoa hồng</th>
+                    <th data-toggle="tooltip" data-placement="left" title="Thưởng = Phần trăm thưởng * Hoa hồng">Thưởng</th>
+                    <th>Lương cơ bản</th>
+                    <th data-toggle="tooltip" data-placement="left" title="Tổng lương = Hoa hồng + Thưởng + Lương cơ bản">Tổng lương</th>
+                    <th class="text-center">Thanh toán</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        int slrose = 0; //hoa hồng
+                        int salarysaler = 2000000;  //lương cơ bản
+                        int salaryzim = 0; //phần trăn hoa hồng cấu hình
+                        int totalsalary = 0; //tổng lương
+
+                        int percent = -1;
+                        var checkpaidsalary = SalaryPaidHistoryTable.getbyuidvscampid(aclog.ID, item.ID); //check xem đã thanh toán chưa
+                        if (checkpaidsalary != null)
+                        {
+                            salarysaler = checkpaidsalary.SalarySaler.Value; //lương cơ bản
+                            salaryzim = checkpaidsalary.PercentBonus.Value; //phần trăn hoa hồng cấu hình
+                            percent = checkpaidsalary.PercentTip.Value; //phần trăm thưởng thêm nếu vượt chỉ tiêu
+                        }
+
+                        // ds hv đc them vao khoa
+                        //var rcord = CoursesStudentTable.getbycampid(item.ID).Where(n => n.SupportUID == aclog.ID).ToList();
+
+                        IEnumerable<tbl_CoursesStudent> l = CoursesStudentTable.getall().Where(n => n.CampaignSaleID == item.ID && n.SupportUID == aclog.ID).OrderByDescending(n => n.ID).ToList();
+                        var l2 = StudentAppointmentTable.getByCampaignSaleID(item.ID, aclog.UserName);
+                        List<ChienDich> fl = new List<ChienDich>();
+                        // tbl_CoursesStudent
+                        foreach (var i in l)
+                        {
+                            ChienDich x = new ChienDich();
+                            x.TenHocVien = i.StudentName;
+                            x.TenKhoaHoc = i.CourseName;
+                            x.Gia = (double)i.PriceCourse + (double)i.CommitmentPrice;
+                            x.DuocGiam = (double)i.PriceDiscout;
+                            x.DaThanhToan = (double)i.Deposit;
+                            x.ConThieu = (x.Gia - x.DuocGiam - x.DaThanhToan);
+                            x.SupportID = i.SupportUID.Value;
+                            x.NgayTao = i.CreatedDate.Value;
+                            fl.Add(x);
+                        }
+                        foreach (var i in l2)
+                        {
+                            ChienDich x = new ChienDich();
+                            x.TenHocVien = i.StudentName;
+                            x.TenKhoaHoc = i.ClassName;
+                            x.Gia = (double)i.ClassPrice;
+                            x.DuocGiam = (double)i.DiscountPrice;
+                            x.DaThanhToan = (double)i.Deposit;
+                            x.ConThieu = (x.Gia - x.DuocGiam - x.DaThanhToan);
+                            x.SupportID = AccountTable.getbyusername(i.CreatedBy).ID;
+                            x.NgayTao = item.CreatedDate.Value;
+                            fl.Add(x);
+                        }
+
+                        //int totalRefund = 0; //tổng tiền hoàn trả
+                        int TongDoanhThu = (int)fl.Sum(x => x.DaThanhToan); //tổng doanh thu
+                        //foreach (var i in rcord)
+                        //{
+                        //    var re = RefundsTable.getbycoursestudentid(i.ID);
+                        //    if (re != null)
+                        //    {
+                        //        totalRefund = totalRefund + re.Price.Value; //đếm tổng tiền hoàn trả
+                        //    }
+                        //}
+                        salaryzim = SalarySettingTable.getPercent(TongDoanhThu);
+                        if (salaryzim != 0) //nếu phần trăm hoa hồng cấu hình khác 0 thì theo công thức,ngược lại hoa hồng bằng 0
+                        {
+                            slrose = TongDoanhThu * salaryzim / 100; //tổng doanh thu thực * phần trăn hoa hồng
+                        }
+
+
+                        //Nếu doanh thu thực lớn hơn chỉ tiêu thì thưởng thêm theo cấu hình
+                        var setting = StaffSalaryRoseSellerTable.GetByUID(aclog.ID);
+                        int ptThuong = 0; // pt thuong
+                        if (setting != null)
+                        {
+                            ptThuong = setting.SalaryPresent.Value;
+                        }
+
+                        int salarypercet = 0; //thưởng
+                        salarypercet = Math.Round((slrose / 100f) * ptThuong, 0).ToString().ToInt(0);// tinh tien thuong = hoa hong * pt cau hinh / 100
+                        totalsalary = slrose + salarypercet + salarysaler; //tổng lương = hoa hồng + thưởng + lương cơ bản
+                        if (checkpaidsalary != null) //nếu đã thanh toán rồi thì lấy từ database ra
+                        {
+                            totalsalary = checkpaidsalary.PaidReal.Value;
+                        }
+
+                        <tr>
+                            <td class="campaign-name"><span>@item.CampaignName <span class="text-success">@item.sTime.Value.ToString("dd/MM/yyyy") - @item.eTime.Value.ToString("dd/MM/yyyy")</span></span></td>
+                            @{
+                                if (item.isHide.Value)
+                                {
+                                    <td class="campaign-status col-fix-10 text-center tx-danger"><span class="">Hoàn thành</span></td>
+                                }
+                                else
+                                {
+                                    <td class="campaign-status col-fix-10 text-center tx-success"><span class="">Đang mở</span></td>
+                                }
+                            }
+
+                            <td class="campaign-commission col-fix-10">@String.Format("{0:0,0}", slrose) (@salaryzim %)</td>
+                            <td class="campaign-bonus col-fix-10">@String.Format("{0:0,0}", salarypercet) (@ptThuong %)</td>
+                            <td class="campaign-salary col-fix-10">@String.Format("{0:0,0}", salarysaler)</td>
+                            <td class="campaign-total col-fix-10">@(totalsalary <= salarysaler ? "00" : String.Format("{0:0,0}", totalsalary) )</td>
+                            @{
+                                if (checkpaidsalary != null)
+                                {
+                                    <td class="campaign-payment col-fix-10 text-center"><span class="badge badge-success">Đã thanh toán</span></td>
+                                }
+                                else
+                                {
+                                    <td class="campaign-payment col-fix-10 text-center"><span class="badge badge-danger">Chưa thanh toán</span></td>
+                                }
+                            }
+                            <td class="text-center">
+                                <a href="@Url.Action("CampaignSaleDetail", "Staff", new { area = "Admin", id = item.ID })"><i data-feather="eye">Chi tiết</i></a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @Html.PagedListPager(Model, page => Url.Action("DashboardSaler", new { page, sort = ViewBag.Sort, from = ViewBag.From, to = ViewBag.To }),
+       new PagedListRenderOptions
+       {
+           UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+       })
+</nav>
+
+
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+    </script>
+}

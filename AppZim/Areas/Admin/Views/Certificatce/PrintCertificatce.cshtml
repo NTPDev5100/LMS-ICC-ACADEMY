@@ -1,0 +1,237 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@model tbl_CertificatceCustomer
+@{
+    ViewBag.Title = "Certificatce";
+    Layout = null;
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    tbl_CertificatceCustomer CC = CertificatceCustomerTable.getbyid(Model.ID);
+    tbl_CoursesStudent cs = CoursesStudentTable.getbyid(CC.CourseStudentID.Value);
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <link rel="shortcut icon" type="image/x-icon" href="~/app-assets/logoVietCoCo.png">
+    <meta name="viewport" content="width=device-width" />
+    <title>Chứng nhận hoàn thành</title>
+    <style>
+        @@media print {
+            body {
+                background: white;
+                font-size: 12pt;
+            }
+
+            .hide-on-print {
+                display: none;
+            }
+
+            .label-print {
+                display: block;
+            }
+
+            @@page {
+                size: auto;
+            }
+
+            .container {
+                width: auto;
+                border: 0;
+            }
+
+            .barcode-wrap img {
+                border: 0;
+            }
+        }
+    </style>
+    <link href="~/app-assets/zimv2/lib/@("@fortawesome")/fontawesome-free/css/all.min.css" rel="stylesheet">
+    <link href="~/app-assets/vietcocolo/mauchungnhan/style.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="page-invoice-top hide-on-print" style="padding:10px;border-bottom:1px solid #e2dddd">
+        <div class="d-sm-flex align-items-center justify-content-between" style="display:inline-flex">
+            <div class="flex-print hide-on-print">
+                <h6 class="mg-b-0" style="font-size:15px;line-height:25px"><i class="fas fa-file-signature"></i> Chứng Nhận Hoàn Thành </h6>
+            </div>
+            <div class="form-row mg-b-15 mg-t-15 align-items-center hide-on-print">
+                <div class="col-12 col-xs-4 col-md-12">
+                    <div class="d-flex align-items-center justify-content-end">
+                        @*@{
+                            if (aclog.RoleID == 1)
+                            {
+                                <button type="button" class="btn btn-outline-secondary mg-r-10" style="margin-right:10px"><i class="far fa-check-circle"></i> Duyệt</button>
+                            }
+                        }*@
+                        <button type="button" class="btn btn-outline-secondary btn-print" style="padding:5px 10px;margin-left:20px"><i class="fas fa-print"></i> Print</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="new-post-wrap fix-container">
+        @using (Html.BeginForm("AddCertificatceCustomer", "Certificatce", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="hdf-CourseStudentId" value="@cs.ID" />
+            <div class="editor-wrap" style="margin-top:20px">
+                <div class="bg-chungchi">
+                    <div class="container">
+                        <div class="chungchi">
+                            <div class="logo" style="text-align:center">
+                                <img src="~/app-assets/vietcocolo/mauchungnhan/images/VietCoCoLogo.png" alt="" style="height:70px;width:auto">
+                            </div><div class="title-chungchi-VN" style="margin-top:10px">
+                                <h2>TRUNG TÂM NHẬT NGỮ TÂM VIỆT</h2>
+                                <h2>⼼越⽇本語学校</h2>
+                            </div>
+                            <div class="title-chungchi-VN" style="margin-top:20px">
+                                <h2>Chứng nhận hoàn thành khóa học</h2>
+                            </div>
+                            <div class="title-chungchi-Fore">
+                                <h2>コース修了証</h2>
+                            </div>
+                            <div class="thongtin">
+                                <div class="box-thongtin">
+                                    <div class="ques">
+                                        <p>Họ tên</p>
+                                        <span>フル</span>
+                                    </div>
+                                    <div class="hoten">
+                                        <p>@cs.StudentName</p>
+                                    </div>
+                                </div>
+                                <div class="box-thongtin">
+                                    <div class="ques">
+                                        <p>Ngày sinh</p>
+                                        <span>生年月日</span>
+                                    </div>
+                                    <div class="ngaysinh">
+                                        @{
+                                            var a = AccountTable.getbyID(cs.StudentUID.Value);
+                                            <p>@(a.Birthday == null ? "" : a.Birthday.Value.ToString("dd/MM/yyyy"))</p>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mota">
+                                <div class="mota-vn">
+                                    <p>
+                                        Trung tâm Nhật ngữ Tâm Việt chứng nhận Anh/Chị có tên trên đây đã hoàn thành khóa @cs.CourseName được tổ chức tại Trung tâm.
+                                    </p>
+                                </div>
+                                <div class="mota-jp">
+                                    <p>
+                                        心越日本語学校が実施した日本語 @cs.CourseName コースを修了したことを証明します
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="thongtin-chungchi">
+                                <div class="img-chungchi">
+                                    <img src="./images/medal.png" alt="">
+                                </div>
+                                <div class="table-chungchi">
+                                    <div class="row-chungchi">
+                                        <div class="left-chungchi">
+                                            <p>Ngày cấp</p>
+                                            <span>@DateTime.Now.Date.ToString("dd/MM/yyyy")</span>
+                                        </div>
+                                        <div class="right-chungchi">
+                                            <p>日付範囲</p>
+                                            <span>@(DateTime.Now.Date.Year)年@(DateTime.Now.Date.Month)月@(DateTime.Now.Date.Day)日</span>
+                                        </div>
+                                    </div>
+                                    <div class="row-chungchi">
+                                        <div class="left-chungchi">
+                                            <p>Chương trình đào tạo</p>
+                                            <span>@cs.CourseName</span>
+                                        </div>
+                                        <div class="right-chungchi">
+                                            <p>日付範囲</p>
+                                            <span>日本語コース @cs.CourseName</span>
+                                        </div>
+                                    </div>
+                                    <div class="row-chungchi">
+                                        @{
+                                            DateTime eDate = DateTime.Now;
+                                        }
+                                        <div class="left-chungchi">
+                                            <p>Thời gian đào tạo</p>
+                                            @{
+                                                string endDate = "";
+                                                string startDate = "";
+                                                var c = CoursesTable.getbyid(cs.CourseID.Value);
+                                                var lich = CoursesScheduleTable.getbycourseid(cs.CourseID.Value);
+                                                if (c.TypeCourse == 2)
+                                                {
+                                                    if (!string.IsNullOrEmpty(c.EndingDate.ToString()) && !string.IsNullOrEmpty(c.OpeningDate.ToString()))
+                                                    {
+                                                        startDate = c.OpeningDate.Value.ToString("dd/MM/yyyy"); //ngày bắt đầu học
+                                                        endDate = c.EndingDate.Value.ToString("dd/MM/yyyy");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (lich.Count() != 0)
+                                                    {
+                                                        var ngaybatdau = lich.OrderBy(n => n.Date).ToList()[0];
+                                                        var ngayketthuc = lich.OrderByDescending(n => n.Date).ToList()[0];
+                                                        if (!string.IsNullOrEmpty(ngaybatdau.ToString()) && !string.IsNullOrEmpty(ngayketthuc.ToString()))
+                                                        {
+                                                            startDate = ngaybatdau.Date.Value.ToString("dd/MM/yyyy"); //ngày bắt đầu học
+                                                            endDate = ngayketthuc.Date.Value.ToString("dd/MM/yyyy");
+                                                            eDate = ngayketthuc.Date.Value;
+                                                        }
+                                                    }
+                                                }
+                                                <span>Từ @startDate - @endDate</span>
+                                            }
+                                        </div>
+                                        <div class="right-chungchi">
+                                            <p>日付範囲</p>
+                                            <span>@(eDate.Date.Year)年@(eDate.Date.Month)月@(eDate.Date.Day)日から</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="trungtam">
+                                <h3>Trung tâm Nhật ngữ Tâm Việt</h3>
+                                <h4>心越日本語学校</h4>
+                                <div class="giamdoc">
+                                    <p>Giám đốc</p>
+                                    <span>DƯƠNG VĂN BÌNH</span>
+                                </div>
+                            </div>
+                            <div class="sohieu">
+                                <p>Số hiệu|登録番号</p>
+                                <span>TVN5202011-01</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row mg-b-15 mg-t-15 align-items-center hide-on-print" style="display:none">
+                <div class="col-12 col-xs-4 col-md-12">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <button type="submit" class="btn btn-primary">Lưu lại</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+
+
+    <script src="~/app-assets/zimv2/lib/jquery/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.btn-print').on('click', function () {
+                window.print();
+            })
+        });</script>
+</body>
+</html>
+
+
+
+
+

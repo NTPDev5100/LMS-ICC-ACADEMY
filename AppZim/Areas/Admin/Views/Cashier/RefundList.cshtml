@@ -1,0 +1,485 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@model List<get_list_of_Refund_Result>
+@{
+    ViewBag.Title = "RefundList";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_School> schools = SchoolTable.getall();
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+}
+@section myStyles{
+    <style>
+        .pd-sm-b-40 {
+            padding-bottom: 5px;
+        }
+    </style>
+}
+@using (Html.BeginForm("RefundList", "Cashier", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                        <li class="breadcrumb-item active" aria-current="page">DANH SÁCH YÊU CẦU HOÀN TIỀN</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Học viên a > z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Học viên a > z</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Học viên z > a</option>
+                            }
+                            else
+                            {
+                                <option value="2">Học viên z > a</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Ngày tạo (Tăng)</option>
+                            }
+                            else
+                            {
+                                <option value="3">Ngày tạo (Tăng)</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Ngày tạo (Giảm)</option>
+                            }
+                            else
+                            {
+                                <option value="4">Ngày tạo (Giảm)</option>
+                            }
+                            if (ViewBag.Sort == 5)
+                            {
+                                <option value="5" selected>Số tiền 1 > 9</option>
+                            }
+                            else
+                            {
+                                <option value="5">Số tiền 1 > 9</option>
+                            }
+                            if (ViewBag.Sort == 6)
+                            {
+                                <option value="6" selected>Số tiền 9 > 1</option>
+                            }
+                            else
+                            {
+                                <option value="6">Số tiền 9 > 1</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0 transparent" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    @*<div class="form-group col-md-4 col-6 col-xl-3">
+                        <label class="form-control-label">Trung tâm:</label>
+                        <select class="form-control select2" name="center">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                foreach (var c in schools)
+                                {
+                                    if (ViewBag.CenterID != null)
+                                    {
+                                        if (ViewBag.CenterID == c.ID)
+                                        {
+                                            <option value="@c.ID" selected>@c.SchoolName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.ID">@c.SchoolName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.ID">@c.SchoolName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>*@
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Trạng thái:</label>
+                        <select class="form-control select2" name="status">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                if (ViewBag.StatusID == 1)
+                                {
+                                    <option value="1" selected>Yêu cầu mới</option>
+                                }
+                                else
+                                {
+                                    <option value="1">Yêu cầu mới</option>
+                                }
+                                if (ViewBag.StatusID == 2)
+                                {
+                                    <option value="2" selected>Duyệt</option>
+                                }
+                                else
+                                {
+                                    <option value="2">Duyệt</option>
+                                }
+                                if (ViewBag.StatusID == 3)
+                                {
+                                    <option value="3" selected>Không duyệt</option>
+                                }
+                                else
+                                {
+                                    <option value="3">Không duyệt</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Ngày tạo từ:</label>
+                        <input type="text" name="from" class="form-control datetimepicker date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Đến:</label>
+                        <input type="text" name="to" class="form-control datetimepicker date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Tìm kiếm:</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary"><i data-feather="search"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    @*<th>Trung tâm</th>*@
+                    <th class="no-wrap">Nguồn</th>
+                    <th class="no-wrap">Học viên</th>
+                    <th class="no-wrap">Số điện thoại</th>
+                    <th class="no-wrap">Số tiền</th>
+                    <th class="no-wrap">Trạng thái</th>
+                    <th class="no-wrap">Ngày giờ tạo</th>
+                    <th class="no-wrap text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var jtem in Model)
+                    {
+                        <tr class="tr-row">
+                            <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                            @*<td class="no-wrap">@jtem.SchoolName</td>*@
+                            <td class="no-wrap">@jtem.SourceRefund</td>
+                            <td class="no-wrap">@jtem.StudentFullName</td>
+                            <td>@jtem.StudentPhone</td>
+                            <td>@String.Format("{0:0,0}", jtem.Price)</td>
+                            <td class="no-wrap">@Html.Raw(jtem.StatusName)</td>
+                            <td class="no-wrap">@jtem.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="no-wrap text-center">
+                                @{
+                                    if (jtem.StatusID != 2 && aclog.RoleID == 1 && jtem.RefundDone != true)
+                                    {
+                                        <a class="pd-5 btn-update" href="#div-modal-update" data-hv="@jtem.StudentFullName" data-id="@jtem.ID" data-price="@jtem.Price" data-des="@jtem.ReasonNote" data-toggle="modal" data-placement="top" title="Cập nhật"><i data-feather="rotate-ccw"></i></a>
+                                    }
+                                    if (jtem.StatusID == 2 && jtem.RefundDone != true)
+                                    {
+                                        <a class="pd-5 btn-vouchers" href="#div-modal-voucher" data-id="@jtem.ID" data-price="@jtem.Price" data-uid="@jtem.StudentUID" data-toggle="modal"><i title="Xuất phiếu chi" data-feather="dollar-sign"></i></a>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                        <tr class="collapse-row">
+                            <td colspan="9">
+                                <div class="collapse-content">
+                                    <table class="table table-bordered">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Lý do</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>@jtem.ReasonNote</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+            <div class="pagination-container">
+                @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+            </div>
+        </ul>
+    </nav>
+</div>
+
+<div class="modal fade show" id="div-modal-update" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateRefund", "Cashier", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdf-url" />
+                <input type="hidden" name="hdfID" id="hdfID" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Duyệt yêu cầu</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-hoc-vien" class="">Học viên:</label>
+                                <input id="txt-hoc-vien" class="form-control" type="text" disabled placeholder="0" />
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-yc" class="">Số tiền yêu cầu:</label>
+                                <input id="txt-yc" class="form-control" type="text" disabled placeholder="0" />
+                            </div>
+                            <div class="col-sm-3 form-group" hidden>
+                                <label for="txt-refund" class="">Hoàn trả số tiền:</label>
+                                <input id="txt-refund" name="txt-refund" type="text" class="form-control" required placeholder="0" oninput="moneyfm(this)" />
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="ddl-status-refund" class="">Duyệt yêu cầu:</label>
+                                <select id="ddl-status-refund" required name="ddl-status-refund" class="form-control">
+                                    <option value="">---Trạng thái---</option>
+                                    <option value="2">Duyệt</option>
+                                    <option value="3">Không duyệt</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="txt-note-refund" class="">Lý do:</label>
+                                <textarea id="txt-note-refund" name="txt-note-refund" required class="form-control" rows="1"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade show" id="div-modal-voucher" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("CreateVoucherss", "Cashier", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfvcID" id="hdfvcID" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Thông tin phiếu chi</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-4 form-group">
+                                <label for="txt-name" class="">Học viên:</label>
+                                <input id="txt-name" class="form-control" type="text" disabled />
+                            </div>
+                            <div class="col-sm-2 form-group">
+                                <label for="txt-phone" class="">Số Điện thoại:</label>
+                                <input id="txt-phone" name="txt-phone" class="form-control" type="text" disabled />
+                            </div>
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-address" class="">Địa chỉ:</label>
+                                <input id="txt-address" name="txt-address" disabled type="text" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-4 form-group">
+                                <label for="txt-money" class="">Số tiền:</label>
+                                <input id="txt-money" name="txt-money" disabled type="text" class="form-control" />
+                            </div>
+                            <div class="col-sm-4 form-group">
+                                <label for="txt-payment" class="">Phương thức thanh toán:</label>
+                                <select id="ddl-payment" name="ddl-payment" required class="form-control">
+                                    <option value="">---Phương thức---</option>
+                                    <option value="1">Tiền mặt</option>
+                                    <option value="2">Thanh toán online</option>
+                                    <option value="4">Quẹt thẻ</option>
+                                    <option value="5">Chuyển khoản</option>
+                                    <option value="3">Khác</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-4 form-group">
+                                <label for="ddl-school-refund" class="">Trung tậm tạo:</label>
+                                <select id="ddl-school-refund" required name="ddl-school-refund" class="form-control">
+                                    <option value="">---Trung tâm---</option>
+                                    @{
+                                        foreach (var item in schools)
+                                        {
+                                            <option value="@item.ID">@item.SchoolName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="txt-note-vouchers" class="">Ghi chú:</label>
+                                <textarea id="txt-note-vouchers" name="txt-note-vouchers" required class="form-control" rows="1"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="button" id="btn-check" class="btn btn-primary">Xuất phiếu</button>
+                    <button type="submit" id="btn-submit" style="display:none;"></button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts{
+    <script src="~/app-assets/js/accounting.min.js"></script>
+    <script src="~/app-assets/mycalendar/js/moment.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).ready(function () {
+            if (!ckstring('@TempData["InvoiceURL"]')) {
+                // invoice
+                window.open('@TempData["InvoiceURL"]');
+            }
+        });
+        $(document).on("click", ".btn-update", function () {
+            $('#hdfID').val($(this).attr('data-id'));
+            $('#txt-hoc-vien').val($(this).attr('data-hv'));
+            $('#txt-yc').val(accounting.formatNumber($(this).attr('data-price')));
+            $('#txt-refund').val(accounting.formatNumber($(this).attr('data-price')));
+            $('#txt-note-refund').val($(this).attr('data-des'));
+            $('#modal-refund-view').modal('open');
+        })
+        $(document).on("click", ".btn-vouchers", function () {
+            $('#hdfvcID').val($(this).attr('data-id'));
+            $('#txt-money').val(accounting.formatNumber($(this).attr('data-price')));
+            var uid = $(this).attr('data-uid');
+            $('#txt-name').val('');
+            $('#txt-phone').val('');
+            $('#txt-address').val('');
+            $('#txt-date').val('');
+            $('#txt-location').val('');
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/SearchID",
+                data: '{id: ' + uid + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Chưa có dữ liệu',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 4000
+                        });
+                    }
+                    else {
+                        $('#txt-name').val(msg.acc.FullName);
+                        $('#txt-phone').val(msg.acc.Phone);
+                        $('#txt-address').val(msg.acc.Address);
+                        $('#modal-vouchers').modal('open');
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error");
+                }
+            });
+        })
+
+        $('#btn-check').click(function () {
+            if (ckstring($('#ddl-payment').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn phương thức thanh toán',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                });
+                return;
+            }
+            if (ckstring($('#ddl-school-refund').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn trung tâm xuất phiếu',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                });
+                return;
+            }
+            $('#btn-submit').click();
+        })
+    </script>
+}

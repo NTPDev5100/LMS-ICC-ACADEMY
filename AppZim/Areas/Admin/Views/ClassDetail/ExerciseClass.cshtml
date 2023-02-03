@@ -1,0 +1,247 @@
+﻿@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_ExerciseGroup>
+@{
+    ViewBag.Title = "Location";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item"><a href="@Url.Action("ClassList", "Class", new { area = "Admin" })">Danh sách lớp</a></li>
+        <li class="breadcrumb-item"><a href="@Url.Action("DetailClass", "ClassDetail", new { area = "Admin", id = ViewBag.ClassID.ClassID })">@ViewBag.ClassID.CurriculumsName</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Câu hỏi</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("ExerciseClass", "ClassDetail", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="#div-add-district" class="btn btn-primary" data-toggle="modal"><i data-feather="folder"></i> Tạo nhóm</a>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+
+                <div class="sort-by">
+                    <select name="sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Tên nhóm A - Z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Tên nhóm A - Z</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Tên nhóm Z - A</option>
+                            }
+                            else
+                            {
+                                <option value="2">Tên nhóm Z - A</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Số câu (tăng)</option>
+                            }
+                            else
+                            {
+                                <option value="3">Số câu (tăng)</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Số câu (giảm)</option>
+                            }
+                            else
+                            {
+                                <option value="4">Số câu (giảm)</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Nhóm</th>
+                    <th>Loại</th>
+                    <th class="text-center">Số câu</th>
+                    <th>Chỉnh sửa</th>
+                    <th>Thời gian sửa</th>
+                    <th class="text-center">Thao tác</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ExerciseGroupName</td>
+                        <td>@item.TypeGroupName</td>
+                        <td class="text-center">@item.CountExe</td>
+                        <td>@item.ModifiedBy</td>
+                        <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">
+                            <a href="#edit-provincial" data-toggle="modal" data-id="@item.ID" data-group="@item.ExerciseGroupName" class="btn btn-primary edit-scource">
+                                <i data-feather="rotate-ccw"></i> Cập nhật
+                            </a>
+                            <a href="/Admin/ClassDetail/ExerciseClassGroup/@item.ID" class="btn btn-warning">
+                                <i data-feather="arrow-right-circle"></i> Chi tiết
+                            </a>
+                        </td>
+                        <td>
+                            <a href="javascript:;" class="btn btn-icon btn-sm btn-delete" style="background:#f52222;color:white" data-id="@item.ID" data-name="@item.ExerciseGroupName" data-toggle="tooltip" data-placement="top" title="Xóa">
+                                <i data-feather="trash-2"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @Html.PagedListPager(Model, page => Url.Action("indexdoc", new
+    {
+        page,
+        search = ViewBag.Search,
+        sort = ViewBag.Sort,
+    }),
+    new PagedListRenderOptions
+    {
+        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+    })
+</nav>
+
+<div class="modal" id="div-add-district" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddGroupEx", "ClassDetail", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfCruID" value="@ViewBag.CurrID" />
+                <input type="hidden" name="hdfpercent" id="hdfpercent" value="0" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Tạo mới nhóm</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-exam-date">Loại:</label>
+                                    <select name="ddl-type" required class="form-control">
+                                        <option value="1">Tự luận</option>
+                                        <option value="2">Trắc nghiệm</option>
+                                        <option value="3">Nói</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-exam">Tên nhóm:</label>
+                                    <textarea id="txt-group" name="txt-group" class="form-control" rows="1" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div id="edit-provincial" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditGroupEx", "ClassDetail", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Cập nhật nhóm</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-group">Tên nhóm:</label>
+                                    <textarea id="txt-edit-group" name="txt-edit-group" class="form-control" rows="1" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).on("click", ".edit-scource", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('textarea[name=txt-edit-group]').val($(this).attr('data-group'));
+            $('textarea[name=txt-edit-group]').focus();
+        });
+
+        $(document).ready(function () {
+            $('.btn-delete').on('click', function () {
+                let id = $(this).attr('data-id');
+                let fullname = $(this).attr('data-name');
+                let $this = $(this);
+                if (confirm("Bạn có chắc chắn muốn xóa nhóm " + fullname + "?")) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/ClassDetail/DeleteExerciseGroup?id=' + id,
+                        success: function (msg) {
+                            if (msg.rs) {
+                                $this.closest('tr').remove();
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Thành công',
+                                    icon: 'check',
+                                    classBackground: 'noti-success',
+                                    timeout: 3000
+                                })
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                })
+                            }
+                        }
+                    })
+
+                }
+                else {
+                    return false;
+                }
+            });
+        })
+    </script>
+}

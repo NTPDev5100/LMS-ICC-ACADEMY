@@ -1,0 +1,376 @@
+﻿
+@using AppZim.TableSql
+@using PagedList.Mvc
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "Order";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var course = CoursesTable.getall();
+    var cus = AccountTable.getbyrole(6);
+}
+<style>
+    .table-striped tbody tr:nth-of-type(2n+2) {
+        background-color: #f5f5f58a;
+    }
+
+    .table {
+        border: 1px solid #c0ccda;
+    }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+    .table-course .actions-group {
+        display: block;
+    }
+
+    .table-striped tbody tr td a {
+        margin: 0.2rem 0;
+    }
+
+    .content-body {
+        overflow: hidden;
+    }
+</style>
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách đơn hàng</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("Discount", "Option", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="#div-add-district" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Add</a>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" name="search" placeholder="Search" value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+
+                <div class="sort-by">
+                    <select name="sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sort by --</option>
+                        <option value="">Fullname a -> z</option>
+                        <option value="">Fullname z -> a</option>
+                        <option value="">Course name a -> z</option>
+                        <option value="">Course name z -> a</option>
+                    </select>
+                </div>
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Status:</label>
+                        <select class="form-control" name="status">
+                            <option value="0">-- Sort by --</option>
+                            <option value="">Đã thanh toán</option>
+                            <option value="">Chưa thanh toán</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Created from:</label>
+                        <input type="text" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Created to:</label>
+                        <input type="text" name="to" class="form-control datetimepicker to-date date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-1">
+                        <label class="form-control-label">Action:</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>No.</th>
+                    <th>Code</th>
+                    <th>Full Name</th>
+                    <th>Course</th>
+                    <th>Price</th>
+                    <th>PaymentMode</th>
+                    <th>Status</th>
+                    <th>Note</th>
+                    <th>CreatedDate</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var i in cus.Take(10))
+                {
+                    <tr>
+                        <td>@i.ID</td>
+                        <td>U70SDW@(i.ID)</td>
+                        <td>@i.FullName</td>
+                        <td>Khóa học Javascript @i.ID </td>
+                        <td>@(i.ID),000,000</td>
+                        <td>Internet Banking</td>
+                        <td>
+                            <span class="badge badge-success" style="font-size:1em">Đã thanh toán</span>
+                        </td>
+                        <td>Khách hàng đã thanh toán khóa học ABC @i.ID</td>
+                        <td>31/10/2020</td>
+                        <td class="text-center">
+                            <a href="#edit-provincial" data-toggle="modal" data-id="1" class="btn btn-primary btn-icon btn-sm edit-scource">
+                                <i data-feather="rotate-ccw"></i> Update
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @*@Html.PagedListPager(Model, page => Url.Action("DiscountCode", new
+        {
+            page,
+            search = ViewBag.Search,
+            sort = ViewBag.Sort,
+            status = ViewBag.Status,
+            from = ViewBag.From,
+            to = ViewBag.To
+        }),
+        new PagedListRenderOptions
+        {
+            UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+        })*@
+</nav>
+
+<div class="modal" id="div-add-district" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddCode", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfpercent" id="hdfpercent" value="0" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Thêm mới</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-district">Khách hàng:</label>
+                                    <select name="" class="form-control select2">
+                                        @foreach (var i in cus)
+                                        {
+                                            <option value="@i.ID">@i.FullName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-district">Chọn khóa học:</label>
+                                    <select name="" class="form-control select2">
+                                        @foreach (var i in course)
+                                        {
+                                            <option value="@i.ID">@i.CourseName (@String.Format("{0:0,0}", i.Price) VNĐ)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-dead-line">Hình thức thanh toán:</label>
+                                    <select name="" class="form-control select2">
+                                        <option value="1">Tiền mặt</option>
+                                        <option value="2">Thanh toán online</option>
+                                        <option value="3">Quẹt thẻ</option>
+                                        <option value="4">Internet Banking</option>
+                                        <option value="5">Khác</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-district">Ghi chú:</label>
+                                    <textarea id="txt-note" name="txt-note" class="form-control" rows="1"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Create</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div id="edit-provincial" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditCode", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Cập nhật</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-district">Khách hàng:</label>
+                                    <select name="" class="form-control select2" disabled>
+                                        @foreach (var i in cus)
+                                        {
+                                            <option value="@i.ID">@i.FullName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-district">Chọn khóa học:</label>
+                                    <select name="" class="form-control select2">
+                                        @foreach (var i in course)
+                                        {
+                                            <option value="@i.ID">@i.CourseName (@String.Format("{0:0,0}", i.Price) VNĐ)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-dead-line">Hình thức thanh toán:</label>
+                                    <select name="" class="form-control select2">
+                                        <option value="1">Tiền mặt</option>
+                                        <option value="2">Thanh toán online</option>
+                                        <option value="3">Quẹt thẻ</option>
+                                        <option value="4">Internet Banking</option>
+                                        <option value="5">Khác</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-dead-line">Trạng thái:</label>
+                                    <select name="" class="form-control select2">
+                                        <option value="0">--</option>
+                                        <option value="1">Đã thanh toán</option>
+                                        <option value="2">Chưa thanh toán</option>
+                                        <option value="3">Hủy</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-district">Ghi chú:</label>
+                                    <textarea id="txt-note" name="txt-note" class="form-control" rows="1"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Update</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).on("click", ".edit-scource", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            var id = $(this).attr('data-id');
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Option/GetDiscountByID",
+                data: '{id: "' + id + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        //toast.create({
+                        //    title: 'Thông báo!',
+                        //    text: 'Không tìm thấy dữ liệu',
+                        //    icon: 'error_outline',
+                        //    classBackground: 'noti-error',
+                        //    timeout: 2500
+                        //})
+                    }
+                    else {
+                        if (msg.type) {
+                            $('#div-percent-edit').show();
+                            $('#div-money-edit').hide();
+                        }
+                        else {
+                            $('#div-percent-edit').hide();
+                            $('#div-money-edit').show();
+                        }
+
+                        $('#txt-edit-code').val(msg.code);
+                        $('#txt-edit-price').val(msg.p);
+                        $('#txt-edit-percent').val(msg.percent);
+                        $('#txt-edit-dead-line').val(msg.dl);
+                        $('#txt-edit-note').val(msg.note);
+                        $('#txt-edit-quantity').val(msg.quantity);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e:) ");
+                }
+            });
+        });
+
+        $('#chk-type').change(function () {
+            if ($(this).is(":checked")) {
+                $('#hdfpercent').val(1);
+                $('#div-percent').show();
+                $('#div-money').hide();
+            }
+            else {
+                $('#hdfpercent').val(0);
+                $('#div-money').show();
+                $('#div-percent').hide();
+            }
+        });
+    </script>
+}
+
+

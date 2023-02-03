@@ -1,0 +1,172 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@model List<VietCoCo_certificate_browsing_Result>
+@{
+    ViewBag.Title = "CensorshipCertificatce";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+}
+<link href="~/app-assets/zimv2/assets/dev/contractcss.css" rel="stylesheet" />
+@using (Html.BeginForm("CensorshipCertificatce", "Certificatce", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item active" aria-current="page">Danh sách chứng chỉ chờ duyệt</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" id="ddl-sort" class="custom-select" onchange="pagesearch()">
+                        <option value="2">-- Trạng thái --</option>
+                        @{
+                            if (ViewBag.Sort == 0)
+                            {
+                                <option value="0" selected>Chưa duyệt</option>
+                            }
+                            else
+                            {
+                                <option value="0">Chưa duyệt</option>
+                            }
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Đã duyệt</option>
+                            }
+                            else
+                            {
+                                <option value="1">Đã duyệt</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Học viên</th>
+                    <th>Khóa học</th>
+                    <th>Thời gian tạo</th>
+                    <th>Người tạo</th>
+                    <th>Trạng thái</th>
+                    <th class="no-wrap tx-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        <tr class="tr-row">
+                            <td class="no-wrap">@item.FullName</td>
+                            <td>@item.CourseName</td>
+                            <td class="no-wrap">@item.CreatedDate</td>
+                            <td class="no-wrap">@item.CreatedBy</td>
+                            <td>
+                                @{
+                                    if (aclog.RoleID == 1)
+                                    {
+                                        if (item.isAccept == false)
+                                        {
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input chk-show" data-id="@item.ID" id="chk-@item.ID">
+                                                <label class="custom-control-label" for="chk-@item.ID">Duyệt</label>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input chk-show" checked data-id="@item.ID" id="chk-@item.ID">
+                                                <label class="custom-control-label" for="chk-@item.ID">Duyệt</label>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (item.isAccept == false)
+                                        {
+                                            <span class="badge badge-warning">Chưa Duyệt</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-success">Đã Duyệt</span>
+                                        }
+                                    }
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a href="@Url.Action("PrintCertificatce", "Certificatce", new { area = "Admin", id = item.ID })" class="btn btn-info mg-2 btn-sm" data-toggle="tooltip" title="Chi tiết"><i class="fas fa-file-alt"></i></a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+            <div class="pagination-container">
+                @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+            </div>
+        </ul>
+    </nav>
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).on("click", ".chk-show", function () {
+            var id = $(this).attr('data-id');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Certificatce/AcceptCertificatce",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Thành công!',
+                        icon: 'check',
+                        classBackground: 'noti-success',
+                        timeout: 2500
+                    });
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error :) ");
+                }
+            });
+        })
+    </script>
+}
+
+

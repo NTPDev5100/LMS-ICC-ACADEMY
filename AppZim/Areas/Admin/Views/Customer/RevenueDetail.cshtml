@@ -1,0 +1,623 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@using System.Collections.Generic;
+@model List<RevenueDetail_GetList_Result>
+@{
+    ViewBag.Title = "RevenueDetail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+
+    List<tbl_SourceOfCustomer> sc = SourceOfCustomerTable.getall();
+    List<tbl_Account> lsale = AccountTable.getall().Where(n => n.Status == 2 && (n.RoleID == 2 || n.RoleID == 3 || n.RoleID == 6)).OrderBy(n => n.FullName).ToList();
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var lLanguage = Language.GetAll();
+    var trinhdo = AcademicLevelTable.getall();
+    var classes = ClassTable.getall();
+    var commitment = ClassTable.GetByType(3);
+    var teachers = AccountTable.getbyrole(4);
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Doanh thu tư vấn viên</li>
+    </ol>
+</nav>
+@using (Html.BeginForm("RevenueDetail", "Customer", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="mg-l-5 mg-r-5">
+                    <select name="slTvv" class="custom-select select2" onchange="pagesearch()">
+                        <option value="0">-- Tư vấn viên --</option>
+                        @{
+                            foreach (var i in lsale)
+                            {
+                                <option value="@i.ID">@i.FullName - @i.RoleName</option>
+                            }
+                        }
+                    </select>
+                    <script>$('select[name=slTvv]').val(@ViewBag.Counselors)</script>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <input type="text" name="to" class="form-control datetimepicker to-date date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th>Học viên</th>
+                    <th>Kênh data</th>
+                    <th>Ngôn ngữ</th>
+                    <th>Tư vấn viên</th>
+                    <th>Đầu vào</th>
+                    <th>Đầu ra</th>
+                    <th>Ngày đóng</th>
+                    <th>Học phí</th>
+                    <th>Số buổi học</th>
+                    <th>Hệ số đóng</th>
+                    <th>Phương thức thanh toán</th>
+                    <th>@(String.Format("{0:0,0}", Model.Count == 0 ? 0 : Model[0].TotalPrice))</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        var studytimes = DesiredStudyTimeTable.getbyStudentAppointmentID(item.ID.Value);
+                        <tr class="tr-row">
+                            <td><a href="javascript:;" class="collapse-toggle" data-id="@item.ID"><i class="fas fa-plus-square"></i></a></td>
+                            <td>@item.FullName</td>
+                            <td class="no-wrap">@item.SourceName</td>
+                            <td>@item.Name</td>
+                            <td>@item.SupportName</td>
+                            <td>@item.Inputs</td>
+                            <td>@item.Outputs</td>
+                            <td>
+                                @if (item.CreatedDate != null)
+                                {
+                                    <span>@item.CreatedDate.Value.ToString("dd/MM/yyyy")</span>
+                                }
+                            </td>
+                            <td>@String.Format("{0:0,0}", item.CustomPrice)</td>
+                            <td>@item.Lesson</td>
+                            <td>@item.CoefficientName</td>
+                            <td>@item.PaymentMethodName</td>
+                            <td>
+                                @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 3)
+                                {
+                                    <button type="button" class="btn btn-primary btn-edit" data-toggle="modal" data-target="#div-edit" data-id="@item.ID" data-language="@item.Language" data-program="@item.ClassID" data-discountcode="@item.DiscountCode" data-discountprice="@String.Format("{0:0,0}", item.DiscountPrice)" data-commitment="@item.CommitmentID" data-method="@item.PaymentMethodID" data-total="@String.Format("{0:0,0}", item.CustomPrice)" data-note="@item.Note" data-teacher="@item.PaymentTeacherReceiveID" data-fromdate="@(item.CreatedDate == null ? "" : item.CreatedDate.Value.ToString("dd/MM/yyyy"))"><i class="fas fa-edit"></i></button>
+                                }
+                            </td>
+                        </tr>
+                        <tr class="collapse-row">
+                            <td colspan="11">
+                                <div class="collapse-content">
+                                    <div class="schedule-test-form mg-t-30">
+                                        <div class="row" id="test-register">
+                                            <div class="col-12 col-md-12">
+                                                <fieldset class="form-fieldset">
+                                                    <legend style="color: #01a42f;">Thông tin chi tiết</legend>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Họ tên:</label>
+                                                            <input type="text" disabled class="form-control" id="ddl-fullname-@item.ID" value="@item.FullName">
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Số điện thoại:</label>
+                                                            <input type="text" disabled class="form-control" id="ddl-phone-@item.ID" value="@item.Phone">
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Email:</label>
+                                                            <input type="text" disabled class="form-control" id="ddl-email-@item.ID" value="@item.Email">
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Link FB:</label>
+                                                            <textarea type="text" disabled rows="1" class="form-control" id="ddl-email-@item.ID">@item.LinkFB</textarea>
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Kênh data:</label>
+                                                            <select class="form-control select2" disabled id="ddl-source-@item.ID">
+                                                                <option value="0">---</option>
+                                                                @{
+                                                                    foreach (var s in sc)
+                                                                    {
+                                                                        <option value="@s.ID">@s.SourceOfCustomer</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>
+                                                                $('#ddl-source-@item.ID').val(@item.SourceID)
+                                                            </script>
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Tư vấn viên:</label>
+                                                            <select class="form-control select2" disabled id="ddl-support-@item.ID">
+                                                                <option value="0">---</option>
+                                                                @{
+                                                                    foreach (var s in lsale)
+                                                                    {
+                                                                        <option value="@s.ID">@s.FullName</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>
+                                                                $('#ddl-support-@item.ID').val(@item.SupportUID)
+                                                            </script>
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="address">Ngôn ngữ</label>
+                                                            <select class="form-control select2" disabled id="dll-language-@item.ID">
+                                                                <option value="0"></option>
+                                                                @foreach (var ii in lLanguage)
+                                                                {
+                                                                    <option value="@ii.ID" @(ii.ID == item.Language ? "selected" : "")>@ii.Name</option>
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Đầu vào:</label>
+                                                            <select class="custom-select select2" disabled id="txt-in-scoure-@item.ID" name="in-point-hope">
+                                                                @{
+                                                                    foreach (var i in trinhdo)
+                                                                    {
+                                                                        <option value="@i.ID">@i.LevelName</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>
+                                                                $('#txt-in-scoure-@item.ID').val(@item.ScoreIn.ToInt(0))
+                                                            </script>
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Đầu ra:</label>
+                                                            <select class="custom-select select2" disabled id="txt-out-scoure-@item.ID">
+                                                                @{
+                                                                    foreach (var i in trinhdo)
+                                                                    {
+                                                                        <option value="@i.ID">@i.LevelName</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>$('#txt-out-scoure-@item.ID').val(@item.ScoreOut.ToInt(0))</script>
+                                                        </div>
+
+                                                        @foreach (var d in studytimes)
+                                                        {
+                                                            <div class="col-sm-3 form-group desiretime-@d.StudentAppointmentID">
+                                                                <label>Thời gian học:</label>
+                                                                <input type="text" class="form-control" data-id="@d.ID" data-studytime="@d.StudyTimeID" data-day="@d.DayOfWeekID" disabled value="@d.DayOfWeekName - @d.StudyTimeName" />
+                                                            </div>
+                                                        }
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Chương trình học:</label>
+                                                            <select class="custom-select select2" disabled id="txt-class-@item.ID">
+                                                                @{
+                                                                    foreach (var i in classes)
+                                                                    {
+                                                                        <option value="@i.ID">@i.ClassName</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>$('#txt-class-@item.ID').val(@item.ClassID)</script>
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Mã khuyến mãi:</label>
+                                                            <input type="text" class="form-control" disabled value="@item.DiscountCode - @String.Format("{0:0,0}", item.DiscountPrice)" />
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Gói cam kết:</label>
+                                                            <select class="custom-select select2" disabled id="txt-commitment-@item.ID">
+                                                                @{
+                                                                    foreach (var c in commitment)
+                                                                    {
+                                                                        <option value="@c.ID">@c.ClassName</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <script>$('#txt-commitment-@item.ID').val(@item.CommitmentID)</script>
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Học phí:</label>
+                                                            <input type="text" class="form-control" disabled value="@String.Format("{0:0,0}", item.CustomPrice)" />
+                                                        </div>
+
+                                                        <div class="col-sm-3 form-group">
+                                                            <label>Phương thức thanh toán:</label>
+                                                            <select class="custom-select select2" disabled id="txt-payment-@item.ID">
+                                                                <option value="1">Tiền mặt</option>
+                                                                <option value="2">Thanh toán online</option>
+                                                                <option value="4">Quẹt thẻ</option>
+                                                                <option value="5">Chuyển khoản</option>
+                                                                <option value="6">Giáo viên thu hộ</option>
+                                                                <option value="3">Khác</option>
+                                                            </select>
+                                                            <script>$('#txt-payment-@item.ID').val(@item.PaymentMethodID)</script>
+                                                        </div>
+                                                    </div>
+                                                </fieldset>
+                                                <br />
+                                                <fieldset class="form-fieldset">
+                                                    <legend style="color: #01a42f;">Ghi chú</legend>
+                                                    <div>
+                                                        <textarea class="form-control" rows="1">@item.Note</textarea>
+                                                    </div>
+                                                </fieldset>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </nav>
+</div>
+<div class="modal fade show" id="div-edit" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateAppoinment", "Customer", FormMethod.Post, new { id = "create-form" }))
+            {
+                <input type="hidden" name="hdId" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Cập nhật</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-3 form-group">
+                                <label>Ngôn ngữ:</label>
+                                <select class="custom-select select2" name="slLanguage-edit">
+                                    @foreach (var ii in lLanguage)
+                                    {
+                                        <option value="@ii.ID">@ii.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-sm-3 form-group">
+                                <label>Chương trình học:</label>
+                                <select class="custom-select select2" name="slProgram-edit">
+                                    @foreach (var i in classes)
+                                    {
+                                        <option value="@i.ID">@i.ClassName - @String.Format("{0:0,0}", i.PriceClass)</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-sm-3 form-group">
+                                <label>Mã khuyến mãi:</label>
+                                <input name="txt-discount-code" type="text" class="form-control" />
+                                <a href="javascript:;" class="search-number" id="check-code"><i data-feather="search"></i></a>
+                            </div>
+
+                            <div class="col-sm-3 form-group">
+                                <label>Tiền được giảm:</label>
+                                <input name="txt-discount-price" type="text" class="form-control" placeholder="0" disabled />
+                            </div>
+
+                            <div class="col-sm-3 form-group">
+                                <label>Gói cam kết:</label>
+                                <select class="custom-select select2" name="slCommitment">
+                                    @foreach (var i in commitment)
+                                    {
+                                        <option value="@i.ID">@i.ClassName - @String.Format("{0:0,0}", i.PriceClass)</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-sm-3 form-group">
+                                <label>Phương thức thanh toán:</label>
+                                <select class="custom-select select2" name="slPaymentMethod">
+                                    <option value="1">Tiền mặt</option>
+                                    <option value="2">Thanh toán online</option>
+                                    <option value="4">Quẹt thẻ</option>
+                                    <option value="5">Chuyển khoản</option>
+                                    <option value="6">Giáo viên thu hộ</option>
+                                    <option value="3">Khác</option>
+                                </select>
+                            </div>
+
+                            <div class="col-sm-3 form-group">
+                                <label>Tổng tiền: <i class="far fa-question-circle" data-toggle="tooltip" data-placement="left" title="Vui lòng tự cộng trừ tiền gói cam kết và mã khuyến mãi"></i></label>
+                                <input name="txt-total" type="text" class="form-control" placeholder="0" oninput="moneyfm(this)" />
+                            </div>
+
+                            <div class="col-sm-3 form-group">
+                                <label>Ghi chú:</label>
+                                <textarea name="txt-note" class="form-control" rows="1"></textarea>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label>Ngày đóng:</label>
+                                <input type="text" name="txt-from" class="form-control datetimepicker from-date date-only" />
+                            </div>
+                            <div class="col-sm-12 form-group" style="display:none;" id="div-teacher">
+                                <div class="col-6" style="padding-left:0px;">
+                                    <label>Giáo viên thu hộ:</label>
+                                    <select class="custom-select select2" name="slTeacher">
+                                        <option value="0">---</option>
+                                        @foreach (var t in teachers)
+                                        {
+                                            <option value="@t.ID">@t.FullName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-refund">Thời gian học:</label>
+                                <div class="col-sm-12 form-group">
+                                    <a href="javascript:;" onclick="add_div_timeDesrire()" style="font-size:20px;margin-top:20px;margin-left:48.5%"><i class="fas fa-plus-circle"></i></a>
+                                </div>
+                                <div id="div_timeDesrire">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+
+        $('#btn-search').click(function () {
+            pagesearch();
+        });
+
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        var numberTimeDesrire = 1;
+        function remove_div_timeDesrire(id) {
+            var div_id = 'numberTimeDesrire-' + id;
+            $('#' + div_id).remove();
+        }
+
+        function add_div_timeDesrire() {
+            var html = '<div class="form-row" id="numberTimeDesrire-' + numberTimeDesrire + '" > ' +
+                '<div class="form-group col-sm-6">' +
+                '<select id="want-to-day" name="want-to-day" class="form-control select2">' +
+                '<option value="1">Thứ 2</option>' +
+                '<option value="2">Thứ 3</option>' +
+                '<option value="3">Thứ 4</option>' +
+                '<option value="4">Thứ 5</option>' +
+                '<option value="5">Thứ 6</option>' +
+                '<option value="6">Thứ 7</option>' +
+                '<option value="0">Chủ nhật</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="col-sm-5 form-group">' +
+                '<select name="ddl-study-combo" class="form-control select2 listTimeDerise">' +
+                '<option value="0">---Ca học---</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="col-sm-1 form-group" style="padding:4px">' +
+                '<a href="javascript:;" onclick="remove_div_timeDesrire(' + numberTimeDesrire + ')" style="float:left;font-size:20px;color:red"><i class="far fa-times-circle"></i></a>' +
+                '</div>' +
+                '</div>';
+            $('#div_timeDesrire').append(html);
+            $.ajax({
+                url: '/Cashier/getStudyingTime',
+                method: 'post',
+                dataType: 'json',
+                data: {},
+                success: function (r) {
+                    var html = '<option value="0">---Ca học---</option>';
+                    for (var i = 0; i < r.length; i++) {
+                        html += '<option value="' + r[i].ID + '">' + r[i].StudyTimeName + '</option>';
+                    }
+                    $('.listTimeDerise').each(function (index) {
+                        var value = $(this).val();
+                        if (value == 0) {
+                            $(this).html(html);
+                        }
+                    });
+                }
+            });
+            numberTimeDesrire += 1;
+        }
+
+        $('#check-code').click(function () {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/CheckDisCountCode",
+                data: '{id: "' + $('input[name=hdId]').val() + '", code:"' + $('input[name=txt-discount-code]').val() + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Mã khuyến mãi không tồn tại hoặc đã được sử dụng',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        });
+                    }
+                    else {
+                        $('input[name=txt-discount-price]').val(dinhdangtien(msg.data.DiscountPrice, ','));
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e :) ");
+                }
+            });
+        });
+
+        $('select[name=slLanguage-edit]').on("click", function () {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/LoadProgramBylanguage",
+                data: '{lang: ' + $('select[name=slLanguage-edit]').val() + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không tìm thấy dữ liệu',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        });
+                    }
+                    else {
+                        $('select[name=slProgram-edit]').html(msg.data);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        });
+
+        $(document).on("click", ".btn-edit", function () {
+            $('input[name=hdId]').val($(this).attr('data-id'));
+
+            $('select[name=slLanguage-edit]').val($(this).attr('data-language'));
+            $('select[name=slLanguage-edit]').trigger("change");
+
+            $('select[name=slProgram-edit]').val($(this).attr('data-program'));
+            $('select[name=slProgram-edit]').trigger("change");
+
+            $('input[name=txt-discount-code]').val($(this).attr('data-discountcode'));
+            $('input[name=txt-from]').val($(this).attr('data-fromdate'));
+
+            $('input[name=txt-discount-price]').val($(this).attr('data-discountprice'));
+
+            $('select[name=slCommitment]').val($(this).attr('data-commitment'));
+            $('select[name=slCommitment]').trigger("change");
+
+            $('select[name=slPaymentMethod]').val($(this).attr('data-method'));
+            $('select[name=slPaymentMethod]').trigger("change");
+
+            $('select[name=slTeacher]').val($(this).attr('data-teacher'));
+            $('select[name=slTeacher]').trigger("change");
+
+            $('input[name=txt-total]').val($(this).attr('data-total'));
+
+            $('textarea[name=txt-note]').val($(this).attr('data-note'));
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/GetListWantToDay",
+                data: '{studentappointid: ' + $(this).attr('data-id') + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không tìm thấy dữ liệu',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        });
+                    }
+                    else {
+                        $('#div_timeDesrire').html(msg.data);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        });
+        function DeleteInDB(e) {
+            if (confirm('Bạn có chắc muốn xóa thời gian này không?')) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Customer/DeleteDesrire",
+                    data: '{id: ' + e + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Không tìm thấy dữ liệu',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            });
+                        }
+                        else {
+                            $('#div-id-' + e).remove();
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(xmlhttprequest);
+                    }
+                });
+            }
+        }
+        $('select[name=slPaymentMethod]').on("change", function () {
+            if ($('select[name=slPaymentMethod]').val() == "6") {
+                $('#div-teacher').css('display', 'block');
+            }
+            else {
+                $('#div-teacher').css('display', 'none');
+            }
+        });
+    </script>
+}

@@ -1,0 +1,303 @@
+﻿@using AppZim.TableSql;
+@using AppZim.Models;
+@using PagedList.Mvc;
+@using MB.Extensions;
+@using AppZim.ZIM;
+@model PagedList.IPagedList<tbl_SetPackageStudent>
+@{
+    ViewBag.Title = "My Set";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_Account aclog = new tbl_Account();
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    else
+    {
+        aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    }
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item"><a href="~/news-feed">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Bộ sưu tập</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Gói bài</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+
+<div class="my-package">
+    <div class="d-lg-flex align-items-center justify-content-between mg-t-30 mg-b-30">
+        <h3 class="mg-b-15 mg-lg-b-0">Danh sách gói bài</h3>
+        @using (Html.BeginForm("MySet", "StudentSet", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-sm-flex justify-content-xl-center flex-wrap">
+                <div class="search-form mg-md-r-10 wd-100p wd-md-300 mg-b-15 mg-md-b-0">
+                    <input type="search" class="form-control ht-md-100p" placeholder="...">
+                    <button class="btn" type="button"><i data-feather="search"></i></button>
+                </div>
+                <div class="select-with-label d-flex align-items-center bg-white mg-sm-r-10 mg-b-15 mg-sm-b-0">
+                    <span class="label no-wrap">Loại:</span>
+                    <select name="setType" onchange="pagesearch()" class="custom-select tx-center-last">
+                        @{
+                            if (ViewBag.SetType == 0)
+                            {
+                                <option value="0" selected>Tất cả</option>
+                            }
+                            else
+                            {
+                                <option value="0">Tất cả</option>
+                            }
+                            if (ViewBag.SetType == 1)
+                            {
+                                <option value="1" selected>Miễn phí</option>
+                            }
+                            else
+                            {
+                                <option value="1">Miễn phí</option>
+                            }
+                            if (ViewBag.SetType == 2)
+                            {
+                                <option value="2" selected>Cao cấp</option>
+                            }
+                            else
+                            {
+                                <option value="2">Cao cấp</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="select-with-label d-flex align-items-center bg-white flex-lg-grow-0 flex-grow-1">
+                    <span class="label no-wrap">Sắp xếp:</span>
+                    <select name="sort" onchange="pagesearch()" class="custom-select tx-center-last">
+                        @{
+                            if (ViewBag.Sort == 0)
+                            {
+                                <option value="0" selected>---</option>
+                            }
+                            else
+                            {
+                                <option value="0">---</option>
+                            }
+                            @*if (ViewBag.Sort == 1)
+                                {
+                                    <option value="1" selected>Name A-Z</option>
+                                }
+                                else
+                                {
+                                    <option value="1">Name A-Z</option>
+                                }
+                                if (ViewBag.Sort == 2)
+                                {
+                                    <option value="2" selected>Name Z-A</option>
+                                }
+                                else
+                                {
+                                    <option value="2">Name Z-A</option>
+                                }*@
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Thời gian ↑</option>
+                            }
+                            else
+                            {
+                                <option value="3">Thời gian ↑</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Thời gian ↓</option>
+                            }
+                            else
+                            {
+                                <option value="4">Thời gian ↓</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row">
+        @{
+            if (Model.Count > 0)
+            {
+                foreach (var item in Model)
+                {
+                    tbl_SetPackage set = SetPackageTable.getbyid(item.SetPackageID.Value);
+                    <div class="col-12 mg-b-15">
+                        <div class="card bd-0 shadow-base">
+                            <div class="card-body">
+                                <div class="media d-block d-md-flex">
+                                    <div class="set-img rounded-3 mg-md-r-20 shadow-sm mg-b-15 mg-md-b-0">
+                                        <div class="badge-wrap">
+                                            @if (item.SetPrice > 0)
+                                            {<div class="trust-badge trust-badge-premium">
+                                                    <a href="javascript:;">Cao cấp</a>
+                                                    <div class="trust-badge-top"></div>
+                                                    <div class="trust-badge-bottom"></div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="trust-badge trust-badge-premium">
+                                                    <a href="javascript:;">Miễn phí</a>
+                                                    <div class="trust-badge-top"></div>
+                                                    <div class="trust-badge-bottom"></div>
+                                                </div>
+                                            }
+                                        </div>
+                                        <img src="@set.PackageIMGThumbnail"
+                                             class="wd-100p wd-md-200 wd-xl-300" alt="">
+                                    </div>
+                                    <div class="media-body">
+                                        <h3 class="tx-18 tx-bold mg-b-10">
+                                            <a href="javascript:;" class="tx-inverse" onclick="showSetDetail(this)" data-id="@item.SetPackageID">
+                                                @set.PackageName
+                                            </a>
+                                        </h3>
+                                        <div class="set-meta d-flex align-items-center mg-b-10  tx-color-03">
+                                            <span class="d-none d-sm-inline-block">
+                                                Học phí:<span class="price tx-danger mg-l-5 mg-r-15 mg-lg-r-30 tx-bold ">@string.Format("{0:N0}", item.SetPrice)</span>
+                                            </span>
+                                            <span>
+                                                Trạng thái:@{
+                                                    if (item.SetPrice == 0)
+                                                    {
+                                                        <span class="tx-success mg-l-5 mg-r-15 mg-lg-r-30 tx-medium">Miễn phí</span>
+                                                    }
+                                                    else if (item.Paid.Value)
+                                                    {
+                                                        <span class="tx-success mg-l-5 mg-r-15 mg-lg-r-30 tx-medium">Đã thanh toán</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="tx-warning mg-l-5 mg-r-15 mg-lg-r-30 tx-medium">Chưa thanh toán</span>
+                                                    }
+                                                }
+                                            </span>
+                                            @*<span>
+                                                    Lasted test:<span class="tx-color-01 mg-l-5 tx-medium ">27/04/2010</span>
+                                                </span>*@
+                                        </div>
+                                        @*<div class="set-result mg-b-15 pd-10 bg-light rounded-5">
+                                                <div class="d-flex flex-wrap flex-lg-nowrap">
+                                                    <div class="wd-50p mg-b-5">
+                                                        <span class="icon">
+                                                            <i class="fa fa-headphones-alt"></i>
+                                                            Listening:
+                                                        </span>
+                                                        <span class="score tx-bold">5.0</span>
+                                                    </div>
+                                                    <div class="wd-50p mg-b-5">
+                                                        <span class="icon"><i class="fas fa-book-open"></i> Reading:</span>
+                                                        <span class="score tx-bold">5.0</span>
+                                                    </div>
+                                                    <div class="wd-50p mg-b-5">
+                                                        <span class="icon"><i class="fas fa-edit"></i> Writing:</span>
+                                                        <span class="score tx-bold">5.0</span>
+                                                    </div>
+                                                    <div class="wd-50p mg-b-5">
+                                                        <span class="icon">
+                                                            <i class="fas fa-microphone-alt"></i>
+                                                            Speaking:
+                                                        </span>
+                                                        <span class="score tx-bold">5.0</span>
+                                                    </div>
+                                                </div>
+                                            </div>*@
+                                        <div class="description mg-b-15">
+                                            @{
+                                                string endtitle = AssetCRM.RemoveHTMLTags(set.Note);
+                                                if (endtitle.Length > 400)
+                                                {
+                                                    endtitle = endtitle.Substring(0, 400) + "...";
+                                                }
+                                                @endtitle
+                                            }
+                                        </div>
+                                        <div class="d-flex align-items-center">
+
+                                            @if (item.Paid.Value || item.SetPrice == 0)
+                                            {
+                                                <a href="@Url.Action("SetPackage", "StudentSet", new { area = "", ID = item.SetPackageID })" class="btn btn-success mg-r-15  btn-sm text-white">
+                                                    <i data-feather="play" class="mg-r-10"></i>Bắt đầu
+                                                </a>
+                                            }@if (item.Paid.Value == false)
+                                            {
+                                                <a href="@Url.Action("CheckOut","SetPackage",new { area="Admin",ID = item.SetPackageID})" class="btn btn-info mg-r-15  btn-sm">
+                                                    <i data-feather="credit-card" class="mg-r-10"></i>Thanh toán
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        @Html.PagedListPager(Model, page => Url.Action("MySet", "StudentSet", new { page, sort = ViewBag.Sort, setType = ViewBag.SetType }),
+         new PagedListRenderOptions
+         {
+             UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+         })
+    </nav>
+</div>
+<div class="modal fade" tabindex="-1" role="dialog" id="js-detailSet">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title package-name">A-IELTS Foundation Speaking Lesson</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="set-information">
+                    <div class="set-img">
+                        <img class="package-img" src="https://hoctienganhnhanh.net/wp-content/uploads/2019/02/thi-ielts-2.jpeg" alt="image">
+                    </div>
+                    <div class=" set-description">
+                        <h3 class="title">Thông tin gói</h3>
+                        <div class="package-description">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script>
+        function showSetDetail(obj) {
+            console.log($(obj).attr('data-id'));
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/LoadInfoSet",
+                data: '{id: ' + $(obj).attr('data-id') + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('.package-name').html(msg.d.PackageName);
+                        $('.package-description').html(msg.d.Note);
+                        $('.package-img').attr('src', msg.d.PackageIMG);
+                        $('#js-detailSet').modal('show');
+
+                    } else {
+                        console.log("éc éc");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: éc éc oạc oạc");
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,98 @@
+﻿footer.footer {
+    display: none;
+}
+
+/*.content {
+    margin-top: 0;
+}*/
+
+p.note-line {
+    margin-bottom: 0;
+    padding-left: 10px;
+    margin-left: 15px;
+    position: relative;
+    font-size: 12px;
+}
+
+.label-print {
+    display: none;
+}
+
+p.note-line:before {
+    content: '-';
+    position: absolute;
+    right: 100%;
+}
+
+.contract-content {
+    counter-reset: section;
+}
+
+ul.list-mark {
+    margin-bottom: 1rem;
+}
+
+.title-section {
+    font-size: 1.15rem;
+    counter-reset: subsection;
+    font-weight: bold;
+}
+
+    .title-section::before {
+        counter-increment: section;
+        content: "Điều " counter(section) ": ";
+    }
+
+.subtitle-section {
+    font-weight: bold;
+}
+
+    .subtitle-section::before {
+        counter-increment: subsection;
+        content: counter(section) "." counter(subsection) " /";
+        margin-right: 5px;
+    }
+
+ul.list-mark > li.icon-dot {
+    list-style: disc;
+}
+
+ul.list-mark > li.icon-dash {
+    list-style-type: none;
+    position: relative;
+    padding-left: 15px;
+}
+
+    ul.list-mark > li.icon-dash:before {
+        content: "-";
+        position: absolute;
+        left: 0;
+    }
+
+@media print {
+    body {
+        background: white;
+        font-size: 12pt;
+    }
+
+    .hide-on-print {
+        display: none;
+    }
+
+    .label-print {
+        display: block;
+    }
+
+    @page {
+        size: auto;
+    }
+
+    .container {
+        width: auto;
+        border: 0;
+    }
+
+    .barcode-wrap img {
+        border: 0;
+    }
+}

@@ -1,0 +1,431 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using MB.Extensions
+@using System.Text;
+@using PagedList.Mvc;
+@model List<ASW_CourseList_Online_Result>
+@{
+    ViewBag.Title = "CourseListOnline";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_Account aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var center = SchoolTable.getall();
+    var giaovien = AccountTable.getbyrole(4).Where(n => n.Status == 2);
+    StringBuilder dsGV = new StringBuilder();
+    foreach (var item in giaovien)
+    {
+        var check = StaffSalaryTable.GetByUIDType(item.ID, 1);
+        if (check != null)
+        {
+            dsGV.Append("<option value=\"" + item.ID + "\">" + item.FullName + "</option>");
+        }
+    }
+}
+<style>
+    p {
+        margin-bottom: 0px;
+    }
+
+    .bold {
+        font-weight: bold;
+    }
+</style>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách khoá học Online</li>
+    </ol>
+</nav>
+@using (Html.BeginForm("CourseListOnline", "Course", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+
+        <div>
+            <a href="javascript:;" class="btn btn-primary" data-toggle="modal" data-target="#modal-create-center"><i data-feather="plus"></i> Thêm</a>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" id="ddl-sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Trung tâm (A > Z)</option>
+                            }
+                            else
+                            {
+                                <option value="1">Trung tâm (A > Z)</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Trung tâm (Z > A)</option>
+                            }
+                            else
+                            {
+                                <option value="2">Trung tâm (Z > A)</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Ngày mở (Tăng)</option>
+                            }
+                            else
+                            {
+                                <option value="3">Ngày mở (Tăng)</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Ngày mở (Giảm)</option>
+                            }
+                            else
+                            {
+                                <option value="4">Ngày mở (Giảm)</option>
+                            }
+                            if (ViewBag.Sort == 5)
+                            {
+                                <option value="5" selected>Giá tiền (Tăng)</option>
+                            }
+                            else
+                            {
+                                <option value="5">Giá tiền (Tăng)</option>
+                            }
+                            if (ViewBag.Sort == 6)
+                            {
+                                <option value="6" selected>Giá tiền (Giảm)</option>
+                            }
+                            else
+                            {
+                                <option value="6">Giá tiền (Giảm)</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    @*<div class="form-group col-md-4 col-6 col-xl-3">
+                        <label class="form-control-label">Trung tâm:</label>
+                        <select class="form-control select2" name="school">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                var scho = SchoolTable.getall();
+                                foreach (var item in scho)
+                                {
+                                    if (ViewBag.School != null)
+                                    {
+                                        if (ViewBag.School == item.ID)
+                                        {
+                                            <option value="@item.ID" selected>@item.SchoolName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@item.ID">@item.SchoolName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.ID">@item.SchoolName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>*@
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Ngày mở từ:</label>
+                        <input type="text" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Đến:</label>
+                        <input type="text" name="to" class="form-control datetimepicker to-date date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2 text-center">
+                        <label class="form-control-label">Thao tác:</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary mg-r-10"><i data-feather="search"></i></button>
+                            <a href="javascript:;" class="btn btn-success export-excel"><i data-feather="file-text"></i> Xuất Excel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="course-horizental mg-t-30">
+    <ul class="list-wrap">
+        @{
+            foreach (var item in Model)
+            {
+                <li class="cr-item" style="background-color:white">
+                    <div class="media">
+                        <div class="media-body">
+                            <h5 class="mg-b-5">
+                                @{
+                                    if (item.Status == 1)
+                                    {
+                                        <span class="badge badge-warning">Mới tạo</span>
+                                    }
+                                    if (item.Status == 2)
+                                    {
+                                        <span class="badge badge-success">Đang mở</span>
+                                    }
+                                    if (item.Status == 3)
+                                    {
+                                        <span class="badge badge-danger">Đã đóng</span>
+                                    }
+                                }
+                                <a href="@Url.Action("ListStudent", "CourseDetail", new { area = "Admin", id = item.ID  })" class="course-name">@item.CourseName</a>
+                            </h5>
+                            <p class="summary">Giáo viên dạy: @item.TeacherName</p>
+                            <p class="">Học phí: @String.Format("{0:0,0đ}", item.Price)</p>
+                            <div class="course-information tx-12">
+                                <span class="mg-r-30">@item.TypeCourseName</span>
+                                <span class="mg-r-30">@item.CountDay ngày</span>
+                                <span class="mg-r-30">Bắt đầu: @item.OpeningDate.Value.ToString("dd/MM/yyyy")</span>
+                                <span class="mg-r-30">Kết thúc: @item.EndingDate.ToString("dd/MM/yyyy")</span>
+                                <span class="mg-r-30">Học viên: @CoursesStudentTable.getbycourseid(item.ID).Count</span>
+                                <span class="mg-r-30">Đã thanh toán: @String.Format("{0:0,0}", CoursesStudentTable.getbycourseid(item.ID).Sum(i => Convert.ToDouble(i.TotalPaid.Value)))</span>
+                                <span class="mg-r-30">Còn thiếu: @String.Format("{0:0,0}", CoursesStudentTable.getbycourseid(item.ID).Sum(i => Convert.ToDouble(i.PriceLeft.Value)))</span>
+                            </div>
+                        </div>
+                        @{
+                            if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7 || aclog.RoleID == 8)
+                            {
+                                if (CoursesStudentTable.getbycourseid(item.ID).Count() <= 0)
+                                {
+                                    <a href="javascript:;" class="btn-delete mg-l-10 tx-danger" data-id="@item.ID" data-name="@item.CourseName" data-toggle="tooltip" data-placement="top" title="Xóa">
+                                        <i data-feather="trash-2"></i>
+                                    </a>
+                                }
+                            }
+                        }
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+</div>
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </ul>
+</nav>
+
+<div class="modal fade" id="modal-create-center" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddCourseOnline", "Course", FormMethod.Post))
+            {
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" id="btn-close" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Thông tin khóa học Online</h4>
+                        <div class="form-group">
+                            <label>Trung tâm:</label>
+                            <select id="ddl-school" name="ddl-school" class="form-control" required>
+                                <option value="">---</option>
+                                @{
+                                    foreach (var item in center)
+                                    {
+                                        <option value="@item.ID">@item.SchoolName </option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Chuyên môn:</label>
+                            <select id="ddl-grade" name="ddl-grade" class="form-control" required>
+                                <option value="">---</option>
+                                @{
+                                    var gra = GradeTable.getall();
+                                    foreach (var item in gra)
+                                    {
+                                        <option value="@item.ID">@item.GradeName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Lớp học:</label>
+                            <select id="ddl-class" name="ddl-class" required class="form-control">
+                                <option value="">---</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Giáo trình:</label>
+                            <select id="ddl-giaotrinh" name="ddl-giaotrinh" class="form-control" required>
+                                <option value="">---</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Giáo viên dạy:</label>
+                            <label class="text-info">(Chỉ hiển thị giáo viên đã được cấu hình lương)</label>
+                            <select id="ddl-teacher" name="ddl-teacher" class="form-control select2" required>
+                                @Html.Raw(dsGV.ToString())
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-6">
+                                    <label>Ngày mở:</label>
+                                    <input id="txt-start-date" name="txt-start-date" required type="text" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY" value="@GetDateTime.Now.ToString("dd/MM/yyyy")">
+                                </div>
+                                <div class="col-6">
+                                    <label>Ngày đóng:</label>
+                                    <input id="txt-end-date" name="txt-end-date" required type="text" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Tên khóa:</label>
+                            <input id="txt-course-name" name="txt-course-name" class="form-control" type="text" placeholder="..." required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Tạo ngay</button>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div>
+
+@section myScripts{
+    <script>
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $('#ddl-grade').on('change', function () {
+            LoadClass($(this).val());
+        });
+        $('#ddl-class').on('change', function () {
+            if ($("#ddl-class").val() != '0') {
+                LoadGiaoTrinh();
+            }
+        });
+
+        function LoadClass(id) {
+            $("#ddl-class").empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Course/LoadClassOnline",
+                data: '{gradeid: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#ddl-class').append(msg.rs);
+                    $("#ddl-class").trigger("change");
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error :) ");
+                }
+            });
+        }
+
+        function LoadGiaoTrinh() {
+            $("#ddl-giaotrinh").empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Course/LoadGiaoTrinhOnline",
+                data: '{classid: ' + $('#ddl-class').val() + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#ddl-giaotrinh').append(msg.rs);
+                    $("#ddl-giaotrinh").trigger("change");
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error :) ");
+                }
+            });
+        }
+
+        //Xuất excel
+        $('.export-excel').click(function () {
+            var search = $('input[name=search]').val();
+            var sort = $('select[name=sort]').val();
+            var schoolID = $('select[name=school]').val();
+            var fdate = $('input[name=from]').val();
+            var tdate = $('input[name=to]').val();
+            $.ajax({
+                type: "POST",
+                url: "/Course/ExportExcelCourseListOnline",
+                data: '{search: "' + search + '",sort:"' + sort + '",schoolID:"' + schoolID + '",fdate:"' + fdate + '",tdate:"' + tdate + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        fnExcelReport(msg.data, msg.f); //hàm này ở layout
+                    }
+                    else {
+                        alert(msg.noti);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        });
+
+        $(document).ready(function () {
+            $('.btn-delete').on('click', function () {
+                let id = $(this).attr('data-id');
+                let fullname = $(this).attr('data-name');
+                let $this = $(this);
+                if (confirm("Xác nhận xóa khóa học " + fullname + "?")) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/Course/DeleteCourse?id=' + id,
+                        success: function (msg) {
+                            if (msg.rs) {
+                                $this.closest('li').remove();
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'check',
+                                    classBackground: 'noti-success',
+                                    timeout: 3000
+                                })
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                })
+                            }
+                        }
+                    })
+
+                }
+                else {
+                    return false;
+                }
+            });
+        })
+    </script>
+}
+
+

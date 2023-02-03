@@ -1,0 +1,345 @@
+﻿
+@using AppZim.TableSql;
+@using AppZim.Models;
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_SetPackage>
+@{
+    ViewBag.Title = "ListSetPackages";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<link href="~/app-assets/zimv2/assets/lightbox/css/lightbox.min.css" rel="stylesheet" />
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách gói bài</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="my-package">
+    @using (Html.BeginForm("ListSetPackages", "SetPackage", FormMethod.Get, new { id = "form-search" }))
+    {
+        <div class="d-lg-flex align-items-center justify-content-between mg-t-30 mg-b-30">
+            <a href="@Url.Action("CreateSets", "SetPackageCustom", new { area = "Admin" })" class="btn btn-primary btn-icon"><i data-feather="plus" class="left"></i> Tạo gói mới</a>
+            <h3 class="mg-b-15 mg-lg-b-0"></h3>
+            <div class="d-sm-flex justify-content-xl-center flex-wrap">
+                <div class="search-form mg-md-r-10 wd-100p wd-md-300 mg-b-15 mg-md-b-0">
+                    <input type="search" name="search" class="form-control ht-md-100p" placeholder="..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="select-with-label d-flex align-items-center bg-white mg-sm-r-10 mg-b-15 mg-sm-b-0">
+                    <span class="label no-wrap">Loại:</span>
+                    <select name="setType" onchange="pagesearch()" class="custom-select tx-center-last">
+                        @{
+                            if (ViewBag.SetType == 0)
+                            {
+                                <option value="0" selected>Tất cả</option>
+                            }
+                            else
+                            {
+                                <option value="0">Tất cả</option>
+                            }
+                            if (ViewBag.SetType == 1)
+                            {
+                                <option value="1" selected>Miễn phí</option>
+                            }
+                            else
+                            {
+                                <option value="1">Miễn phí</option>
+                            }
+                            if (ViewBag.SetType == 2)
+                            {
+                                <option value="2" selected>Cao cấp</option>
+                            }
+                            else
+                            {
+                                <option value="2">Cao cấp</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="select-with-label d-flex align-items-center bg-white flex-lg-grow-0 flex-grow-1">
+                    <span class="label no-wrap">Sắp xếp:</span>
+                    <select name="sort" onchange="pagesearch()" class="custom-select tx-center-last">
+                        @{
+                            if (ViewBag.Sort == 0)
+                            {
+                                <option value="0" selected>---</option>
+                            }
+                            else
+                            {
+                                <option value="0">---</option>
+                            }
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Tên A-Z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Tên A-Z</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Tên Z-A</option>
+                            }
+                            else
+                            {
+                                <option value="2">Tên Z-A</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Thời gian ↑</option>
+                            }
+                            else
+                            {
+                                <option value="3">Thời gian ↑</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Thời gian ↓</option>
+                            }
+                            else
+                            {
+                                <option value="4">Thời gian ↓</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    }
+    <div class="table-responsive">
+        <table class="table tb-set-manager table-bordered table-vcenter table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th rowspan="2" class="th-thumb tx-center">Ảnh thu nhỏ</th>
+                    <th rowspan="2" class="th-name">Tên gói</th>
+                    <th rowspan="2" class="tx-center">Loại</th>
+                    <th colspan="4" class="tx-center option-hd">Mở rộng</th>
+                    <th rowspan="2">Trạng thái</th>
+                    <th rowspan="2">Thời gian tạo</th>
+                    <th rowspan="2" class="tx-center">@ViewBag.TotalCount</th>
+                </tr>
+                <tr>
+                    <th class="th-option tx-center">Từ vựng</th>
+                    <th class="th-option tx-center">Ngữ pháp</th>
+                    <th class="th-option tx-center">Đọc hiểu</th>
+                    <th class="th-option tx-center">Nghe hiểu</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    if (Model.Count > 0)
+                    {
+                        foreach (var item in Model)
+                        {
+                            tbl_SetPackage pk = item;
+                            <tr>
+                                <td>
+                                    <a href="@pk.PackageIMG" data-lightbox="@pk.PackageIMGThumbnail" data-title="My caption">
+                                        <img src="@pk.PackageIMGThumbnail" style="height:50px; width:auto;" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/sign-in.png';" />
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="javascript:;" class="tx-inverse load-des" data-toggle="modal" data-target="#js-detailSet" data-id="@pk.ID">@pk.PackageName</a>
+                                </td>
+                                <td class="tx-center">
+
+                                    @if (pk.Price > 0)
+                                    {
+                                        <span class="nowrap" style="display: block;">
+                                            <i class="fas fa-crown tx-warning mg-r-5"></i>Cao cấp
+                                        </span>
+                                        <span class="nowrap">@string.Format("{0:N0}", pk.Price)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="nowrap">Miễn phí</span>
+                                    }
+
+                                </td>
+                                <td class="tx-center">
+                                    @if (pk.Speaking.Value)  //từ vựng hán tự
+                                    {
+                                        <span><i class="fas fa-check tx-success tx-24"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tx-danger">Không</span>
+                                    }
+                                </td>
+                                <td class="tx-center">
+                                    @if (pk.Writing.Value)  //ngữ pháp
+                                    {
+                                        <span><i class="fas fa-check tx-success tx-24"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tx-danger">Không</span>
+                                    }
+                                </td>
+                                <td class="tx-center">
+                                    @if (pk.Reading.Value)
+                                    {
+                                        <span><i class="fas fa-check tx-success tx-24"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tx-danger">Không</span>
+                                    }
+                                </td>
+                                <td class="tx-center">
+                                    @if (pk.Listening.Value)
+                                    {
+                                        <span><i class="fas fa-check tx-success tx-24"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tx-danger">Không</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (pk.Show.Value)
+                                    {
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input chk-status" id="chk-show-@pk.ID" checked data-value="@pk.ID">
+                                            <label class="custom-control-label" for="chk-show-@pk.ID">Hiện</label>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input chk-status" id="chk-show-@pk.ID" data-value="@pk.ID">
+                                            <label class="custom-control-label" for="chk-show-@pk.ID">Hiện</label>
+                                        </div>
+                                    }
+                                </td>
+                                <td><span>@pk.CreatedDate.Value.ToString("dd/MM/yyyy")</span></td>
+                                <td>
+                                    <div class="dropdown dropdown-icon">
+                                        <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">more_vert</a>
+                                        <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                            @*<a class="dropdown-item btn-icon" href="#"><i data-feather="eye"></i> View set</a>*@
+                                            <a class="dropdown-item btn-icon" href="@Url.Action("SetDetails","SetPackageCustom", new {id=pk.ID})">
+                                                <i data-feather="edit"></i>
+                                                Sửa
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        @Html.PagedListPager(Model, page => Url.Action("ListSetPackages", "SetPackage", new { page, search = ViewBag.Search, sort = ViewBag.Sort, setType = ViewBag.SetType }),
+            new PagedListRenderOptions
+            {
+                UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+            })
+    </nav>
+</div>
+
+
+<div class="modal fade" tabindex="-1" role="dialog" id="js-detailSet">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="h-title"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="set-information" id="div-content">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section myScripts{
+    <script src="~/app-assets/zimv2/assets/lightbox/js/lightbox.min.js"></script>
+    <script>
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $('.load-des').click(function () {
+            var id = $(this).attr('data-id');
+            $('#h-title').text('');
+            $('#div-content').empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/LoadInfoSet",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    console.log(msg.rs);
+                    if (msg.rs) {
+                        $('#h-title').text(msg.d.PackageName);
+                        $('#div-content').append(msg.d.Note);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng thử lại',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                }
+            });
+        })
+
+        $('.chk-status').click(function () {
+            var id = $(this).attr('data-value');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/UpdateStatus",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 2500
+                        })
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng thử lại',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                }
+            });
+        })
+    </script>
+}
+
+

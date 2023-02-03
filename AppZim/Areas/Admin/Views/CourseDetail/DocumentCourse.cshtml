@@ -1,0 +1,526 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using System.Linq
+@{
+    ViewBag.Title = "DocumentCourse";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    //var ldoc = DocumentTable.getcatebycurrid(ViewBag.Course);
+    var ldoc = DocumentTable.GetByCurriculumID(ViewBag.CurriculumsID);
+    var course = CoursesTable.getbyid(ViewBag.CourseID);
+    var totalLesson = CoursesScheduleTable.getbycourseid(course.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(course.ID, 1).Count;// số buổi đã học
+    int remainLesson = totalLesson - learnedLesson - course.DifferenceSchedule;
+    IEnumerable<tbl_Curriculum> giaotrinhs = CurriculumnInCourseTable.getByCourseId(course.ID);
+}
+<style>
+    .doc-item-wrap {
+        border: 1px solid rgba(72,94,144,.16);
+        border-radius: 10px;
+        padding: 10px;
+    }
+
+    .modal-body iframe {
+        width: 100%;
+        height: auto;
+    }
+</style>
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-9">
+        <div class="docs-wrap">
+            <div class="card">
+                <div class="card-header">
+                    <div class="top-filter">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="title mg-b-0">Tài liệu khóa học</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mg-t-30">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-vcenter">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Giáo trình</th>
+                                        <th>Link</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var i in giaotrinhs)
+                                    {
+                                        <tr>
+                                            <td>@i.CurriculumsName</td>
+                                            <td>@i.LinkCurriculumn</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="d-flex docs-list flex-wrap align-items-start">
+                        @{
+                            foreach (tbl_Document item in ldoc)
+                            {
+                                string d = "";
+                                if (!string.IsNullOrEmpty(item.DocumentLink))
+                                {
+                                    d = "download";
+                                }
+                                <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mg-b-20">
+                                    <div class="doc-item-wrap">
+                                        <div class="doc-image">
+                                            <a href="javascript:;" data-toggle="modal" data-target="#exampleModalCenter-@item.ID">
+                                                <img src="/app-assets/zimv2/images/document-icon.png" alt="300">
+                                            </a>
+                                        </div>
+                                        <div class="doc-link">
+                                            <a @d href="@item.DocumentLink">@item.Name</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                //modal
+                                <div class="modal fade" id="exampleModalCenter-@item.ID" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="padding-right:0">
+                                    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:1315px">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="exampleModalLongTitle">Nội dung tài liệu</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                @Html.Raw(item.DocumentName)
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="mg-t-30" hidden>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-vcenter" id="ManageListMeetingTable">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Room ID</th>
+                                        <th>Khóa học</th>
+                                        <th>Ngày học</th>
+                                        <th class="no-wrap">Ca học</th>
+                                        <th class="no-wrap">Giáo viên</th>
+                                        <th class="no-wrap">Trạng thái</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-xl-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@Model.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Số buổi học chênh lệch">@course.DifferenceSchedule</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item">
+                        <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", Model.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 4 || aclog.RoleID == 7)
+                    {
+                        <li class="menu-item">
+                            <a href="@Url.Action("EditCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="edit"></i>Chỉnh sửa</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("ListStudent","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book"></i>Học viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action( "AttendanceCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="check-circle"></i>Điểm danh</a>
+                    </li>
+
+                    @*<li class="menu-item">
+                            <a href="@Url.Action("CourseExam","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="activity"></i>Điểm số</a>
+                        </li>
+                        @if (aclog.RoleID != 6)
+                        {
+                            <li class="menu-item">
+                                <a href="@Url.Action( "ExerciseCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book-open"></i>Bài tập</a>
+                            </li>
+                        }*@
+                    @if (aclog.RoleID != 6)
+                    {
+                        <li class="menu-item active">
+                            <a href="@Url.Action( "DocumentCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="file-text"></i>Tài liệu</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("NoteCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="flag"></i>Đánh giá</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("NotificationCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("VideoOfSchedule","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="video"></i>Video bài giảng</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:600px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Dữ liệu đã lưu</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-vcenter">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Loại tệp</th>
+                                <th>Dung lượng tệp</th>
+                                <th class="text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataCloud">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Thoát</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script src="~/app-assets/js/accounting.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script>
+        var getParams = function (url) {
+            var params = {};
+            var parser = document.createElement('a');
+            parser.href = url;
+            var query = parser.search.substring(1);
+            var vars = query.split('&');
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split('=');
+                if (pair[1] != undefined) { params[pair[0]] = decodeURIComponent(pair[1]); }
+            }
+            return params;
+        };
+        var filterValues = {};
+        var refDataTable;
+        $(document).ready(function () {
+            var url = window.location;
+            let params = getParams(url.href);
+            let startIndex = 0;
+            let start = 0;
+            let length = 10;
+            let defaultOrder = 0;
+            let defaultDir = "desc";
+            if (params.length > 0) {
+
+                start = params.start;
+                length = params.length;
+                startIndex = start;
+                defaultOrder = params.order;
+                defaultDir = params.dir;
+            }
+            refDataTable = $("#ManageListMeetingTable").dataTable({
+                "order": [[defaultOrder, defaultDir]],
+                serverSide: true,
+                bFilter: false,
+                pageLength: 20,
+                lengthChange: false,
+                bInfo: false,
+                bAutoWidth: false,
+                displayStart: startIndex,
+                processing: true,
+
+                language: {
+                    paginate: {
+                        previous: "Prev"
+                    },
+                    processing: `<div class="loader" >
+                                                                        <div class= "strip-holder">
+                                                                            <img src="/app-assets/loading.gif" style="width:unset;" />
+                                                        </div>
+                                                    </div>`
+                },
+                columns: [
+                    //{ data: "RoomID" },
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            let roomid = `<span>${row.RoomID}</span>`;
+                            let btnOff = `<a href="javascript:;" class="btn-outline-info btn-icon btn-sm" onclick="copyToClipboard($(this))" data-roomId="${row.RoomID}" data-roomPass="${row.RoomPass}" style="margin-left:10px" data-toggle="tooltip" title="Sao chép"><i class="fas fa-copy"></i></a>`;
+                            return roomid + btnOff;
+                        }
+                    },
+                    { data: "CourseName" },
+                    { data: "DateStudy" },
+                    { data: "StudyTimeName" },
+                    { data: "TeacherName" },
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            let bagde = `<span class="badge badge-pill badge-warning">Đã đóng</span>`;
+                            if (row.isRoomStart == true) {
+                                bagde = `<span class="badge badge-pill badge-success">Đang diễn ra</span>`;
+                            }
+                            return bagde;
+                        }
+                    },
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            let btnOff = ``;
+                            if (row.isRoomStart == true) {
+                                btnOff = `<a href="javascript:;" class="btn-secondary btn-icon btn-sm" onclick="OffRoom(${row.ID})" data-toggle="tooltip" title="Đóng phòng"><i class="fas fa-power-off"></i></a>`;
+                            }
+                            return btnOff;
+                        }
+                    }
+                ],
+                columnDefs: [
+                    { targets: [6], orderable: false },
+                    { className: "text-center", targets: [6] }
+                ],
+                ajax: function (data, callback, settings) {
+                    filterValues.draw = data.draw;
+                    if (params.search != undefined && data.draw == "1") {
+                        filterValues.search = params.search;
+                        $('input[name="search"]').val(params.search);
+                    }
+                    if (params.isRoomStart != undefined && data.draw == "1") {
+                        filterValues.isRoomStart = params.isRoomStart;
+                        $("select[name='isRoomStart']").val(params.isRoomStart);
+                    }
+                    if (params.from != undefined && data.draw == "1") {
+                        filterValues.from = params.from;
+                        $('select[name="from"]').val(params.from);
+                    }
+                    if (params.to != undefined && data.draw == "1") {
+                        filterValues.to = params.to;
+                        $('select[name="to"]').val(params.to);
+                    }
+
+                    if (params.length > 0 && data.draw == "1") {
+                        filterValues.start = data.start = params.start;
+                        filterValues.length = data.length = params.length;
+                        filterValues.order = data.order[0].column = params.order;
+                        filterValues.dir = data.order[0].dir = params.dir;
+                    }
+                    else {
+                        filterValues.start = data.start;
+                        filterValues.length = data.length;
+                        filterValues.order = data.order[0].column;
+                        filterValues.dir = data.order[0].dir;
+                    }
+                    filterValues.courseID = @ViewBag.CourseID;
+                    $.ajax({
+                        url: '/Admin/ZoomMeeting/LoadManageListMeetingForStudent',
+                        method: 'GET',
+                        data: filterValues,
+                        success: function (msg) {
+                            let ajaxprams = getParams(this.url);
+                            if (ajaxprams.draw != 1) {
+                                let queryString = "?";
+                                for (var key in ajaxprams) {
+                                    if (key != "draw") {
+                                        queryString += "&" + key + "=" + ajaxprams[key];
+                                    }
+                                }
+                                let state = ajaxprams;
+                                let title = 'state' + filterValues.draw;
+                                let query = queryString;
+                                history.pushState(state, title, query)
+                            }
+                        },
+                    }).done(callback, (data) => {
+                        feather.replace();
+                    });
+                },
+                fnCreatedRow: function (nRow, data, iDataIndex) {
+                    $(nRow).attr('data-id', data.ID);
+                },
+            });
+
+            async function pagesearch() {
+                filterValues.search = $('input[name="search"]').val();
+                filterValues.isRoomStart = $('select[name=isRoomStart]').val();
+                filterValues.from = $('input[name=from]').val();
+                filterValues.to = $('input[name=to]').val();
+                refDataTable.fnDraw();
+            }
+            $('input[name=search]').keyup(function (event) {
+                if (event.keyCode === 13) {
+                    pagesearch();
+                }
+            });
+            $('#btn-search').click(function () {
+                pagesearch();
+            })
+            $('.btn-search').click(function () {
+                pagesearch();
+            })
+
+            $("#ManageListMeetingTable").on('click', 'tr:not(.collapse-row)', function () {
+                $("#ManageListMeetingTable tr").removeClass('selected');
+                $(this).addClass('selected')
+            });
+
+
+            //Lấy danh sách ReCording
+            $("#ManageListMeetingTable tbody").on('dblclick', 'tr:not(.collapse-row)', function () {
+                $("#ManageListMeetingTable tbody tr").removeClass('selected');
+                $(this).addClass('selected');
+                let id = $(this).attr('data-id');
+                LoadRecording(id);
+            });
+
+        });
+
+        function LoadRecording(id) {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/ZoomMeeting/LoadDetailRecording",
+                data: '{id:  ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.m,
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2000
+                        })
+                    }
+                    else {
+                        //console.log(msg.data);
+                        let data = msg.data;
+                        $('#dataCloud').empty();
+                        let html = ``;
+                        for (var i = 0; i < data.length; i++) {
+                            let d = data[i];
+                            let fileSize = parseFloat(d.file_size) / 1024000;
+                            let but = ``;
+                            if (d.file_type == 'MP4') {
+                                but = ` <a href="#exampleModalCenter-${d.file_size}" data-toggle="modal" class="btn btn-secondary btn-icon btn-sm">
+                                        <i class="fab fa-youtube"></i>
+                                    </a>`;
+                            }
+                            else if (d.file_type == 'M4A') {
+                                but = ` <a href="#exampleModalCenter-${d.file_size}" data-toggle="modal" class="btn btn-info btn-icon btn-sm">
+                                        <i class="fas fa-headphones-alt"></i>
+                                    </a>`;
+                            }
+
+
+                            html += ` <tr>
+                                <td>${d.file_extension} - ${d.recording_type}</td>
+                                <th>${fileSize.toFixed(1)} Mb</th>
+                                <td class="text-center">
+                                   ${but}
+                                    <div class="modal fade" id="exampleModalCenter-${d.file_size}" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered" style="max-width:500px;height:auto" role="document">
+                                            <div class="modal-content" style="border:none;background:none">
+                                                <video width="100%" height="auto" controls>
+                                                    <source src="${d.download_url}" type="video/mp4">
+                                                </video>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="${d.download_url}" download="" class="btn btn-success btn-icon btn-sm">
+                                        <i class="fas fa-cloud-download-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>`;
+                        }
+                        $('#dataCloud').html(html);
+                        $('#exampleModalCenter').modal('show');
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: error");
+                }
+            });
+        };
+
+        function OffRoom(id) {
+            if (confirm('Xác nhận đóng phòng học?')) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/ZoomMeeting/OffMeeting",
+                    data: '{id:  ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.m,
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2000
+                            })
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.m,
+                                icon: 'check',
+                                classBackground: 'noti-success',
+                                timeout: 3000
+                            });
+                            refDataTable.fnDraw();
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: error");
+                    }
+                });
+            }
+        }
+
+        function copyToClipboard($this) {
+            var $temp = $("<input>");
+            const roomId = $($this).attr("data-roomId");
+            const pwd = $($this).attr("data-roomPass");
+            const url = 'https://us05web.zoom.us/j/' + roomId + '?pwd=' + pwd;
+            $("body").append($temp);
+            $temp.val(url).select();
+            if ($temp.val() != null) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: "Sao chép thành công!",
+                    icon: 'check',
+                    classBackground: 'noti-success',
+                    timeout: 3000
+                })
+            }
+            document.execCommand("copy");
+            $temp.remove();
+        }
+    </script>
+}

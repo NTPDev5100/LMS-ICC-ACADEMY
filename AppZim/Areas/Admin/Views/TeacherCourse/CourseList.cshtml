@@ -1,0 +1,369 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@using MB.Extensions;
+@model PagedList.IPagedList<tbl_TeacherCourse>
+@{
+    ViewBag.Title = "Khóa học";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var schools = SchoolTable.getall().Where(n => n.CityID == aclog.LocationID).ToList();
+    var study = StudyTimeTable.getall();
+    var classs = ClassTable.getall().Where(n => n.isHide != true).ToList();
+}
+<style>
+    .teacher-list-icon .avatar {
+        width: 38px;
+        height: 38px;
+    }
+
+    p {
+        margin-bottom: 0px;
+    }
+
+    .bold {
+        font-weight: bold;
+    }
+
+    .course-horizental .cr-item:not(.hd):hover {
+        background-color: white;
+    }
+</style>
+@using (Html.BeginForm("CourseList", "TeacherCourse", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item"><span>Danh sách khóa học</span></li>
+            </ol>
+        </nav>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" name="search" value="@ViewBag.Search" placeholder="..." class="form-control" />
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select class="custom-select" name="sort" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.SortBy == 1)
+                            {
+                                <option value="1" selected>Khóa học a > z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Khóa học a > z</option>
+                            }
+                            if (ViewBag.SortBy == 2)
+                            {
+                                <option value="2" selected>Khóa học z > a</option>
+                            }
+                            else
+                            {
+                                <option value="2">Khóa học z > a</option>
+                            }
+                            if (ViewBag.SortBy == 3)
+                            {
+                                <option value="3" selected>Ngày mở (low)</option>
+                            }
+                            else
+                            {
+                                <option value="3">Ngày mở (low)</option>
+                            }
+                            if (ViewBag.SortBy == 4)
+                            {
+                                <option value="4" selected>Opening (hign)</option>
+                            }
+                            else
+                            {
+                                <option value="4">Opening (hign)</option>
+                            }
+                            if (ViewBag.SortBy == 5)
+                            {
+                                <option value="5" selected>Center a > z</option>
+                            }
+                            else
+                            {
+                                <option value="5">Center a > z</option>
+                            }
+                            if (ViewBag.SortBy == 6)
+                            {
+                                <option value="6" selected>Center z > a</option>
+                            }
+                            else
+                            {
+                                <option value="6">Center z > a</option>
+                            }
+                        }
+
+                    </select>
+                </div>
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0 transparent" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse"><i data-feather="filter"></i></a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    <div class="form-group col-md-4 col-6 col-xl-3">
+                        <label class="form-control-label">Trung tâm:</label>
+                        <select class="custom-select" name="center">
+                            <option value="0">Tất cả</option>
+
+                            @{
+                                var centerid = Convert.ToInt32(ViewBag.Center);
+
+                                foreach (var item in schools)
+                                {
+                                    if (centerid == @item.ID)
+                                    {
+                                        <option value="@item.ID" selected>@item.SchoolName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.ID">@item.SchoolName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-3">
+                        <label class="form-control-label">Lớp: </label>
+                        <select class="custom-select select2" name="classid">
+                            <option value="0">Tất cả</option>
+                            @{
+                                var classIDI = Convert.ToInt32(ViewBag.ClassID);
+                                foreach (var item in classs)
+                                {
+                                    if (classIDI == item.ID)
+                                    {
+                                        <option value="@item.ID" selected>@item.ClassName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.ID">@item.ClassName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Trạng thái: </label>
+                        <select class="custom-select" name="status">
+                            <option value="0" selected>Tất cả</option>
+                            @{
+                                if (ViewBag.StarusID == 1)
+                                {
+                                    <option value="1" selected>Mới mở</option>
+                                }
+                                else
+                                {
+                                    <option value="1">Mới mở</option>
+                                }
+                                if (ViewBag.StarusID == 2)
+                                {
+                                    <option value="2" selected>Đang mở</option>
+                                }
+                                else
+                                {
+                                    <option value="2">Đang mở</option>
+                                }
+                                if (ViewBag.StarusID == 3)
+                                {
+                                    <option value="3" selected>Đã đóng</option>
+                                }
+                                else
+                                {
+                                    <option value="3">Đã đóng</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Ngày mở: </label>
+                        <input type="text" name="from" class="form-control datetimepicker date-only from-date" value="@ViewBag.From" placeholder="DD / MM / YYYY">
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Đến: </label>
+                        <input type="text" name="to" class="form-control datetimepicker date-only to-date" value="@ViewBag.To" placeholder="DD / MM / YYYY">
+                    </div>
+                    <div class="form-group col-12 mg-b-0">
+                        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="course-horizental mg-t-30 bg-white">
+    <ul class="list-wrap">
+        @{
+            foreach (var jtem in Model)
+            {
+                tbl_Courses item = CoursesTable.getbyid(jtem.CourseID.Value);
+                if (item == null)
+                {
+                    continue;
+                }
+                <li class="cr-item">
+                    <div class="media">
+                        <img src="/app-assets/zimv2/images/img-course.jpg" class="wd-200 rounded mg-r-20" alt="">
+                        <div class="media-body">
+                            <h5 class="mg-b-5">
+                                @{
+                                    if (item.Status == 1)
+                                    {
+                                        <span class="badge badge-warning">Mới mở</span>
+                                    }
+                                    if (item.Status == 2)
+                                    {
+                                        <span class="badge badge-success">Đang mở</span>
+                                    }
+                                    if (item.Status == 3)
+                                    {
+                                        <span class="badge badge-danger">Đã đóng</span>
+                                    }
+                                }
+                                <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", id = item.ID  })" class="course-name tx-bold">@item.CourseName</a>
+                            </h5>
+                            @{
+                                var gv = TeacherCourseTable.getbycourseid(item.ID).Where(n => n.isHide != true).ToList();
+                                string gvs = "";
+                                for (int i = 0; i < gv.Count; i++)
+                                {
+                                    var te = AccountTable.getbyID(gv[i].TeacherUID.Value);
+                                    if (i != gv.Count - 1)
+                                    {
+                                        gvs += te.FullName + ", ";
+                                    }
+                                    else
+                                    {
+                                        gvs += te.FullName;
+                                    }
+                                }
+
+                                var studys = CoursesScheduleTable.getbycourseid(item.ID).Select(n => n.StudyTimeID).Distinct();
+                                var stu = "";
+                                foreach (var st in studys)
+                                {
+                                    var stud = StudyTimeTable.getbyid(st.Value);
+                                    stu += stud.sTime + " - " + stud.eTime + "   ";
+                                }
+                            }
+                            <p class="bold">Chủ nhiệm: @item.TeacherLeaderName</p>
+                            <p class="summary">Giáo viên: @gvs</p>
+                            <div class="course-information tx-12">
+                                @{
+                                    IEnumerable<tbl_CoursesSchedule> l = CoursesScheduleTable.getbycourseid(item.ID);
+                                    var ll = from t in l
+                                             group t by t.Date;
+                                    int dem = 0;
+                                    foreach (var ageGroup in ll)
+                                    {
+                                        var ne = from t in ageGroup
+                                                 group t by t.StudyTimeID;
+                                        dem += ne.GroupBy(n => n.Key).Count();
+
+                                    }
+                                }
+                                <span class="mg-r-30">@dem ngày</span>
+                                <span class="mg-r-30">@item.SchoolName</span>
+                                <span class="mg-r-30">@stu</span>
+                                <span class="mg-r-30">Ngày mở: @item.OpeningDate.Value.ToString("dd/MM/yyyy")</span>
+                                @{
+                                    string end = "";
+                                    var e = CoursesScheduleTable.getbycourseid(item.ID).OrderByDescending(n => n.Date).FirstOrDefault();
+                                    if (e != null)
+                                    {
+                                        end = e.Date.Value.ToString("dd/MM/yyyy");
+                                    }
+                                }
+                                <span class="mg-r-30">Ngày đóng: @end</span>
+                                <span class="mg-r-30">Học viên: @CoursesStudentTable.getbycourseid(item.ID).Count</span>
+                            </div>
+                        </div>
+                        <a href="#div-teacher-leader" data-id="@item.ID" class="tx-info load-teacher-lead" data-toggle="modal"><i data-feather="user-check" data-toggle="tooltip" data-placement="left" title="Chỉnh sửa"></i></a>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+</div>
+<div class="clearfix"></div>
+<nav aria-label="Page navigation" class="mg-t-10 right">
+    @Html.PagedListPager(Model, page => Url.Action("CourseList",
+       new
+            {
+                page,
+           search = ViewBag.Search,
+           sort = ViewBag.SortBy,
+           center = ViewBag.Center,
+           classid = ViewBag.ClassID,
+           status = ViewBag.StarusID,
+           from = ViewBag.From,
+           to = ViewBag.To
+       }),
+       new PagedListRenderOptions
+       {
+           UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+       })
+</nav>
+<div class="modal fade" id="div-teacher-leader" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="hdfID" id="hdfID" />
+            <input type="hidden" name="hdf-url" />
+            <div class="modal-body pd-20 pd-sm-40">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label>Số buổi áp dụng:</label>
+                        </div>
+                        <div class="col-6">
+                            <label>Lương/ buổi:</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="div-salary">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).on("click", ".load-teacher-lead", function () {
+            var id = $(this).attr('data-id');
+            $('#hdfID').val(id);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Course/LoadTeacherByCourse",
+                data: '{courseid: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#ddl-acdemic-officer').empty();
+                    $('#ddl-acdemic-officer').append(msg.rs2).trigger('change');
+                    $('input[name=txt-lesson]').empty();
+                    $('input[name=txt-lesson]').val(msg.lesson);
+                    $('#div-salary').html(msg.rs);
+                    console.log(msg.rs)
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        })
+    </script>
+}

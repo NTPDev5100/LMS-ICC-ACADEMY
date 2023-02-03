@@ -1,0 +1,344 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@using System.Threading.Tasks;
+@model List<zoom_meeting_internal_Result>
+    @{
+    ViewBag.Title = "MeetingInternal";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    }
+    <style>
+        .table .tr-row + .collapse-row {
+            background: white;
+        }
+
+        .form-create-meeting {
+            border: 1px solid rgba(72,94,144,.16);
+            border-radius: .25rem;
+        }
+    </style>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+            <li class="breadcrumb-item active" aria-current="page">Danh sách phòng họp nội bộ</li>
+        </ol>
+    </nav>
+    <div class="bg-white pd-10 form-create-meeting pd-t-20">
+        <div class="">
+            @using (Html.BeginForm("CreateRoomInternal", "ZoomMeeting", FormMethod.Post, new { id = "form-create-noti" }))
+            {
+            <div class="form-row">
+                <div class="col-sm-2 form-group">
+                    <label for="txt-StartDate" class="">Ngày diễn ra</label>
+                    <input type="text" name="txt-StartDate" class="datetimepicker date-only form-control" placeholder="__/__/____" required>
+                </div>
+                <div class="col-sm-2 form-group">
+                    <label for="txt-StartTime" class="">Giờ</label>
+                    <select name="txt-time" required class="form-control select2">
+                        <option value="07:00">07:00</option>
+                        <option value="07:30">07:30</option>
+                        <option value="08:00">08:00</option>
+                        <option value="08:30">08:30</option>
+                        <option value="09:00">09:00</option>
+                        <option value="09:30">09:30</option>
+                        <option value="10:00">10:00</option>
+                        <option value="10:30">10:30</option>
+                        <option value="11:00">11:00</option>
+                        <option value="11:30">11:30</option>
+                        <option value="12:00">12:00</option>
+                        <option value="12:30">12:30</option>
+                        <option value="13:00">13:00</option>
+                        <option value="13:30">13:30</option>
+                        <option value="14:00">14:00</option>
+                        <option value="14:30">14:30</option>
+                        <option value="15:00">15:00</option>
+                        <option value="15:30">15:30</option>
+                        <option value="16:00">16:00</option>
+                        <option value="16:30">16:30</option>
+                        <option value="17:00">17:00</option>
+                        <option value="17:30">17:30</option>
+                        <option value="18:00">18:00</option>
+                        <option value="18:30">18:30</option>
+                        <option value="19:00">19:00</option>
+                    </select>
+                </div>
+                <div class="col-sm-2 form-group">
+                    <label for="address" class="">Mời tham gia</label>
+                    <select name="ddl-role" class="form-control select2 no-wrap" required onchange="LoadStaff($(this))">
+                        <option value="">----</option>
+                        @*
+                        <option value="0">Tất cả</option>*@
+                        <option value="1">Supper Admin</option>
+                        @*
+                        <option value="2">Quản lý</option>*@
+                        @*
+                        <option value="3">Lễ tân</option>*@
+                        <option value="4">Giáo viên</option>
+                        @*
+                        <option value="5">Học viên</option>*@
+                        <option value="6">Tư vấn viên</option>
+                        <option value="7">Học vụ</option>
+                        @*
+                        <option value="8">Quản lý chuyên môn</option>*@
+                        <option value="9">Kế toán</option>
+                    </select>
+                </div>
+                <div class="col-sm-6 form-group">
+                    <label for="address" class="">(Mặc định tất cả)</label>
+                    <select name="ddl-staff" id="ddl-staff" class="form-control select2" multiple required></select>
+                </div>
+            </div>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fas fa-video mg-r-10"></i> Chủ đề cuộc họp</span>
+                </div>
+                <input type="text" name="txt-topic" class="form-control" placeholder="Topic..." required>
+            </div>
+            <div class="message-editor-wrap mg-y-20">
+                <div class="d-flex justify-content-between mg-t-20">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" onchange="notiemail()" id="chk-box">
+                        <label class="custom-control-label" for="chk-box">Gửi Mail thông báo</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check-circle"></i> Tạo ngay</button>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    <div class="course-horizental mg-t-30">
+        @{
+        foreach (var item in Model)
+        {
+        <ul class="list-wrap">
+            <li class="cr-item" style="background-color:white">
+                <div class="media">
+                    @*<img src="/app-assets/zimv2/images/img-course.jpg" class="wd-200 rounded mg-r-20" alt="">*@
+                    <a href="/admin/zoommeeting/JoinMeetingInternal?id=@item.ID" class="mg-r-20 pd-15 bg-primary" target="_blank" style="border-radius:15px" data-toggle="tooltip" title="Tham gia">
+                        <i class="fas fa-video wd-60 rounded text-center text-white" style="font-size:40px"></i>
+                    </a>
+                    <div class="media-body">
+                        <h5 class="mg-b-5">
+                            @{
+                            if (!string.IsNullOrEmpty(item.sDate.ToString()))
+                            {
+                            if (item.sDate.Value.Date < DateTime.Now.Date)
+                            {
+                            <span class="badge badge-secondary">Đã đóng</span>
+                            }
+                            else
+                            {
+                            if (item.isStart == true)
+                            {
+                            <span class="badge badge-success">Đang mở</span>
+                            }
+                            else
+                            {
+
+                            <span class="badge badge-info">Chưa mở</span>
+                            }
+                            }
+                            }
+                            }
+                            <span class="" style="color:red">@item.Topic</span>
+                        </h5>
+                        <div class="course-information tx-12 mg-t-5">
+                            <span class="mg-r-30"><i class="fas fa-user-check"></i> Người tạo: @item.CreatedByFullName</span>
+                            <span class="mg-r-30"><i class="far fa-calendar-alt"></i> Ngày tạo: @item.CreatedDate</span>
+                            <span class="mg-r-30"><i class="fas fa-play-circle"></i> Lịch diễn ra: @item.StartDate @item.StartTime</span>
+                        </div>
+                        <div class="course-information tx-12 mg-t-5">
+                            <span class="mg-r-30"><i class="fas fa-pause-circle"></i> Kết thúc lúc: @item.EndDate</span>
+                            <span class="mg-r-30"><i class="fas fa-home"></i> ID Phòng: @item.RoomId</span>
+                            <span class="mg-r-30"><i class="fas fa-unlock-alt"></i> Mật khẩu: @item.RoomPass</span>
+                        </div>
+                    </div>
+                    <a href="javascript:;" class="btn-outline-info btn-icon btn-sm" onclick="copyToClipboard($(this))" data-roomId="@item.RoomId" data-roomPass="@item.RoomPass" data-toggle="tooltip" title="Sao chép"><i class="fas fa-copy"></i></a>
+                    <a href="javascript:;" class="btn-outline-secondary btn-icon btn-sm" onclick="LoadUserJoin($(this))" data-id="@item.ID" data-toggle="tooltip" title="Người tham gia"><i class="fas fa-users"></i></a>
+                </div>
+            </li>
+        </ul>
+        }
+        }
+    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination mg-b-0 mg-t-10 justify-content-end">
+            <div class="pagination-container">
+                @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+            </div>
+        </ul>
+    </nav>
+
+    <div class="modal fade view-list-member" id="viewListMember" tabindex="-1" role="dialog" aria-labelledby="viewListMember"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewListMember">Danh sách tham gia</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-header pb-0 bd-b-0">
+                    @*<div class="d-flex add-member-select flex-grow-1">
+                        <div class="search-member">
+                            <input type="text" class="form-control" id="txt-search-member" name="txt-gr-name" placeholder="">
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary flex-shrink-0" onclick="Search()">Tìm kiếm</button>
+                    </div>*@
+                </div>
+                <div class="modal-body">
+                    <div class="member-list-wrap">
+                        <div class="member-block pd-x-5" id="blockmember">
+                        </div>
+                        <div class="media blog" style="margin-top: 20px;">
+                            <div style="margin:0 auto;">
+                                <a href="javascript:;" class="btn btn-outline-info" onclick="LoadMember()">Xem thêm...</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="hdfIndex" value="0" />
+    <input type="hidden" id="hdfId" value="0" />
+    @section myScripts
+    {
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+
+
+        function notiemail() {
+            var vl = $('#hdfemail').val();
+            if (vl == 'false') {
+                $('#hdfemail').val('true');
+            }
+            else {
+                $('#hdfemail').val('false');
+            }
+        }
+
+        function LoadStaff(e) {
+            let roleId = e.val();
+            $("#ddl-staff").empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/ZoomMeeting/LoadStaffByRole",
+                data: '{"roleId": ' + roleId + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#ddl-staff').append(msg.data);
+                        $("#ddl-staff").trigger("change");
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.m,
+                            icon: 'notifications_active',
+                            classBackground: 'noti-error',
+                            timeout: 2500
+                        })
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(errorthrow);
+                }
+            });
+        }
+
+        function copyToClipboard($this) {
+            var $temp = $("<input>");
+            const roomId = $($this).attr("data-roomId");
+            const pwd = $($this).attr("data-roomPass");
+            const url = 'https://us05web.zoom.us/j/' + roomId + '?pwd=' + pwd;
+            $("body").append($temp);
+            $temp.val(url).select();
+            if ($temp.val() != null) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: "Sao chép thành công!",
+                    icon: 'check',
+                    classBackground: 'noti-success',
+                    timeout: 3000
+                })
+            }
+            document.execCommand("copy");
+            $temp.remove();
+        }
+
+        //
+        function LoadUserJoin($this) {
+            let id = $($this).attr("data-id");
+            $('#hdfId').val(id);
+            $('#hdfIndex').val(0);
+            $('#viewListMember').modal('show');
+            LoadMember();
+        }
+
+        let loading = `<div class="div-loading" style="
+                        display: flex;
+                        justify-content: center;
+                    ">
+                        <div class="spinner-grow text-primary" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <div class="spinner-grow text-secondary" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <div class="spinner-grow text-success" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                                <div class="spinner-grow text-danger" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                        </div>`;
+        //function Search() {
+        //    $('#hdfIndex').val(0);
+        //    let id =  $('#hdfId').val();
+        //    $('#blockmember').empty();
+        //    LoadMember();
+        //};
+
+        function LoadMember() {
+            let id = $('#hdfId').val();
+            let pageIndex = $('#hdfIndex').val();
+            var search = $('#txt-search-member').val();
+            $('#blockmember').append(loading);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/ZoomMeeting/LoadUserJoinMeeting",
+                data: '{id: "' + id + '", PageIndex: ' + pageIndex + ', searchName:"' + search + '", PageSize: 10}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('.div-loading').remove();
+                        $('#blockmember').append(msg.data);
+                        $('#hdfIndex').val(msg.PageIndex);
+                    }
+                    else {
+                        $('.div-loading').remove();
+                        console.log("wrong");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: view-history");
+                }
+            });
+
+
+        }
+    </script>
+    }
+

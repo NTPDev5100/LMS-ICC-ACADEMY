@@ -1,0 +1,261 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using MB.Extensions
+
+@{
+    ViewBag.Title = "StaffDetail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_Account aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    tbl_Account teacher = AccountTable.getbyID(Model.ID);
+    var teav = "/app-assets/zimv2/images/invis-user.png";
+    if (!string.IsNullOrEmpty(teacher.Avatar))
+    {
+        teav = teacher.Avatar;
+    }
+    var schools = SchoolTable.getall().OrderBy(n => n.SchoolName).ToList();
+    var position = SalarySettingTable.getall();
+    double revenue = 0;
+    if (teacher.RoleID == 3)
+    {
+        revenue = AccountTable.GetRevenueById(teacher.ID) + (teacher.Revenue ?? 0);
+    }
+}
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item"><a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })">Danh sách nhân viên</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Cập nhật thông tin</li>
+    </ol>
+</nav>
+<div class="media d-block d-lg-flex">
+    <div class="config-teacher" style="flex-grow:1;">
+        <div class="teacher-infomation mg-b-15">
+            <fieldset class="form-fieldset">
+                <legend>Thông tin tài khoản</legend>
+
+                @using (Html.BeginForm("EditStaff", "Staff", FormMethod.Post))
+                {
+                    <input type="hidden" value="@teacher.ID" name="hdfID" />
+                    <div class="form-group row">
+                        <label for="user_name" class="col-sm-2 col-form-label">Tài khoản</label>
+                        <div class="col-sm-4">
+                            <input type="text" disabled class="form-control" id="user_name" placeholder="Full name" value="@teacher.UserName">
+                        </div>
+                        <label class="col-sm-2 col-form-label">Trạng thái</label>
+                        <div class="col-sm-4">
+                            <select name="ddl-status" required class="form-control">
+                                <option value="1">Chưa kích hoạt</option>
+                                <option value="2">Hoạt động</option>
+                                <option value="3">Khóa</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-full-name" class="col-sm-2 col-form-label">Họ và tên</label>
+                        <div class="col-sm-4">
+                            <input value="@teacher.FullName" name="txt-full-name" type="text" class="validate form-control" required>
+                        </div>
+                        <label for="txt-email" class="col-sm-2 col-form-label">Email</label>
+                        <div class="col-sm-4">
+                            <input type="email" class="form-control" id="txt-email" name="txt-email" placeholder="Email address" value="@teacher.Email">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-phone" class="col-sm-2 col-form-label">Số điện thoại</label>
+                        <div class="col-sm-4">
+                            <input type="number" class="form-control" id="txt-phone" name="txt-phone" placeholder="Phone number" value="@teacher.Phone">
+                        </div>
+                        <label for="txt-birthday" class="col-sm-2 col-form-label">Ngày sinh</label>
+                        <div class="col-sm-4">
+                            <input type="text" id="txt-birthday" name="txt-birthday" class="form-control datetimepicker date-only" placeholder="dd/mm/yyyy" required
+                                   value="@teacher.Birthday.Value.ToString("dd/MM/yyyy")">
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="txt-address" class="col-sm-2 col-form-label">Địa chỉ</label>
+                        <div class="col-sm-4">
+                            <textarea type="text" class="form-control" row="1" id="txt-address" name="txt-address">@teacher.Address</textarea>
+                        </div>
+
+                        <label for="txt-fb" class="col-sm-2 col-form-label">Link FB</label>
+                        <div class="col-sm-4">
+                            <textarea type="text" class="form-control" row="1" id="txt-fb" name="txt-fb">@teacher.LinkFB</textarea>
+                        </div>
+                    </div>
+                    if (teacher.RoleID == 2 || teacher.RoleID == 3 || teacher.RoleID == 6)
+                    {
+                        <div class="form-group row">
+                            <label for="txt-dw" class="col-form-label col-sm-2 pt-0">Cấp bậc</label>
+                            <div class="col-sm-4">
+                                <select name="ddl-position" required class="form-control select2">
+                                    <option value="0">---</option>
+                                    @foreach (var i in position)
+                                    {
+                                        <option value="@i.ID">@i.PositionName</option>
+                                    }
+                                </select>
+                                <script>$('select[name=ddl-position]').val(@teacher.Position)</script>
+                            </div>
+                            <label class="col-form-label col-sm-2 pt-0">Doanh thu cũ</label>
+                            <div class="col-sm-4">
+                                <input type="text" id="txt-revenue" name="txt-revenue" class="form-control" oninput="moneyfm(this)" value="@String.Format("{0:0,0}", teacher.Revenue)" />
+                            </div>
+                        </div>
+                    }
+
+                    <div class="form-group row">
+                        <label class="col-form-label col-sm-2 col-form-label">Giới tính</label>
+                        <div class="col-sm-4 d-flex align-items-center">
+
+                            @{ int gen = teacher.GenderID.Value;
+                                if (gen == 1)
+                                {
+                                    <div class="custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-male" value="1" checked>
+                                        <label class="custom-control-label" for="sex-male">Nam</label>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-male" value="1">
+                                        <label class="custom-control-label" for="sex-male">Nam</label>
+                                    </div>
+                                }
+                                if (gen == 2)
+                                {
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-female" value="2" checked>
+                                        <label class="custom-control-label" for="sex-female">Nữ</label>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-female" value="2">
+                                        <label class="custom-control-label" for="sex-female">Nữ</label>
+                                    </div>
+                                }
+                                if (gen == 3)
+                                {
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-free" value="3" checked>
+                                        <label class="custom-control-label" for="sex-free">Không xác định</label>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-free" value="3">
+                                        <label class="custom-control-label" for="sex-free">Không xác định</label>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <label class="col-form-label col-sm-2 col-form-label">Trung tâm:</label>
+                        <div class="col-sm-4">
+                            <select name="ddl-school" required class="form-control">
+                                @{
+                                    foreach (var item in schools)
+                                    {
+                                        <option value="@item.ID">@item.SchoolName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-bank" class="col-sm-2 col-form-label">Thông tin ngân hàng</label>
+                        <div class="col-sm-4">
+                            <textarea type="text" class="form-control" id="txt-bank" name="txt-bank" rows="1">@teacher.BankInformation</textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-dw" class="col-form-label col-sm-2 pt-0">Ngày nhận việc</label>
+                        <div class="col-sm-4">
+                            <input type="text" id="txt-dw" name="txt-dw" class="form-control datetimepicker date-only" value="@(teacher.DateStartWork == null ? "" : teacher.DateStartWork.Value.ToString("dd/MM/yyyy"))">
+                        </div>
+                        <label for="txt-dw" class="col-form-label col-sm-2 pt-0">Chức vụ</label>
+                        <div class="col-sm-4">
+                            <select name="ddl-role" required class="form-control">
+                                <option value="1">Admin</option>
+                                <option value="2">Trưởng phòng</option>
+                                <option value="3">Trưởng nhóm</option>
+                                <option value="6">Tư vấn viên</option>
+                            </select>
+                            <script>$('select[name=ddl-role]').val(@teacher.RoleID)</script>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-form-label col-sm-2 pt-0">Mật khẩu mới:</label>
+                        <div class="col-sm-4">
+                            <input type="password" id="txt-password" name="txt-password" class="form-control" placeholder="*******" />
+                        </div>
+                        <label class="col-form-label col-sm-2 pt-0">Nhập lại:</label>
+                        <div class="col-sm-4">
+
+                            <input type="password" class="form-control" id="txt-password-confirm" name="txt-password-confirm" placeholder="*******" />
+                        </div>
+                    </div>
+                    if (aclog.RoleID == 1 || (aclog.RoleID == 2 && teacher.RoleID > 2) || aclog.ID == teacher.LeaderID)
+                    {
+                        <div class="text-right">
+                            @if (teacher.RoleID == 3)
+                            {
+                                <span class="tx-bold" style="float:left!important;">Tổng doanh thu: @String.Format("{0:0,0}", revenue)</span>
+                            }
+
+                            <button type="submit" class="btn btn-primary">Cập nhật</button>
+                        </div>
+                    }
+                }
+            </fieldset>
+        </div>
+    </div>
+</div><!-- media -->
+
+@section myScripts{
+    <script>
+    $(document).ready(function () {
+        $('.edit-profile').on('click', function () {
+            $('.cs-account').slideToggle();
+            $('.cs-profile').slideToggle();
+        });
+
+        $('.change-password').on('click', function () {
+            $('.cs-account').slideDown();
+            $('.cs-profile').slideUp();
+        });
+
+        $('select[name=ddl-status]').val(@teacher.Status);
+        $('select[name="ddl-gender]').val(@teacher.GenderID);
+        $('select[name=ddl-school]').val(@teacher.SchoolID);
+    });
+
+    function assignschool(school) {
+        $.ajax({
+            type: "POST",
+            url: "/Admin/Staff/AssignSchool",
+            data: '{UID: ' + @teacher.ID + ', SchoolID:' + school +'}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (msg.status === false) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng thử lại',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log('e: AssignSubject')
+            }
+        });
+    }
+    </script>
+}

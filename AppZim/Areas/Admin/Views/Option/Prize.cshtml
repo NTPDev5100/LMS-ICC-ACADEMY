@@ -1,0 +1,251 @@
+﻿
+@{
+    ViewBag.Title = "Prize";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+
+<div class="all">
+    <div class="prize-wrap">
+        <div class="row">
+            <div class="prize-collection">
+                <ul id="prize-collection" class="collection z-depth-1">
+                    <li class="collection-item avatar clear pt-2">
+                        <div class="head-left float-left">
+                            <i class="material-icons red accent-2 circle">card_giftcard</i>
+                            <h5 class="collection-header m-0">Danh sách giải thưởng</h5>
+                            <p>Dựa theo số điểm</p>
+                        </div>
+
+                        <a href="#modalAddPrize" class="float-right label btn-primary modal-trigger border-radius-5 white-text z-depth-2">Thêm giải thưởng</a>
+                    </li>
+                    <li class="collection-item">
+                        <div class="row">
+                            <div class="col s3">
+                                <p class="collections-title font-weight-600 no-margin">Học viên xuất sắc nhất</p>
+                                <p class="collections-content  no-margin">300 điểm</p>
+                            </div>
+                            <div class="col s2"><span class="task-cat deep-orange accent-2 pulse z-depth-1-half">Giải nhất</span></div>
+                            <div class="col s2">
+                                Số lượng 1
+                            </div>
+                            <div class="col s4">
+                                <span>	Được tặng 1 bộ móc khóa hình PIKACHU</span>
+                            </div>
+                            <div class="col s1 table-action">
+                                <div class="center-block mr-10">
+                                    <a href="javascript:;" class="edit-prize black-text font-weight-600 border-radius-10 tooltipped " data-position="top" data-tooltip="Sửa giải thưởng"><i class="material-icons">mode_edit</i></a>
+                                </div>
+                                <div class="center-block ml-10">
+                                    <a href="javascript:;" class="delete-prize black-text font-weight-600 border-radius-10 tooltipped" data-position="top" data-tooltip="Xóa giải thưởng"><i class="material-icons">delete</i></a>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </li>
+                    <li class="collection-item">
+                        <div class="row">
+                            <div class="col s3">
+                                <p class="collections-title font-weight-600 no-margin">Học viên chăm chỉ nhất</p>
+                                <p class="collections-content  no-margin">200 điểm</p>
+                            </div>
+                            <div class="col s2"><span class="task-cat deep-orange accent-2  pulse z-depth-1-half">Giải nhì</span></div>
+                            <div class="col s2">
+                                Số lượng 1
+                            </div>
+                            <div class="col s4">
+                                <span>	Được tặng 1 bộ tài liệu Study Hard</span>
+                            </div>
+                            <div class="col s1 table-action">
+                                <div class="center-block mr-10">
+                                    <a href="javascript:;" class="edit-prize black-text font-weight-600 border-radius-10 tooltipped " data-position="top" data-tooltip="Sửa giải thưởng"><i class="material-icons">mode_edit</i></a>
+                                </div>
+                                <div class="center-block ml-10">
+                                    <a href="javascript:;" class="delete-prize black-text font-weight-600 border-radius-10 tooltipped" data-position="top" data-tooltip="Xóa giải thưởng"><i class="material-icons">delete</i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="collection-item">
+                        <div class="row">
+                            <div class="col s3">
+                                <p class="collections-title font-weight-600 no-margin">Học viên chăm chỉ nhất</p>
+                                <p class="collections-content  no-margin">200 điểm</p>
+                            </div>
+                            <div class="col s2"><span class="task-cat deep-orange accent-2 pulse z-depth-1-half">Giải ba</span></div>
+                            <div class="col s2">
+                                Số lượng 1
+                            </div>
+                            <div class="col s4">
+                                <span>	Được tặng 1 bộ tài liệu English</span>
+                            </div>
+                            <div class="col s1 table-action">
+                                <div class="center-block mr-10">
+                                    <a href="javascript:;" class="edit-prize black-text font-weight-600 border-radius-10 tooltipped " data-position="top" data-tooltip="Sửa giải thưởng"><i class="material-icons">mode_edit</i></a>
+                                </div>
+                                <div class="center-block ml-10">
+                                    <a href="javascript:;" class="delete-prize black-text font-weight-600 border-radius-10 tooltipped" data-position="top" data-tooltip="Xóa giải thưởng"><i class="material-icons">delete</i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="collection-item">
+                        <div class="row">
+                            <div class="col s3">
+                                <p class="collections-title font-weight-600 no-margin">Học viên khó khăn</p>
+                                <p class="collections-content  no-margin">200 điểm</p>
+                            </div>
+                            <div class="col s2"><span class="task-cat deep-orange accent-2 pulse z-depth-1-half">Khác</span></div>
+                            <div class="col s2">
+                                Số lượng 10
+                            </div>
+                            <div class="col s4">
+                                <span>Hỗ trợ học bổng chi phí 50%</span>
+                            </div>
+                            <div class="col s1 table-action">
+                                <div class="center-block mr-10">
+                                    <a href="javascript:;" class="edit-prize black-text font-weight-600 border-radius-10 tooltipped " data-position="top" data-tooltip="Sửa giải thưởng"><i class="material-icons">mode_edit</i></a>
+                                </div>
+                                <div class="center-block ml-10">
+                                    <a href="javascript:;" class="delete-prize black-text font-weight-600 border-radius-10 tooltipped" data-position="top" data-tooltip="Xóa giải thưởng"><i class="material-icons">delete</i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- Modal thêm giải -->
+<div id="modalAddPrize" class="modal">
+    <div class="modal-wrap addSubject">
+        <div class="modal-header">
+            <h5>Thêm giải thưởng</h5>
+        </div>
+        <div class="modal-content">
+            <div class="form-wrap">
+                <div class="input-field col s12 m12">
+                    <input placeholder="VD: Học viên xuất sắc" id="prize_name" type="text" class="validate">
+                    <label for="prize_name">Tên giải thưởng</label>
+                </div>
+                <div class="input-field col s12 m6">
+                    <input placeholder="VD: Giải nhất" id="prize_cat" type="text" class="validate">
+                    <label for="prize_cat">Loại giải thưởng</label>
+                </div>
+                <div class="input-field col s12 m6">
+                    <input placeholder="VD: 1" id="prize_numb" type="number" class="validate" min="1">
+                    <label for="prize_numb">Số lượng giải</label>
+                </div>
+                <div class="input-field col s12">
+                    <textarea placeholder="VD: Học bổng toàn phần 100%" id="prize_description" class="materialize-textarea" rows="5"></textarea>
+                    <label for="prize_description">Mô tả giải thưởng</label>
+                </div>
+                <div class="modal-footer clear">
+                    <div class="footer-action">
+                        <a href="#!" class="btn-addprize s6 m3 waves-effect waves-green btn gradient-45deg-indigo-light-blue">Thêm</a>
+                        <a href="#!" class="s6 m2 modal-action modal-close waves-effect waves-green btn gradient-45deg-amber-amber">Hủy</a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit giải -->
+<div id="modalEditPrize" class="modal">
+    <div class="modal-wrap addSubject">
+        <div class="modal-header">
+            <h5>Chỉnh sửa giải thưởng</h5>
+        </div>
+        <div class="modal-content">
+            <div class="form-wrap">
+                <div class="input-field col s12 m12">
+                    <input placeholder="VD: Học viên xuất sắc" id="prize_name" type="text" class="validate" value="Học viên xuất sắc">
+                    <label for="prize_name">Tên giải thưởng</label>
+                </div>
+                <div class="input-field col s12 m6">
+                    <input placeholder="VD: Giải nhất" id="prize_cat" type="text" class="validate" value="Giải nhất">
+                    <label for="prize_cat">Loại giải thưởng</label>
+                </div>
+                <div class="input-field col s12 m6">
+                    <input placeholder="VD: 1" id="prize_numb" type="number" class="validate" min="1" value="1">
+                    <label for="prize_numb">Số lượng giải</label>
+                </div>
+                <div class="input-field col s12">
+                    <textarea placeholder="VD: Học bổng toàn phần 100%" id="prize_description" class="materialize-textarea" rows="5">Học bổng toàn phần 100%</textarea>
+                    <label for="prize_description">Mô tả giải thưởng</label>
+                </div>
+                <div class="modal-footer clear">
+                    <div class="footer-action">
+                        <a href="#!" class=" s6 m3 waves-effect waves-green btn gradient-45deg-indigo-light-blue">Cập nhật</a>
+                        <a href="#!" class="s6 m2 modal-action modal-close waves-effect waves-green btn gradient-45deg-amber-amber">Hủy</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        /*Edit prize*/
+        $('.edit-prize').on('click', function () {
+            $('#modalEditPrize').modal('open');
+        });
+
+        /*Add Prize*/
+        $('.btn-addprize').on('click', function () {
+            console.log('Click Ok');
+            var name = $('#prize_name').val();
+            var cat = $('#prize_cat').val();
+            var numb = $('#prize_numb').val();
+            var des = $('#prize_description').val();
+            var prizeWrap = $('#prize-collection');
+            var item = `<li class="collection-item">
+                 <div class="row" >
+                    <div class="col s3">
+                        <p class="collections-title font-weight-600 no-margin">${name}</p>
+                        <p class="collections-content  no-margin">200 điểm</p>
+                    </div>
+                    <div class="col s2"><span class="task-cat deep-orange accent-2 pulse z-depth-1-half">${cat}</span></div>
+                    <div class="col s2">
+                        Số lượng ${numb}
+                            </div>
+                    <div class="col s4">
+                        <span>${des}</span>
+                    </div>
+                    <div class="col s1 table-action">
+                        <div class="center-block mr-10">
+                            <a href="javascript:;" class="edit-prize black-text font-weight-600 border-radius-10 tooltipped " data-position="top" data-tooltip="Sửa giải thưởng"><i class="material-icons">mode_edit</i></a>
+                        </div>
+                        <div class="center-block ml-10">
+                            <a href="javascript:;" class="delete-prize black-text font-weight-600 border-radius-10 tooltipped" data-position="top" data-tooltip="Xóa giải thưởng"><i class="material-icons">delete</i></a>
+                        </div>
+                    </div>
+                        </div >
+                    </li>`;
+
+            prizeWrap.hide().append(item).fadeIn(500);
+            $('#modalAddPrize').fadeOut(300, function () {
+                $(this).modal('close');
+            });
+        });
+        /*Delete prize*/
+        $('.delete-prize').each(function (e) {
+            var $this = $(this);
+            $this.on('click', function () {
+                console.log($this.parent().parent().parent().parent());
+                var elemRemove = $this.closest('.collection-item')
+                elemRemove.fadeOut(500, function () {
+                    elemRemove.remove();
+                })
+            });
+        })
+    })
+</script>

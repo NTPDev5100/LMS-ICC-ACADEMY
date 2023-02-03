@@ -1,0 +1,506 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    ViewBag.Title = "StudentCourseDetail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    int courseid = Model.ID;
+    var schs = CoursesScheduleTable.getbycourseid(courseid).OrderBy(n => n.Date).Select(n => n.Date).Distinct();
+    var totalLesson = CoursesScheduleTable.getbycourseid(Model.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(Model.ID, 1).Count;// số buổi đã học
+    tbl_Courses course = CoursesTable.getbyid(courseid);
+    int remainLesson = totalLesson - learnedLesson - course.DifferenceSchedule;
+}
+
+@section myStyles{
+    <link href="~/app-assets/zimv2/lib/fullcalendar/fullcalendar.min.css" rel="stylesheet">
+    <style>
+        .fc-time-grid .fc-slats td {
+            height: 3.5em;
+        }
+    </style>
+}
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-9">
+        <div id="schedule-calendar" class="schedule-calendar"></div>
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-xl-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@Model.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Số buổi học chênh lệch">@course.DifferenceSchedule</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item active">
+                        <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", Model.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 4 || aclog.RoleID == 7)
+                    {
+                        <li class="menu-item">
+                            <a href="@Url.Action("EditCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="edit"></i>Chỉnh sửa</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("ListStudent","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book"></i>Học viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action( "AttendanceCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="check-circle"></i>Điểm danh</a>
+                    </li>
+                    @*<li class="menu-item">
+                        <a href="@Url.Action("CourseExam","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="activity"></i>Điểm số</a>
+                    </li>*@
+                    @if (aclog.RoleID != 6)
+                    {
+                        @*<li class="menu-item">
+                            <a href="@Url.Action( "ExerciseCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book-open"></i>Bài tập</a>
+                        </li>*@
+                        <li class="menu-item">
+                            <a href="@Url.Action( "DocumentCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="file-text"></i>Tài liệu</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("NoteCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="flag"></i>Đánh giá</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("NotificationCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("VideoOfSchedule","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="video"></i>Video bài giảng</a>
+                    </li>
+                </ul>
+                <a href="#modal-curriculum" data-toggle="modal" class="btn btn-info w-100"><i data-feather="upload-cloud"></i>  Tải lên tài liệu</a>
+                @*<a href="javascript:;" class="btn btn-secondary mg-t-10 w-100" data-toggle="modal" data-target="#div-config"><i data-feather="settings"></i> Cấu hình Zoom</a>*@
+            </div>
+            <div class="card-body pd-0 pd-t-30">
+                <label class="tx-uppercase tx-sans tx-10 tx-medium tx-spacing-1 tx-color-03 mg-b-15">Nhóm</label>
+                    <ul class="list-menu">
+                        @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7)
+                        {
+                            <li>
+                                <a href="#createGroup" data-toggle="modal" title="Click to create new group">
+                                    <i data-feather="plus-circle"></i> Tạo nhóm mới
+                                </a>
+                            </li>
+                        }
+                        @{
+                            List<tbl_Group> lg = GroupTable.getAvailableGroup(aclog.ID).Where(n => n.CourseID != 0 && n.CourseID == courseid).ToList();
+                            foreach (var item in lg)
+                            {
+
+                                if (PostContentTable.GetPostNewByGroupID(item.ID) > 0)
+                                {
+                                    <li class="mg-t-15"><i data-feather="flag"></i> <a style="position: relative;" href="/news-feed?group=@(item.ID)"><span>@item.GroupName</span><span class="badge-noti">@PostContentTable.GetPostNewByGroupID(item.ID)</span></a></li>
+                                }
+                                else
+                                {
+                                    <li class="mg-t-15"><i data-feather="flag"></i> <a style="position: relative;" href="/news-feed?group=@(item.ID)"><span>@item.GroupName</span></a></li>
+                                }
+                            }
+                        }
+                    </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal" id="div-config" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-500" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddUpdateConfig", "ZoomMeeting", FormMethod.Post))
+            {
+                tbl_ZoomTeacherAPI c = ZoomTeacherAPITable.GetbyTeacherID(aclog.ID);
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" value="@(c==null?0:c.ID)" />
+                <input type="hidden" name="txt-uid" value="@aclog.ID" />
+                <input type="hidden" name="txt-page" value="3" /> //1. trả về trang chi tiết, 2. danh sách chung 3. trang lịch học
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Cấu hình</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-userID">Tài khoản:</label>
+                                    <input id="txt-userID" name="txt-userID" required type="email" value="@(c==null?"":c.UserID)" onkeypress="return event.charCode != 32" class="form-control" placeholder="taikhoanzoom@gmail.com" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-key">API Key:</label>
+                                    <input id="txt-key" name="txt-key" required type="text" value="@(c==null?"":c.APIKey)" onkeypress="return event.charCode != 32" class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-secrect">API Secrect:</label>
+                                    <input id="txt-secrect" name="txt-secrect" required type="text" value="@(c==null?"":c.APISecrect)" onkeypress="return event.charCode != 32" class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-token">Mã xác thực:</label>
+                                    <textarea id="txt-token" name="txt-token" type="text" class="form-control" placeholder="..." onkeypress="return event.charCode != 32" rows="3">@(c==null?"":c.Token)</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="/Admin/ZoomMeeting/RegistrationZoom" target="_blank" class="text-info"><i class="fas fa-info-circle"></i> Hướng dẫn</a>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block mg-t-10">Xác nhận</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Upload file -->
+<div class="modal fade" id="modal-curriculum" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpFileCurruTeacher", "CourseDetail", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+            {
+                <input type="hidden" name="hdfCourseID" value="@Model.ID" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tải lên giáo trình</h4>
+                        <div class="form-group">
+                            <label>Ngày học:</label>
+                            <select class="form-control" name="ddl-date" id="ddl-date" required onchange="loadstudytime()">
+                                <option value="">------</option>
+                                @{
+                                    foreach (var item in schs)
+                                    {
+                                        if (item.Value >= GetDateTime.Now.Date)
+                                        {
+                                            <option value="@item.Value.ToString("dd/MM/yyyy")">@item.Value.ToString("dd/MM/yyyy")</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Giờ học:</label>
+                            <select class="form-control" name="ddl-study" id="ddl-study" required>
+                                <option value="">------</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tài liệu: <span class="text-info">(Giới hạn file 50Mb)</span></label>
+                            <input type="file" id="fileupload" name="fileupload" class="dropify" accept=".zip, .rar" required data-max-file-size="50M">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Tải lên</button>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+@{
+    if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7)
+    {
+        <div class="modal fade" id="createGroup" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+                <div class="modal-content">
+                    <div class="modal-body pd-20 pd-sm-40">
+                        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </a>
+                        <div>
+                            @using (Html.BeginForm("CreateGroup", "Account", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                            {
+                                <input type="hidden" name="ddl-center" value="@ViewBag.Center" />
+                                <input type="hidden" name="ddl-course" value="@ViewBag.Course" />
+                                <h4>Create New Group</h4>
+                                <p class="tx-color-03">Create your new group now!</p>
+                                <div class="form-group">
+                                    <label>Group name</label>
+                                    <input type="text" class="form-control" id="txt-gr-name" name="txt-gr-name" placeholder="" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Create Group</button>
+                            }
+                        </div>
+                    </div><!-- modal-body -->
+                </div><!-- modal-content -->
+            </div><!-- modal-dialog -->
+        </div><!-- modal -->
+    }
+}
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/moment/min/moment.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/fullcalendar/fullcalendar.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Initialize fullCalendar
+            // Calendar Event Source
+            var curYear = moment().format('YYYY');
+            var curMonth = moment().format('MM');
+            var calendarEvents = {
+                id: 1,
+                backgroundColor: '#f7f7f7',
+                borderColor: 'transparent',
+                events: [
+
+                ]
+            };
+
+            var DK = $('#schedule-calendar').fullCalendar({
+                height: 'parent',
+                eventLimit: false,
+                timeFormat: 'HH:mm',
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay,listWeek'
+                },
+                navLinks: true,
+                slotEventOverlap: false,
+                selectable: false,
+                displayEventEnd: true,
+                selectLongPressDelay: 100,
+                editable: false,
+                nowIndicator: true,
+                defaultView: 'listMonth',
+                views: {
+                    agenda: {
+                        columnHeaderHtml: function (mom) {
+                            return '<span>' + mom.format('ddd') + '</span>' + ' ' +
+                                '<span>' + mom.format('DD') + '</span>';
+                        }
+                    },
+                    day: { columnHeader: false },
+                    listMonth: {
+                        listDayFormat: 'ddd DD',
+                        listDayAltFormat: false
+                    },
+                    listWeek: {
+                        listDayFormat: 'ddd DD',
+                        listDayAltFormat: false
+                    },
+                    agendaThreeDay: {
+                        type: 'agenda',
+                        duration: { days: 3 },
+                        titleFormat: 'MMMM YYYY'
+                    }
+                },
+                events: calendarEvents,
+                eventAfterAllRender: function (view) {
+                    if (view.name === 'listMonth' || view.name === 'listWeek') {
+                        var dates = view.el.find('.fc-list-heading-main');
+                        dates.each(function () {
+                            var text = $(this).text().split(' ');
+                            var now = moment().format('DD');
+
+                            $(this).html(text[0] + '<span>' + text[1] + '</span>');
+                            if (now === text[1]) { $(this).addClass('now'); }
+                        });
+                    }
+                },
+                eventRender: function (event, element) {
+                    if (event.info) {
+                        if (element.find('.fc-list-item-title').length > 0) {
+                            element.find('.fc-list-item-title').append(
+                                `<div class="box-info">
+                                <p class="txt">${event.info.school}</p>
+                                <p class="txt">${event.info.teacher}</p>
+                                <p class="txt"><span class="subject">${event.info.subject}</span></p>
+                            </div> `);
+                        } else {
+                            element.append(
+                                `<div class="box-info">
+                                    <p class="txt">${event.info.school}</p>
+                                    <p class="txt">${event.info.teacher}</p>
+                                    <p class="txt"><span class="subject">${event.info.subject}</span></p>
+                                </div>`
+                            );
+                        }
+                    }
+                    var eBorderColor = (event.source.borderColor) ? event.info.borderColor : 'rgb(247, 247, 247)';
+                    element.find('.fc-event-dot').css('backgroundColor', eBorderColor)
+                    element.css('borderLeft', `2px solid ${eBorderColor}`);
+                },
+            });
+            shedule();
+            function shedule() {
+                DK.fullCalendar('removeEvents');
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/CourseDetail/LoadScheduleCourse",
+                    data: '{id:  ' + @Model.ID + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Không có dữ liệu',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                        }
+                        else {
+                            m = msg.m;
+                            var events = [];
+                            for (var i = 0; i < msg.l.length; i++) {
+                                var startDate = $.fullCalendar.moment(msg.l[i].start).format();
+                                var endDate = $.fullCalendar.moment(msg.l[i].end).format();
+                                var allDate = msg.l[i].allDay;
+                                var url = msg.l[i].url;
+                                var borderColor = msg.l[i].borderColor;
+                                var subject = msg.l[i].subject;
+                                var teacher = msg.l[i].teacher;
+                                var school = msg.l[i].school;
+                                var room = msg.l[i].room;
+                                var event = {
+                                    allDay: allDate,
+                                    start: startDate,
+                                    end: endDate,
+                                    info: {
+                                        room: room,
+                                        teacher: teacher,
+                                        school: school,
+                                        subject: subject,
+                                        borderColor: borderColor
+                                    },
+                                    url: url,
+                                }
+                                events.push(event);
+
+                            }
+                            calendarEvents.events = events;
+                            DK.fullCalendar('addEventSource', calendarEvents);
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e :) ");
+                    }
+                });
+            }
+            var calendar = $('#schedule-calendar').fullCalendar('getCalendar');
+            // change view to week when in tablet
+            if (window.matchMedia('(min-width: 576px)').matches) {
+                calendar.changeView('agendaWeek');
+            }
+
+            // change view to month when in desktop
+            if (window.matchMedia('(min-width: 992px)').matches) {
+                calendar.changeView('month');
+            }
+
+            // change view based in viewport width when resize is detected
+            calendar.option('windowResize', function (view) {
+                if (view.name === 'listWeek') {
+                    if (window.matchMedia('(min-width: 992px)').matches) {
+                        calendar.changeView('month');
+                    } else {
+                        calendar.changeView('listWeek');
+                    }
+                }
+            });
+        });
+
+        function loadstudytime() {
+        $.ajax({
+            type: "POST",
+            url: "/Admin/CourseDetail/LoadStudyTimeByCourseDate",
+            data: '{courseid:  ' + @Model.ID + ', date:"' + $('#ddl-date').val() + '"}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (msg.rs == false) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Không có dữ liệu',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2000
+                    })
+                }
+                else {
+                    $('#ddl-study').empty();
+                    $('#ddl-study').append(msg.l);
+                    $('select').formSelect();
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("e: error");
+            }
+        });
+        }
+
+        //function CreateRoom(id) {
+        //    $.ajax({
+        //    type: "POST",
+        //    url: "/Admin/ZoomMeeting/CreateRoom",
+        //    data: '{CoursesScheduleID: "' + id + '"}',
+        //    contentType: "application/json; charset=utf-8",
+        //    dataType: "json",
+        //    success: function (msg) {
+        //        if (msg.rs == false) {
+        //            toast.create({
+        //                title: 'Thông báo!',
+        //                text: msg.m,
+        //                icon: 'notifications_active',
+        //                classBackground: 'noti-warning',
+        //                timeout: 2000
+        //            })
+        //        }
+        //        else {
+        //            toast.create({
+        //                title: 'Thông báo!',
+        //                text: msg.m,
+        //                icon: 'notifications_active',
+        //                classBackground: 'noti-success',
+        //                timeout: 2000
+        //            });
+        //            location.reload();
+        //        }
+        //    },
+        //    error: function (xmlhttprequest, textstatus, errorthrow) {
+        //        console.log("error:"+errorthrow + "xml:" + xmlhttprequest + "text:" + textstatus);
+        //    }
+        //});
+        //}
+
+
+        function CheckJoinRoom(id) {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/ZoomMeeting/CheckJoinRoom",
+                data: '{id:  ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.m,
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2000
+                        })
+                    }
+                    else {
+                        //console.log(msg.url);
+                        window.open(msg.url, "_blank");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: error");
+                }
+            });
+        }
+    </script>
+}

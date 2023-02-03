@@ -1,0 +1,768 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    else
+    {
+        string cfb = "";
+        var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+        if (aclog != null)
+        {
+            
+            <div class="nav-wrapper">
+                <ul class="left hide-on-med-and-down" id="ul-horizontal-nav" data-menu="menu-navigation">
+                    @if (aclog.RoleID == 1)// admin
+                    {
+                        <li>
+                            <a href="@Url.Action("Dashboard", "Home", new { area = "Admin" })">
+                                <i class="material-icons">dashboard</i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="TemplatesDropdown"><i class="material-icons">dvr</i><span>Khóa học<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="TemplatesDropdown">
+                                <li data-menu="">
+                                    <a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })">Tạo khóa học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CreatecourseSelfStudy", "Course", new { area = "Admin" })">Tạo khóa tự học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">Danh sách khóa học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })">Khóa tự học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })">Kiểm tra lịch trống phòng</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })">Kiểm tra lịch trống giáo viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })">Kiểm tra lịch ca học</a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="Cards"><i class="material-icons">group</i><span>Khách hàng<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="Cards">
+
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })">Dữ liệu học viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })">Học viên (TVV nghỉ)</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })">Học viên trong khóa</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })">Học viên chuyển khóa</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })">Học viên sắp thi</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })">Khách hẹn đăng ký</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })">Bảo lưu</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })">Học viên nợ học phí</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })">Khách mua dịch vụ</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })">Thêm lịch hẹn test</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })">Danh sách khách hẹn test</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })">Phiếu thu</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })">Yêu cầu hoàn tiền</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })">Phiếu chi</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })">Cảnh báo học viên</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="CssDropdownNV"><i class="material-icons">person</i><span>Nhân viên<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="CssDropdownNV">
+                                <li data-menu="">
+                                    <a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })">Danh sách nhân viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })">Nhân viên sale</a>
+                                </li>
+                                @*<li data-menu="">
+                        <a href="@Url.Action("CampaignSale", "Staff", new { area = "Admin" })">Chiến dịch sale</a>
+                    </li>*@
+                            </ul>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("CampaignSale", "Staff", new { area = "Admin" })">
+                                <i class="material-icons">show_chart</i>
+                                <span>Chiến dịch sale</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="CssDropdownGV"><i class="material-icons">school</i><span>Giáo viên<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="CssDropdownGV">
+                                <li data-menu="">
+                                    <a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })">Giáo viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("TeacherExerciseFix", "TeacherExercise", new { area = "Admin" })">Bài chấm của giáo viên</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("ListForms", "FormSubmitInfomationCustomer", new { area = "Admin" })">
+                                <i class="material-icons">error_outline</i>
+                                <span>Form thông tin</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="ul-report"><i class="material-icons">monetization_on</i><span>Lương<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="ul-report">
+                                <li data-menu="">
+                                    <a href="@Url.Action("SalaryReview", "SalaryStaff", new { area = "Admin" })">Duyệt lương saler</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="PageDropdown"><i class="material-icons">settings</i><span>Cấu hình<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="PageDropdown">
+                                <li data-menu="">
+                                    <a href="@Url.Action("Center", "Option", new { area = "Admin" })">Trung tâm</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Grade", "Option", new { area = "Admin" })">Khối học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Shift", "Option", new { area = "Admin" })">Ca học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ClassList", "Class", new { area = "Admin" })">Lớp học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Location", "Option", new { area = "Admin" })">Tỉnh/Thành Phố</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("District", "Option", new { area = "Admin" })">Quận Huyện</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Discount", "Option", new { area = "Admin" })">Mã khuyễn mãi</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SourceOfCustomer", "Option", new { area = "Admin" })">Nguồn Khách hàng</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("DayOff", "Option", new { area = "Admin" })">Ngày nghỉ</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Jobs", "Option", new { area = "Admin" })">Nghề nghiệp</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Services", "Option", new { area = "Admin" })">Dịch vụ</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CategoryFeedback", "Option", new { area = "Admin" })">Loại phản hồi</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SupplierList", "Option", new { area = "Admin" })">Nhà cung cấp</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("AcademicPurposesList", "Option", new { area = "Admin" })">Mục đích học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SettingSalary", "Option", new { area = "Admin" })">Cấu hình lương saler</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Exams", "Option", new { area = "Admin" })">Đợt thi</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="hidden">
+                            <a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })">
+                                <i class="material-icons">mood @Html.Raw(cfb)</i>
+                                <span>Phản hồi</span>
+                            </a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })">
+                                <i class="material-icons">notifications_active</i>
+                                <span>Tạo thông báo</span>
+                            </a>
+                        </li>
+                    }
+                    else if (aclog.RoleID == 2)//manager
+                    {
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="TemplatesDropdown"><i class="material-icons">dvr</i><span>Khóa học<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="TemplatesDropdown">
+                                <li data-menu="">
+                                    <a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })">Tạo khóa học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CreatecourseSelfStudy", "Course", new { area = "Admin" })">Tạo khóa tự học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">Danh sách khóa học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })">Khóa tự học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })">Kiểm tra lịch trống phòng</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })">Kiểm tra lịch trống giáo viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })">Kiểm tra lịch ca học</a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="Cards"><i class="material-icons">group</i><span>Khách hàng<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="Cards">
+
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })">Dữ liệu học viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })">Học viên (TVV nghỉ)</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })">Học viên trong khóa</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })">Học viên chuyển khóa</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })">Học viên sắp thi</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })">Khách hẹn đăng ký</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })">Bảo lưu</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })">Học viên nợ học phí</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })">Khách mua dịch vụ</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })">Thêm lịch hẹn test</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })">Danh sách khách hẹn test</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })">Phiếu thu</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })">Yêu cầu hoàn tiền</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })">Phiếu chi</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })">Cảnh báo học viên</a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="CssDropdownNV"><i class="material-icons">person</i><span>Nhân viên<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="CssDropdownNV">
+                                <li data-menu="">
+                                    <a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })">Danh sách nhân viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })">Nhân viên sale</a>
+                                </li>
+                                @*<li data-menu="">
+                        <a href="@Url.Action("CampaignSale", "Staff", new { area = "Admin" })">Chiến dịch sale</a>
+                    </li>*@
+                            </ul>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })">
+                                <i class="material-icons">school</i>
+                                <span>Giáo viên</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">library_books</i>
+                                <span>Phiếu thu</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">access_time</i>
+                                <span>Hẹn test</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">playlist_add_check</i>
+                                <span>Danh sách hẹn test</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="ul-report"><i class="material-icons">monetization_on</i><span>Lương<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="ul-report">
+                                <li data-menu="">
+                                    <a href="@Url.Action("SalaryReview", "SalaryStaff", new { area = "Admin" })">Duyệt lương saler</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="PageDropdown"><i class="material-icons">settings</i><span>Cấu hình<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="PageDropdown">
+                                <li data-menu="">
+                                    <a href="@Url.Action("Grade", "Option", new { area = "Admin" })">Khối học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Shift", "Option", new { area = "Admin" })">Ca học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ClassList", "Class", new { area = "Admin" })">Lớp học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Discount", "Option", new { area = "Admin" })">Mã khuyễn mãi</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SourceOfCustomer", "Option", new { area = "Admin" })">Nguồn Khách hàng</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("DayOff", "Option", new { area = "Admin" })">Ngày nghỉ</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="hidden">
+                            <a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })">
+                                <i class="material-icons">mood @Html.Raw(cfb)</i>
+                                <span>Phản hồi</span>
+                            </a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })">
+                                <i class="material-icons">notifications_active</i>
+                                <span>Tạo thông báo</span>
+                            </a>
+                        </li>
+                    }
+                    else if (aclog.RoleID == 7)//manager academic học vụ
+                    {
+                        <li>
+                            <a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">date_range</i>
+                                <span>Lịch dạy trung tâm</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="TemplatesDropdown"><i class="material-icons">dvr</i><span>Khóa học<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="TemplatesDropdown">
+                                <li data-menu="">
+                                    <a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })">Tạo khóa học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CreatecourseSelfStudy", "Course", new { area = "Admin" })">Tạo khóa tự học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">Danh sách khóa học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })">Khóa tự học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })">Kiểm tra lịch trống phòng</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })">Kiểm tra lịch trống giáo viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })">Kiểm tra lịch ca học</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })">
+                                <i class="material-icons">school</i>
+                                <span>Giáo viên</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">access_time</i>
+                                <span>Hẹn test</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">playlist_add_check</i>
+                                <span>Danh sách hẹn test</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="@Url.Action("ClassList", "Class", new { area = "Admin" })">
+                                <i class="material-icons">class</i>
+                                <span>Lớp học</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })">
+                                <i class="material-icons">warning</i>
+                                <span>Cảnh báo học viên</span>
+                            </a>
+                        </li>
+
+                        <li data-menu="">
+                            <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })">
+                                <i class="material-icons">notifications_active</i>
+                                <span>Tạo thông báo</span>
+                            </a>
+                        </li>
+                    }
+                    else if (aclog.RoleID == 8)//quản lý chuyên môn
+                    {
+                        <li>
+                            <a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">date_range</i>
+                                <span>Lịch dạy trung tâm</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="TemplatesDropdown"><i class="material-icons">dvr</i><span>Khóa học<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="TemplatesDropdown">
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">Danh sách khóa học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })">Khóa tự học</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })">Kiểm tra lịch trống phòng</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })">Kiểm tra lịch trống giáo viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })">Kiểm tra lịch ca học</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="Cards"><i class="material-icons">group</i><span>Khách hàng<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="TemplatesDropdown">
+                                <li data-menu="">
+                                    <a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })">Học viên sắp thi</a>
+                                </li>
+                            </ul>
+                        </li>
+
+                      
+                        <li data-menu="">
+                            <a href="@Url.Action("TeacherExerciseFix", "TeacherExercise", new { area = "Admin" })">
+                                <i class="material-icons">check</i>
+                                <span>Bài chấm</span>
+                            </a>
+                        </li>
+                        <li data-menu="">
+                            <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })">
+                                <i class="material-icons">notifications_active</i>
+                                <span>Tạo thông báo</span>
+                            </a>
+                        </li>
+                    }
+                    else if (aclog.RoleID == 3)//lễ tân
+                    {
+                        <li>
+                            <a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">date_range</i>
+                                <span>Lịch dạy trung tâm</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("RegisterCourse", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">add_location</i>
+                                <span>Đăng ký học</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">
+                                <i class="material-icons">dvr</i>
+                                <span>Khóa học</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">access_time</i>
+                                <span>Hẹn test</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">playlist_add_check</i>
+                                <span>Danh sách hẹn test</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="PageDropdownHV"><i class="material-icons">group</i><span>Khách hàng<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="PageDropdownHV">
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })">Dữ liệu học viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })">Học viên (TVV nghỉ)</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })">Học viên trong khóa</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })">Học viên chuyển khóa</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })">Khách hẹn đăng ký</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })">Bảo lưu</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })">Học viên nợ học phí</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })">Khách mua dịch vụ</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })">Cảnh báo học viên</a>
+                                </li>
+                            </ul>
+                        </li>
+                        @*<li>
+                <a href="@Url.Action("Prize", "Option", new { area = "Admin" })">
+                    <i class="material-icons">local_mall</i>
+                    <span>Đổi giải thưởng</span>
+                </a>
+            </li>*@
+                    }
+                    else if (aclog.RoleID == 4)//giáo viên
+                    {
+                        <li>
+                            <a href="@Url.Action("Schedule", "TeacherCourse", new { area = "Admin" })">
+                                <i class="material-icons">date_range</i>
+                                <span>Lịch dạy</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("DayOffTeacher", "TeacherCourse", new { area = "Admin" })">
+                                <i class="material-icons">content_paste</i>
+                                <span>Đăng ký nghỉ</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("CourseList", "TeacherCourse", new { area = "Admin" })">
+                                <i class="material-icons">dvr</i>
+                                <span>Danh sách khóa học</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="PageDropdownCB"><i class="material-icons">edit</i><span>Chấm bài<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="PageDropdownCB">
+                                <li data-menu="">
+                                    <a href="@Url.Action("ExerciseList", "TeacherExercise", new { area = "Admin" })">Bài mới</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ExerciseProcess", "TeacherExercise", new { area = "Admin" })">Bài đang chấm</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ExerciseRedoFix", "TeacherExercise", new { area = "Admin" })">Chấm lại</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ExerciseDone", "TeacherExercise", new { area = "Admin" })">Bài chấm xong</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })">
+                                <i class="material-icons">warning</i>
+                                <span>Cảnh báo học viên</span>
+                            </a>
+                        </li>
+                        @*<li>
+                <a href="@Url.Action("TotalLesson", "TeacherCourse", new { area = "Admin" })">
+                    <i class="material-icons">card_travel</i>
+                    <span>Tổng tiết dạy</span>
+                </a>
+            </li>*@
+                    }
+                    else if (aclog.RoleID == 5)//Khách hàng
+                    {
+                        <li>
+                            <a href="@Url.Action("Dashboard", "Home", new { area = "" })">
+                                <i class="material-icons">date_range</i>
+                                <span>Lịch học</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("CourseList", "StudentCourse", new { area = "" })">
+                                <i class="material-icons">dvr</i>
+                                <span>Khóa học của tôi</span>
+                            </a>
+                        </li>
+                    }
+                    else if (aclog.RoleID == 6)//saler
+                    {
+                        <li>
+                            <a href="@Url.Action("DashboardSaler", "Home", new { area = "Admin" })">
+                                <i class="material-icons">dashboard</i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("RegisterCourse", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">add_location</i>
+                                <span>Đăng ký học</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })">
+                                <i class="material-icons">access_time</i>
+                                <span>Hẹn test</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-menu" href="#" data-target="Cards"><i class="material-icons">group</i><span>Khách hàng<i class="material-icons right">keyboard_arrow_down</i></span></a>
+                            <ul class="dropdown-content dropdown-horizontal-list" id="Cards">
+
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })">Dữ liệu học viên</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })">Học viên trong khóa</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })">Học viên chuyển khóa</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })">Khách hẹn đăng ký</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })">Bảo lưu</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })">Học viên nợ học phí</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })">Khách mua dịch vụ</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })">Danh sách khách hẹn test</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })">Phiếu thu</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })">Yêu cầu hoàn tiền</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })">Phiếu chi</a>
+                                </li>
+                                <li data-menu="">
+                                    <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })">Cảnh báo học viên</a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li>
+                            <a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">
+                                <i class="material-icons">dvr</i>
+                                <span>Khóa học</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })">
+                                <i class="material-icons">build</i>
+                                <span>Tạo khóa học</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("ScheduleStudyTime", "Course", new { area = "Admin" })">
+                                <i class="material-icons">playlist_add_check</i>
+                                <span>Kiểm tra lịch ca học</span>
+                            </a>
+                        </li>
+                        <li class="hidden">
+                            <a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })">
+                                <i class="material-icons">feedback @Html.Raw(cfb)</i>
+                                <span>Phản hồi</span>
+                            </a>
+                        </li>
+                    }
+
+                    @{
+                        if (aclog.RoleID != 1 && aclog.RoleID != 2 && aclog.RoleID != 7 && aclog.RoleID != 8)
+                        {
+                            <li class="hidden">
+                                <a href="@Url.Action("FeedBack", "FeedBack", new { area = "Admin" })">
+                                    <i class="material-icons">mood</i>
+                                    <span>Gửi yêu cầu</span>
+                                </a>
+                            </li>
+                        }
+                    }
+
+                    <li class="hidden">
+                        <a href="@Url.Action("DocumentList", "ZimDocument", new { area = "Admin" })">
+                            <i class="material-icons">insert_drive_file</i>
+                            <span>Tài liệu</span>
+                        </a>
+                    </li>
+                    <li class="hidden">
+                        <a href="@Url.Action("Notification", "Notification", new { area = "Admin" })">
+                            <i class="material-icons">notifications</i>
+                            <span>Thông báo</span>
+                        </a>
+                    </li>
+                    @{
+                        if (aclog.RoleID == 4 || aclog.RoleID == 6)
+                        {
+                            <li>
+                                <a href="@Url.Action("RankUser", "Account", new { area = "Admin" })">
+                                    <i class="material-icons">beenhere</i>
+                                    <span>Bảng xếp hạng</span>
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        }
+    }
+}
+<!-- END: Horizontal nav start-->

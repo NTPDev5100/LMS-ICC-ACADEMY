@@ -1,0 +1,368 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@{
+    ViewBag.Title = "Test";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var RateExercise = Json.Decode(ViewBag.RateExercise);
+    var Top5RateExercise = ViewBag.Top5RateExercise;
+    var RateTVV = Json.Decode(ViewBag.RateTVV);
+    var Top5RateTVV = ViewBag.Top5RateTVV;
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+
+@section myStyles{
+
+}
+<div class="row mg-b-30">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item"><a href="javascript:;">Bảng xếp hạng</a></li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<div class="row row-xs">
+    <div class="col-12 col-md-12 col-xl-4">
+        @{
+            if (aclog.RoleID != 6)// giáo viên
+            {
+                <div class="card mg-t-10">
+                    <div class="card-header pd-t-10 pd-b-10">
+                        <h6 class="lh-5 mg-b-5">Đánh giá</h6>
+                        <p class="tx-12 tx-color-03 mg-b-0">Thống kê đánh giá các bài chấm của học viên.</p>
+                    </div><!-- card-header -->
+                    <div class="card-body pd-0">
+                        <div class="pd-t-10 pd-b-15 pd-x-20 d-flex align-items-baseline">
+                            <h1 class="tx-normal tx-rubik mg-b-0 mg-r-5">@RateExercise.TotalRate.ToString()</h1>
+                            <div class="tx-18">
+                                @for (int i = 0; i < RateExercise.TotalRate; i++)
+                                {
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                }
+                                @for (int j = 0; j < 5 - RateExercise.TotalRate; j++)
+                                {
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                }
+                            </div>
+                        </div>
+                        <div class="list-group list-group-flush tx-13">
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                                <strong class="tx-12 tx-rubik">5.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateExercise.Rate5[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateExercise.Rate5[1]%</div>
+                            </div>
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                                <strong class="tx-12 tx-rubik">4.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateExercise.Rate4[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateExercise.Rate4[1]%</div>
+                            </div>
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                                <strong class="tx-12 tx-rubik">3.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateExercise.Rate3[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateExercise.Rate3[1]%</div>
+                            </div>
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                                <strong class="tx-12 tx-rubik">2.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateExercise.Rate2[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateExercise.Rate2[1]%</div>
+                            </div>
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center bg-transparent">
+                                <strong class="tx-12 tx-rubik">1.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateExercise.Rate1[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateExercise.Rate1[1]%</div>
+                            </div>
+                        </div><!-- list-group -->
+                    </div><!-- card-body -->
+                </div><!-- card -->
+
+
+                <div class="card mg-t-10 rate-block">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h6 class="mg-b-0">Đánh giá gần đây</h6>
+                    </div>
+                    <ul class="list-group list-group-flush tx-13">
+                        @foreach (var item in Top5RateExercise)
+                        {
+                            <li class="list-group-item d-flex pd-sm-x-20">
+                                <div class="avatar d-none d-sm-block icon-rate"><span class="avatar-initial rounded-circle bg-teal"><i class="icon ion-md-checkmark"></i></span></div>
+                                <div class="pd-sm-l-10 left-rate">
+                                    <p class="tx-medium mg-b-0"><a href="javascript:;">@item.StudentName đã đánh giá bài chấm #@item.ID</a></p>
+                                    <small class="tx-12 tx-color-03 mg-b-0">@Convert.ToDateTime(item.RateDate).ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                                <div class="mg-l-auto text-right right-rate">
+                                    <p class="tx-medium mg-b-0">@item.RateExercise@(".0")</p>
+                                    @if (item.RateExercise == 1)
+                                    {
+                                        <small class="tx-12 tx-danger mg-b-0">Rất tệ</small>
+                                    }
+                                    @if (item.RateExercise == 2)
+                                    {
+                                        <small class="tx-12 tx-pink mg-b-0">Chưa tốt</small>
+                                    }
+                                    @if (item.RateExercise == 3)
+                                    {
+                                        <small class="tx-12 tx-warning mg-b-0">Bình thường</small>
+                                    }
+                                    @if (item.RateExercise == 4)
+                                    {
+                                        <small class="tx-12 tx-success mg-b-0">Tốt</small>
+                                    }
+                                    @if (item.RateExercise == 5)
+                                    {
+                                        <small class="tx-12 tx-success mg-b-0">Rất tốt</small>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div><!-- card -->
+            }
+        }
+        @{
+            if (aclog.RoleID != 4)//tvv
+            {
+
+                <div class="card mg-t-10">
+                    <div class="card-header pd-t-10 pd-b-10">
+                        <h6 class="lh-5 mg-b-5">Đánh giá TVV</h6>
+                        <p class="tx-12 tx-color-03 mg-b-0">Thống kê đánh giá TVV của học viên.</p>
+                    </div><!-- card-header -->
+                    <div class="card-body pd-0">
+
+                        <div class="pd-t-10 pd-b-15 pd-x-20 d-flex align-items-baseline">
+                            <h1 class="tx-normal tx-rubik mg-b-0 mg-r-5">@RateTVV.TotalRateTVV.ToString()</h1>
+                            <div class="tx-18">
+                                @for (int i = 0; i < RateTVV.TotalRateTVV; i++)
+                                {
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                }
+                                @for (int j = 0; j < 5 - RateTVV.TotalRateTVV; j++)
+                                {
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                }
+                            </div>
+                        </div>
+                        <div class="list-group list-group-flush tx-13">
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                                <strong class="tx-12 tx-rubik">5.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV5[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateTVV.RateTVV5[1]%</div>
+                            </div>
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                                <strong class="tx-12 tx-rubik">4.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV4[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateTVV.RateTVV4[1]%</div>
+                            </div>
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                                <strong class="tx-12 tx-rubik">3.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV3[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateTVV.RateTVV3[1]%</div>
+                            </div>
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                                <strong class="tx-12 tx-rubik">2.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV2[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateTVV.RateTVV2[1]%</div>
+                            </div>
+                            <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center bg-transparent">
+                                <strong class="tx-12 tx-rubik">1.0</strong>
+                                <div class="tx-16 mg-l-10">
+                                    <i class="icon ion-md-star lh-0 tx-orange"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                    <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                                </div>
+                                <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV1[0]</div>
+                                <div class="mg-l-20 tx-rubik tx-color-03 wd-10p text-right">@RateTVV.RateTVV1[1]%</div>
+                            </div>
+                        </div><!-- list-group -->
+                    </div><!-- card-body -->
+                </div><!-- card -->
+
+                <div class="card mg-t-10 rate-block">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h6 class="mg-b-0">Đánh giá TVV gần đây</h6>
+
+                    </div>
+                    <ul class="list-group list-group-flush tx-13">
+                        @foreach (var item in Top5RateTVV)
+                        {
+                            <li class="list-group-item d-flex pd-sm-x-20">
+                                <div class="avatar d-none d-sm-block icon-rate"><span class="avatar-initial rounded-circle bg-teal"><i class="icon ion-md-checkmark"></i></span></div>
+                                <div class="pd-sm-l-10 left-rate">
+                                    <p class="tx-medium mg-b-0"><a href="javascript:;">@item.FullName đã gửi phản hồi #@item.ID</a></p>
+                                    <small class="tx-12 tx-color-03 mg-b-0">@Convert.ToDateTime(item.RateDate).ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                                <div class="mg-l-auto text-right right-rate">
+                                    <p class="tx-medium mg-b-0">@item.Rate@(".0")</p>
+                                    @if (item.Rate == 1)
+                                    {
+                                        <small class="tx-12 tx-danger mg-b-0">Rất tệ</small>
+                                    }
+                                    @if (item.Rate == 2)
+                                    {
+                                        <small class="tx-12 tx-pink mg-b-0">Chưa tốt</small>
+                                    }
+                                    @if (item.Rate == 3)
+                                    {
+                                        <small class="tx-12 tx-warning mg-b-0">Bình thường</small>
+                                    }
+                                    @if (item.Rate == 4)
+                                    {
+                                        <small class="tx-12 tx-success mg-b-0">Tốt</small>
+                                    }
+                                    @if (item.Rate == 5)
+                                    {
+                                        <small class="tx-12 tx-success mg-b-0">Rất tốt</small>
+                                    }
+                                </div>
+                            </li>
+                        }
+
+                    </ul>
+                </div><!-- card -->
+            }
+        }
+    </div>
+    <div class="col-12 col-md-12 col-xl-8 d-flex flex-wrap">
+        <div class="card col-12 mg-t-10 pd-0">
+            <div class="card-header pd-t-20 pd-b-20 d-lg-flex align-items-center justify-content-between">
+                <div class="d-md-flex mg-t-20 mg-sm-t-0 mg-lg-t-0 mg-sm-t-20">
+                    <div class="btn-group pd-md-r-15 mg-b-15 mg-md-b-0 d-flex">
+                        <button onclick="getrate(2)" class="btn btn-white btn-xs active">Tuần</button>
+                        <button onclick="getrate(3)" class="btn btn-white btn-xs">Tháng</button>
+                        <button onclick="getrate(4)" class="btn btn-white btn-xs ">Quý</button>
+                        <button onclick="getrate(5)" class="btn btn-white btn-xs">Năm</button>
+                    </div>
+                    <div class="date-filter d-flex flex-wrap justify-content-center">
+                        <div class="input-group col-sm-4 col-6">
+                            <input type="text" class="form-control datetimepicker date-only" id="txt-date-rank-teaching" value="@GetDateTime.Now.ToString("dd/MM/yyyy")" placeholder="Thời gian">
+                        </div>
+                        <div class="input-group col-sm-4 col-6">
+                            <select class="custom-select" id="ddl-type">
+                                <option value="1" selected>Ngày</option>
+                                <option value="2">Tuần</option>
+                                <option value="3">Tháng</option>
+                                <option value="4">Quý</option>
+                                <option value="5">Năm</option>
+                            </select>
+                        </div>
+                        <div class="input-group col-sm-4 col-12 mg-t-15 mg-sm-t-0">
+                            <button onclick="getratehistory()" style="width: 100%" type="button" class="btn btn-primary btn-block">Xem dữ liệu</button>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- card-header -->
+            <div class="card-body d-flex">
+                <div class="col-md-12 pd-0 pd-md-r-10">
+                    @{
+                        if (aclog.RoleID != 6)//giáo viên
+                        {
+                            <div class="table-ranking-teacher">
+                                <div class="table-responsive tableFixHead">
+                                    <table class="table ranking ">
+                                        <thead>
+                                            <tr>
+                                                <th colspan="2">Xếp hạng giáo viên<br /><span style="font-size:12px" id="lbl-date-gv"></span></th>
+                                                <th></th>
+                                                <th>Z-point</th>
+                                                <th>Level 5</th>
+                                                <th>Level 4</th>
+                                                <th>Level 3</th>
+                                                <th>Level 2</th>
+                                                <th>Level 1</th>
+                                                <th>Trung bình</th>
+                                                <th>Tổng thời gian</th>
+                                                <th>Cảnh cáo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbl-body-teacher"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                        }
+                    }
+                </div>
+            </div>
+        </div><!-- card -->
+    </div><!-- card -->
+</div>
+
+@section myScripts{
+    <script>
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+    </script>
+}

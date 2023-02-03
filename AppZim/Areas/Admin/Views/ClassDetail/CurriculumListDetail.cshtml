@@ -1,0 +1,157 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    ViewBag.Title = "TITLE";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    List<tbl_CurriculumDetail> currdetail = CurriculumDetailTable.getbycurriculumid(Model.ID);
+    tbl_Class lop = ClassTable.getbyID(Model.ClassID);
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item"><a href="@Url.Action("ClassList", "Class", new { area = "Admin" })">Danh sách lớp</a></li>
+        <li class="breadcrumb-item"><a href="@Url.Action("DetailClass", "ClassDetail", new { area = "Admin", id = lop.ID })">@lop.ClassName</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.CurriculumsName</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="email-form-template mg-t-30">
+    @using (Html.BeginForm("UpdateCurriculumDetail", "ClassDetail", FormMethod.Post, new { id = "f-submit" }))
+    {
+        @Html.AntiForgeryToken()
+        <div class="row">
+            <input type="hidden" name="hdfData" />
+            <input type="hidden" name="hdfID" value="@Model.ID" />
+            <div class="col-12 ">
+                <div class="docs-detail-wrap">
+                    <div class="d-flex align-items-center mg-b-30">
+                        <div class="mg-r-5">
+                            <a href="javascript:;" class="btn btn-primary update-giao-trinh">Cập nhật</a>
+                        </div>
+                        <div>
+                            <select class="custom-select select2" id="slSubject" onchange="ChangeAllSubject()">
+                                <option>---</option>
+                                @{
+                                    foreach (var s in subs)
+                                    {
+                                        <option value="@s.ID">@s.SubjectName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Môn học</th>
+                                    <th>Tiết học</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int dem = 0;
+                                    int go = Model.TotalLesson;
+
+                                    for (int j = 0; j < go; j++)
+                                    {
+                                        var item = currdetail[j];
+                                        if (dem % 2 == 0)
+                                        {
+                                            <tr class="tr-lesson" data-id="@item.ID">
+                                                <td>
+                                                    <select class="custom-select slChange" id="ddl-subject-@item.ID">
+                                                        <option value="0">---</option>
+                                                        @{
+                                                            foreach (var stem in subs)
+                                                            {
+                                                                if (item.SubjectID == stem.ID)
+                                                                {
+                                                                    <option selected value="@stem.ID">@stem.SubjectName</option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="@stem.ID">@stem.SubjectName</option>
+                                                                }
+                                                            }
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td class="class-hour"><span></span></td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            <tr class="tr-lesson odd" data-id="@item.ID">
+                                                <td>
+                                                    <select class="custom-select slChange" id="ddl-subject-@item.ID">
+                                                        <option value="0">---</option>
+                                                        @{
+                                                            foreach (var stem in subs)
+                                                            {
+                                                                if (item.SubjectID == stem.ID)
+                                                                {
+                                                                    <option selected value="@stem.ID">@stem.SubjectName</option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="@stem.ID">@stem.SubjectName</option>
+                                                                }
+                                                            }
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td class="class-hour"><span></span></td>
+                                            </tr>
+                                        }
+                                    }
+                                    dem += 1;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section myScripts
+{
+    <script>
+        $('.update-giao-trinh').click(function () {
+            var t = 0;
+            var s = 0;
+            var data = '';
+            $('.tr-lesson').each(function () {
+                var id = $(this).attr('data-id');
+                t += 1;
+                var subid = $('#ddl-subject-' + id + '').val();
+                if (subid != 0) {
+                    s += 1;
+                    data += '' + id + '-' + subid + ',';
+                }
+                console.log(data);
+            });
+            $('input[name=hdfData]').val(data);
+            if (t == s) {
+                $('#f-submit').submit();
+            }
+            else {
+                toast.create({
+                    title: 'Thông báo',
+                    text: 'Xếp lịch giáo trình chưa thực hiện xong',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                })
+            }
+        });
+        function ChangeAllSubject() {
+            var sub = $('#slSubject').val();
+            $('.slChange').val(sub);
+            $('.slChange').trigger('change');
+        }
+    </script>
+}

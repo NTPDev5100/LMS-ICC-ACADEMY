@@ -1,0 +1,272 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    List<tbl_CoursesStudent> cs = CoursesStudentTable.getbystudentid(aclog.ID).Where(n => n.isHide != true).ToList();
+}
+
+@section myStyles{
+    <link href="~/app-assets/zimv2/lib/fullcalendar/fullcalendar.min.css" rel="stylesheet">
+    <style>
+        .fc-time-grid .fc-slats td {
+            height: 3.5em;
+        }
+
+        .schedule-calendar .fc-toolbar.fc-header-toolbar {
+            height: 75px;
+        }
+    </style>
+}
+<!-- Breadcrumb -->
+<div class="flex-sm-wrap mg-b-30 row">
+    <div class="col-md-3 col-12" style="line-height: 65px;">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item">Lịch học</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-md-5 ">
+        <label>Khóa học</label>
+        <select class="form-control" onchange="shedule()" id="ddl-course">
+            <option value="0">---</option>
+            @{
+                foreach (var item in cs)
+                {
+                    <option value="@item.CourseID">@item.CourseName</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-md-4 col-12">
+        <label>Môn học</label>
+        <select class="form-control select2" onchange="shedule()" id="ddl-subject" multiple>
+            <option value="0">---</option>
+            @Html.Raw(ViewBag.Sub)
+        </select>
+    </div>
+</div>
+<!-- End breadcrumb -->
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-12">
+        <div id="schedule-calendar" class="schedule-calendar"></div>
+    </div>
+</div>
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/moment/min/moment.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/fullcalendar/fullcalendar.min.js"></script>
+    <script>
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+        var calendarEvents = {
+            id: 1,
+            backgroundColor: '#f7f7f7',
+            borderColor: 'transparent',
+            events: [
+
+            ]
+        };
+
+        var DK = $('#schedule-calendar').fullCalendar({
+            height: 'parent',
+            eventLimit: false,
+            timeFormat: 'HH:mm',
+            header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay,listWeek'
+            },
+            navLinks: true,
+            slotEventOverlap: false,
+            selectable: false,
+            displayEventEnd: true,
+            selectLongPressDelay: 100,
+            editable: false,
+            nowIndicator: true,
+            defaultView: 'listMonth',
+            views: {
+                agenda: {
+                    columnHeaderHtml: function (mom) {
+                        return '<span>' + mom.format('ddd') + '</span>' + ' ' +
+                            '<span>' + mom.format('DD') + '</span>';
+                    }
+                },
+                day: { columnHeader: false },
+                listMonth: {
+                    listDayFormat: 'ddd DD',
+                    listDayAltFormat: false
+                },
+                listWeek: {
+                    listDayFormat: 'ddd DD',
+                    listDayAltFormat: false
+                },
+                agendaThreeDay: {
+                    type: 'agenda',
+                    duration: { days: 3 },
+                    titleFormat: 'MMMM YYYY'
+                }
+            },
+            events: calendarEvents,
+            eventAfterAllRender: function (view) {
+                if (view.name === 'listMonth' || view.name === 'listWeek') {
+                    var dates = view.el.find('.fc-list-heading-main');
+                    dates.each(function () {
+                        var text = $(this).text().split(' ');
+                        var now = moment().format('DD');
+
+                        $(this).html(text[0] + '<span>' + text[1] + '</span>');
+                        if (now === text[1]) { $(this).addClass('now'); }
+                    });
+                }
+            },
+            eventRender: function (event, element) {
+                if (event.info) {
+                    if (element.find('.fc-list-item-title').length > 0) {
+                        element.find('.fc-list-item-title').append(
+                            `<div class="box-info">
+                                                        <p class="txt">Room: ${event.info.room}</p>
+                                                        <p class="txt">${event.info.teacher}</p>
+                                                        <p class="txt">${event.info.course}</p>
+                                                        <p class="txt">${event.info.branch}</p>
+                                                        <p class="txt"><span class="subject">${event.info.subject}</span></p>
+                                                    </div> `);
+                    } else {
+                        element.append(
+                            `<div class="box-info">
+                                                            <p class="txt">Room: ${event.info.room}</p>
+                                                            <p class="txt">${event.info.teacher}</p>
+                                                            <p class="txt">${event.info.course}</p>
+                                                            <p class="txt">${event.info.branch}</p>
+                                                            <p class="txt"><span class="subject">${event.info.subject}</span></p>
+                                                        </div>`
+                        );
+                    }
+
+                }
+                var eBorderColor = (event.source.borderColor) ? event.info.borderColor : 'rgb(247, 247, 247)';
+                element.find('.fc-event-dot').css('backgroundColor', eBorderColor)
+                element.css('borderLeft', `2px solid ${eBorderColor}`);
+            },
+        });
+
+        shedule();
+        function shedule() {
+            DK.fullCalendar('removeEvents');
+            $.ajax({
+                type: "POST",
+                url: "/Home/LoadScheduleStudent",
+                data: '{courseid: ' + $('#ddl-course').val() + ', subject: "' + $('#ddl-subject').val() + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không có dữ liệu',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 4000
+                        })
+                    }
+                    else {
+                        m = msg.m;
+                        var events = [];
+
+
+                        for (var i = 0; i < msg.l.length; i++) {
+                            var startDate = $.fullCalendar.moment(msg.l[i].start).format();
+                            var endDate = $.fullCalendar.moment(msg.l[i].end).format();
+                            var allDate = msg.l[i].allDay;
+                            var url = msg.l[i].url;
+                            var borderColor = msg.l[i].borderColor;
+                            var subject = msg.l[i].subject;
+                            var teacher = msg.l[i].teacher;
+                            var branch = msg.l[i].branch;
+                            var room = msg.l[i].room;
+                            var classname = msg.l[i].className;
+                            var event = {
+                                allDay: allDate,
+                                start: startDate,
+                                end: endDate,
+                                info: {
+                                    room: room,
+                                    teacher: teacher,
+                                    course: classname,
+                                    branch: branch,
+                                    subject: subject,
+                                    borderColor: borderColor
+                                },
+                                url: url,
+                            }
+                            events.push(event);
+
+                        }
+                        calendarEvents.events = events;
+                        console.log(calendarEvents);
+                        DK.fullCalendar('addEventSource', calendarEvents);
+                    }
+
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: shedule :) ");
+                }
+            });
+        }
+
+        var calendar = $('#schedule-calendar').fullCalendar('getCalendar');
+        // change view to week when in tablet
+        if (window.matchMedia('(min-width: 576px)').matches) {
+            calendar.changeView('agendaWeek');
+        }
+
+        // change view to month when in desktop
+        if (window.matchMedia('(min-width: 992px)').matches) {
+            calendar.changeView('month');
+        }
+
+        // change view based in viewport width when resize is detected
+        calendar.option('windowResize', function (view) {
+            if (view.name === 'listWeek') {
+                if (window.matchMedia('(min-width: 992px)').matches) {
+                    calendar.changeView('month');
+                } else {
+                    calendar.changeView('listWeek');
+                }
+            }
+        });
+        function CheckJoinRoom(id) {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/ZoomMeeting/CheckJoinRoom",
+                data: '{id:  ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.m,
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2000
+                        })
+                    }
+                    else {
+                        //console.log(msg.url);
+                        window.open(msg.url, "_blank");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: error");
+                }
+            });
+        }
+    </script>
+}

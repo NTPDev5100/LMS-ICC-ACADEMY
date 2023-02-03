@@ -1,0 +1,3 @@
+PageError: CourseController    FunctionError: AssignCusAppointmentToCourse    loginUID: 0    MessageError: Nullable object must have a value.||    21/02/2022 11:47
+PageError: CustomerController    FunctionError: AssignCusAppointmentToCourse    loginUID: 1    MessageError: Nullable object must have a value.    21/02/2022 14:53
+PageError: CustomerController    FunctionError: ChangeCourseStudent    loginUID: 1    MessageError: Object reference not set to an instance of an object.    21/02/2022 18:02

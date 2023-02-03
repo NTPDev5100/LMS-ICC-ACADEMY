@@ -1,0 +1,2061 @@
+﻿@using AppZim.TableSql;
+@using MB.Extensions;
+@using AppZim.Models
+@using AppZim.ZIM
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_PostContent>
+@{
+    ViewBag.Title = "New Feed";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var courses = CoursesStudentTable.getbystudentid(aclog.ID);
+    string av = "/app-assets/zimv2/images/invis-user.png";
+    if (!string.IsNullOrEmpty(aclog.AvatarThumbnail))
+    {
+        av = aclog.AvatarThumbnail;
+    }
+
+    int rate1 = 0;
+    int rate2 = 0;
+    int rate3 = 0;
+    int rate4 = 0;
+    int rate5 = 0;
+    int perrate1 = 0;
+    int perrate2 = 0;
+    int perrate3 = 0;
+    int perrate4 = 0;
+    int perrate5 = 0;
+    double scoreview = 0;
+    if (aclog.RoleID == 4)//giáo viên
+    {
+        //tính điểm rating
+        List<tbl_ExerciseAddonStudent> l = ExerciseAddonStudentTable.getbyuidfixdone(aclog.ID);
+        l = l.Where(n => n.RateExercise != null).ToList();
+        var rate11 = l.Where(n => n.RateExercise == 1).ToList();
+        var rate22 = l.Where(n => n.RateExercise == 2).ToList();
+        var rate33 = l.Where(n => n.RateExercise == 3).ToList();
+        var rate44 = l.Where(n => n.RateExercise == 4).ToList();
+        var rate55 = l.Where(n => n.RateExercise == 5).ToList();
+
+        rate1 = rate11.Count;
+        rate2 = rate22.Count;
+        rate3 = rate33.Count;
+        rate4 = rate44.Count;
+        rate5 = rate55.Count;
+
+        perrate1 = Math.Round((float)rate11.Count / l.Count * 100, 0).ToString().ToInt(0);
+        perrate2 = Math.Round((float)rate22.Count / l.Count * 100, 0).ToString().ToInt(0);
+        perrate3 = Math.Round((float)rate33.Count / l.Count * 100, 0).ToString().ToInt(0);
+        perrate4 = Math.Round((float)rate44.Count / l.Count * 100, 0).ToString().ToInt(0);
+        perrate5 = Math.Round((float)rate55.Count / l.Count * 100, 0).ToString().ToInt(0);
+
+        int score = 0;
+        int scoretotal = 5 * l.Count;
+        foreach (var item in l)
+        {
+            score += item.RateExercise.Value;
+        }
+        if (scoretotal > 0)
+        {
+            scoreview = Math.Round((float)score / l.Count, 2);
+        }
+    }
+    if (aclog.RoleID == 6)
+    {
+        //tính điểm rating
+        List<tbl_FeedBack> l = FeedBackTable.getbysupportid(aclog.ID).Where(n => n.Rate != null).ToList();
+
+        var rate11 = l.Where(n => n.Rate == 1).ToList();
+        var rate22 = l.Where(n => n.Rate == 2).ToList();
+        var rate33 = l.Where(n => n.Rate == 3).ToList();
+        var rate44 = l.Where(n => n.Rate == 4).ToList();
+        var rate55 = l.Where(n => n.Rate == 5).ToList();
+
+        rate1 = rate11.Count;
+        rate2 = rate22.Count;
+        rate3 = rate33.Count;
+        rate4 = rate44.Count;
+        rate5 = rate55.Count;
+
+        perrate1 = Math.Round((float)rate11.Count / l.Count * 100, 0).ToString().ToInt(0);
+        perrate2 = Math.Round((float)rate22.Count / l.Count * 100, 0).ToString().ToInt(0);
+        perrate3 = Math.Round((float)rate33.Count / l.Count * 100, 0).ToString().ToInt(0);
+        perrate4 = Math.Round((float)rate44.Count / l.Count * 100, 0).ToString().ToInt(0);
+        perrate5 = Math.Round((float)rate55.Count / l.Count * 100, 0).ToString().ToInt(0);
+
+        int score = 0;
+        int scoretotal = 5 * l.Count;
+        foreach (var item in l)
+        {
+            if (item.Rate != null)
+            {
+                score += item.Rate.Value;
+            }
+        }
+        if (scoretotal > 0)
+        {
+            scoreview = Math.Round((float)score / l.Count, 2);
+        }
+    }
+    //List<tbl_PostContent> postviews = new List<tbl_PostContent>();
+    //if (aclog.RoleID == 5)
+    //{
+    //    postviews = PostContentTable.getbyall().Where(n => n.Status == 3 && n.isHideStudent != true).OrderByDescending(n => n.NumberView).Skip(0).Take(6).ToList();
+    //}
+    //else
+    //{
+    //    postviews = PostContentTable.getbyall().Where(n => n.Status == 3 && n.isHideStaff != true).OrderByDescending(n => n.NumberView).Skip(0).Take(6).ToList();
+    //}
+    tbl_Group group = ViewBag.Group;
+    //List center
+    List<tbl_School> lcenter = SchoolTable.getall().Where(n => n.isHide != true).ToList();
+}
+<link href="~/app-assets/zimv2/assets/lightbox/css/lightbox.min.css" rel="stylesheet" />
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+<style>
+    .fixwidthheight {
+        width: 20px !important;
+        height: 20px !important;
+        border-radius: 20px !important
+    }
+
+    .rating-box {
+        display: flex;
+        align-items: center;
+    }
+
+    .col-form-label {
+        text-align: right;
+    }
+
+    .rating-total,
+    .rating-detail,
+    .rating-close {
+        padding: 0px;
+    }
+
+    .rating-nav {
+        list-style-type: none;
+        padding: 0px;
+    }
+
+        .rating-nav li {
+            display: flex;
+            align-items: center;
+        }
+
+            .rating-nav li + li {
+                margin-top: 10px;
+            }
+
+        .rating-nav .star {
+            margin-right: 5px;
+            font-size: 14px;
+            color: #566376;
+        }
+
+        .rating-nav .process-bar {
+            width: 130px;
+            height: 10px;
+            background-color: #fff;
+            position: relative;
+            margin-right: 20px;
+            border-radius: 5px;
+        }
+
+            .rating-nav .process-bar .process-bar-inside {
+                background-color: #ffa500;
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                border-radius: 5px;
+            }
+
+        .rating-nav .rating-link {
+            text-decoration: none;
+        }
+
+    .rating-close-btn {
+        border: 1px solid #e1e1e1;
+        padding: 8px 20px;
+        text-decoration: none;
+        transition: .2s;
+        display: inline-block;
+        border-radius: 2px;
+    }
+
+        .rating-close-btn:hover {
+            background-color: #01a301;
+            color: #fff;
+        }
+
+    .student-rating {
+        display: flex;
+        align-items: center;
+        /*padding: 30px;*/
+    }
+
+        .student-rating .rate {
+            height: 46px;
+            padding: 0 17px;
+            float: left;
+            margin-right: 20px;
+        }
+
+    .rate:not(:checked) > input {
+        display: none;
+    }
+
+    .rate:not(:checked) > label {
+        float: right;
+        width: 1em;
+        overflow: hidden;
+        white-space: nowrap;
+        cursor: pointer;
+        font-size: 30px;
+        color: #ccc;
+    }
+
+        .rate:not(:checked) > label:before {
+            content: '★';
+        }
+
+    .rate > input:checked ~ label {
+        color: #ffa500;
+    }
+    /*.rate:not(:checked)>label:hover,
+        .rate:not(:checked)>label:hover~label {
+            color: #ffa500;
+        }*/
+    .student-rating .title {
+        /*margin-right: 20px;*/
+        display: inline-block;
+    }
+
+    .student-rating .submit-rating {
+        padding: 5px 10px;
+        background-color: #01a301;
+        position: relative;
+        color: #fff;
+        text-decoration: none;
+        transition: .2s;
+    }
+
+        .student-rating .submit-rating::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 10px solid transparent;
+            border-right-color: #01a301;
+            transition: .2s;
+        }
+
+    @@media only screen and (max-width : 768px) {
+        .rating-total, .rating-detail, .rating-close {
+            padding: 15px;
+        }
+
+        .rating-box {
+            display: block;
+            text-align: center;
+        }
+
+        .rating-detail {
+            border-top: 1px solid #e1e1e1;
+            border-bottom: 1px solid #e1e1e1;
+            border-right: 0;
+            border-left: 0;
+        }
+
+        .rating-nav li {
+            justify-content: center;
+        }
+
+        .rating-nav .process-bar {
+            width: 120px;
+        }
+
+        .student-rating {
+            flex-wrap: wrap;
+        }
+
+            .student-rating .title {
+                width: 100%;
+            }
+
+            .student-rating .rate {
+                margin-right: 10px;
+            }
+
+        .student-rating {
+            padding: 15px;
+        }
+    }
+
+    .card {
+        border: unset;
+    }
+
+    .wd-200 {
+        max-height: 115px;
+    }
+
+    @@media only screen and (max-width : 600px) {
+        .blog__post .media {
+            flex-wrap: wrap;
+        }
+
+        .blog__post .media-body {
+            flex: auto;
+            width: 100%;
+        }
+
+        .blog__post .blog > a {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .blog__post .blog a img {
+            width: 100%;
+            margin-right: 0px;
+        }
+
+        .wd-200 {
+            max-height: unset;
+        }
+    }
+
+    .blog__post .media.blog {
+        align-items: stretch
+    }
+
+        .blog__post .media.blog img {
+            height: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+    .content {
+        overflow: initial;
+    }
+
+    .media.blog.status-post .comment-item .comment-avatar .avatar img {
+        max-height: 32px;
+    }
+
+    .co-lat-h5 {
+        white-space: pre-wrap;
+    }
+
+    .banner-page .box-info {
+        position: absolute;
+        bottom: 0px;
+        left: 30px;
+        color: #fff;
+        z-index: 2;
+    }
+
+    .box-info-right {
+        position: absolute;
+        bottom: 20px;
+        right: 30px;
+        color: #fff;
+        z-index: 2;
+    }
+
+        .box-info-right a {
+            color: #fff;
+        }
+
+    .banner-page {
+        height: 150px;
+        position: relative;
+    }
+
+    .spinner-grow {
+        display: inline-block;
+        width: 2rem;
+        height: 2rem;
+        vertical-align: text-bottom;
+        background-color: currentColor;
+        border-radius: 50%;
+        opacity: 0;
+        animation: spinner-grow 1.5s linear infinite;
+        /* padding: 5px; */
+        margin: 5px;
+    }
+
+    a.spinner-border > svg {
+        display: none
+    }
+
+    .spinner-border {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        vertical-align: text-bottom;
+        border: .25em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border .75s linear infinite;
+    }
+
+    .page-group-info {
+        border-radius: 4px;
+        overflow: initial;
+        margin-bottom: 30px;
+    }
+</style>
+
+<div class="media d-block d-lg-flex">
+    <div class="media-body mg-t-30 mg-lg-t-0 pd-lg-x-10 blog__post">
+
+        @{
+            if (ViewBag.Group != null)
+            {
+
+                List<int> listmember = GroupTable.GetGroupMember(group.ID);
+
+                var listPost = PostContentTable.GetByGroupID(group.ID);
+                int countcomment = 0;
+                foreach (var item in listPost)
+                {
+                    var cm = PostCommentTable.getbypostid(item.ID);
+                    countcomment += cm.Count;
+                }
+                <div class="page-group-info">
+                    <div class="banner-page">
+                        @*<img src="@group.CoverIMG" alt="image">*@
+                        <div class="banner-overlay"></div>
+                        <div class="box-info">
+                            <h2 class="group-title">@group.GroupName</h2>
+                            <p class="member-count"><span>@listmember.Count</span> Thành viên</p>
+                        </div>
+                        @if (aclog.RoleID == 1 || aclog.UserName == group.CreatedBy)
+                        {
+                            <div class="box-info-right action-blog ">
+                                <a href="javascript:;" class="" data-toggle="dropdown"><i data-feather="more-vertical"></i></a>
+                                <ul class="action-lists dropdown-menu ">
+                                    <li class="action-link dropdown-item">
+                                        <a href="javascript:;" class="act-link edit-group" data-groupname="@group.GroupName" data-centerId="@group.CenterID" data-groupid="@group.ID" data-groupcourse="@group.CourseID.Value" style="color: #3462c8;display: block;">Sửa</a>
+                                    </li>
+                                    @if (aclog.RoleID == 1)
+                                    {
+                                        <li class="action-link dropdown-item">
+                                            <a href="javascript:;" data-link="@Media.Host@Url.Action("RemoveGroup","Account",new {area="Admin",groupId=group.ID })" class="act-link delete-group" data-groupid="@group.ID" style="color: #3462c8;display: block;">Xóa</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                    <div class="member-list">
+                        <div class="block">
+                            <p class="text-color-1  title">Bài viết</p>
+                            <p class="number">@listPost.Count</p>
+                        </div>
+                        <div class="block">
+                            <p class="text-color-1  title">Bình luận</p>
+                            <p class="number">@countcomment</p>
+                        </div>
+                        <div class="block member">
+                            <p class="text-color-1  title">
+                                Thành viên <a href="#" class=" mg-l-10 add-member"
+                                              data-toggle="modal"
+                                              data-target="#viewListMember">
+                                    <i data-feather="plus" height="18"
+                                       width="18"></i> Thêm
+                                </a>
+                            </p>
+                            <div class="members d-flex align-items-center">
+                                @{
+                                    int dem = 0;
+                                    tbl_Account ac = new tbl_Account();
+                                    foreach (var item in listmember)
+                                    {
+                                        dem++;
+                                        ac = AccountTable.getbyID(item);
+                                        if (dem < 5)
+                                        {
+                                            <a href="#" class="avatar" data-toggle="tooltip" title="@ac.FullName">
+                                                <img src="@ac.AvatarThumbnail" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar">
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            break;
+                                        }
+
+                                    }
+                                    string totalmember = "99+";
+                                    if (listmember.Count > 5 && listmember.Count - 5 < 100)
+                                    {
+                                        totalmember = (listmember.Count - 5).ToString();
+                                    }
+                                    else
+                                    {
+                                        if (listmember.Count <= 5)
+                                        {
+                                            totalmember = listmember.Count.ToString();
+                                        }
+                                    }
+                                }
+                                <a href="javascript:;" class="view-more" data-toggle="modal" data-target="#viewListMember"><span class="more-num">@totalmember</span> Khác</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+        }
+        @using (Html.BeginForm("ProfileUser", "Account", FormMethod.Get, new { id = "form-search" }))
+        {
+            <input type="hidden" name="group" value="@ViewBag.GroupID" />
+            <div class="search-post mg-b-10 d-flex align-items-center bd">
+                @{
+                    if (aclog.RoleID != 5)
+                    {
+                        <div class="share-status bd-r-1">
+                            <i data-feather="edit-3" class="write-status"></i>
+                            <a href="javascript:;" class="link-03 mg-sm-l-10 write-status">
+                                <span class="d-none d-sm-inline">Đăng bài</span>
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        if (ViewBag.GroupID != 0)
+                        {
+                            <div class="share-status bd-r-1">
+                                <i data-feather="edit-3" class="write-status"></i>
+                                <a href="javascript:;" class="link-03 mg-sm-l-10 write-status">
+                                    <span class="d-none d-sm-inline">Đăng bài</span>
+                                </a>
+                            </div>
+                        }
+                    }
+                }
+                <div class="search-form flex-grow-1">
+                    <input type="search" name="search" class="form-control bd-0" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+            </div>
+        }
+        @{
+            if (1 == 1)
+            {
+                using (Html.BeginForm("AddPost", "PostNewFeed", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="hdfGroup" id="hdfGroup" value="@ViewBag.GroupID" />
+                    <input type="hidden" name="txt-type" value="1" />
+                    <input type="hidden" name="hdfbg" id="hdfbg" />
+                    <input type="hidden" name="hdfid" id="hdfid" />
+
+                    <div class="mg-b-10 create-new-status">
+                        <div class="card">
+                            <div class="card-body pd-15">
+                                <div class="status-wrap">
+                                    <textarea name="txt-title" required placeholder="Write something new..." class="form-control bd-0 outline-none shadow-none"></textarea>
+                                    <div class="image-demo"><img src="" alt=""><video src="" style="width:100%;max-height:300px;display: none;" controls></video></div>
+                                </div>
+                            </div>
+                            <div class="card-footer bd-0 pd-t-0 pd-x-15">
+                                <div class="background-demo">
+                                    <div class="d-flex align-items-center flex-wrap">
+                                        <a href="javascript:;" class="demo-bg " data-color="#fff" data-id="2"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status2.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status2.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="3"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status3.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status3.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="4"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status4.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status4.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="5"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status5.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status5.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="6"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status6.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status6.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="7"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status7.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status7.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="8"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status8.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status8.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="9"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status9.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status9.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="10"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status10.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status10.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="11"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status11.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status11.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="12"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status12.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status12.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="13"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status13.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status13.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="14"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status14.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status14.jpg" alt="">
+                                        </a>
+                                        <a href="javascript:;" class="demo-bg" data-color="#fff" data-id="15"
+                                           data-image="/app-assets/zimv2/assets/img/bg-status15.jpg">
+                                            <img class="fixwidthheight" src="/app-assets/zimv2/assets/img/bg-status15.jpg" alt="">
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-content-center justify-content-between">
+                                    <div class="d-flex align-items-center action-icons">
+                                        <a href="javascript:;" class="d-inline-block pd-5 upload-image" data-toggle="tooltip" title="Upload File"><i data-feather="image"></i> File</a>
+                                        <span class="seperate"> | </span>
+                                        <a href="javascript:;" class="d-inline-block pd-5 select-background" data-toggle="tooltip" title="Background Gradient"><i data-feather="circle"></i> Màu nền</a>
+                                        <input type="file" name="filetitle" class="img-upload d-none" accept="image/*video/*">
+                                    </div>
+                                    <button type="submit" id="btn-submit" class="btn btn-primary">Đăng ngay</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        }
+        <div class="card mg-b-20 mg-lg-b-25">
+            <div class="card-body pd-20 pd-lg-25">
+                @{
+                    foreach (var item in Model)
+                    {
+                        if (!item.StatusPost.Value)
+                        {
+                            string metatitle = AssetCRM.UrlBeauty(AssetCRM.RemoveUnicode(item.TitlePost).ToLower());
+                            <div class="media blog">
+                                <a href="/news/bai-viet/@metatitle-@item.ID">
+                                    <img src="@item.PostIMGThumbnail" class="wd-200 rounded mg-r-15" alt="" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/img-course.jpg';">
+                                </a>
+                                <div class="media-body">
+                                    <h5><a href="/news/bai-viet/@metatitle-@item.ID">@item.TitlePost</a></h5>
+                                    <p class="meta-time mg-t-0 mg-b-5 tx-color-03">@item.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                                    @if (AssetCRM.RemoveHTMLTags(item.ContentPost).Length > 130)
+                                    {
+                                        <p class="summary mg-b-0">@Html.Raw(AssetCRM.RemoveHTMLTags(item.ContentPost).Substring(0, 130)) ...</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="summary mg-b-0">@Html.Raw(AssetCRM.RemoveHTMLTags(item.ContentPost))</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            string avcr = "/app-assets/zimv2/images/invis-user.png";
+                            var accre = AccountTable.getbyusername(item.CreatedBy);
+                            if (accre != null)
+                            {
+                                if (!string.IsNullOrEmpty(accre.AvatarThumbnail))
+                                {
+                                    avcr = accre.AvatarThumbnail;
+                                }
+                                var cmtpost = PostCommentTable.getbypostid(item.ID);
+                                if (item.BackgroundPost.Value)
+                                {
+                                    <div class="media blog status-post  gradient d-block" id="@item.ID">
+                                        <div class="media-header d-flex align-items-center justify-content-between">
+                                            <div class="author">
+                                                <a href="javascript:;" class="avatar"><img src="@avcr" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar"></a>
+                                                <div class="author-info">
+                                                    @{
+                                                        if (ViewBag.GroupID == 0)
+                                                        {
+                                                            <a href="/news-feed?search=@("@")@accre.FullName" class="username">
+                                                                @if (accre.RoleID == 1)
+                                                                {
+                                                                    <span class="hasVerifiedBadge">@accre.FullName</span>
+                                                                }
+                                                                else
+                                                                { <span class="hasVerifiedBadge">@accre.FullName</span>}
+                                                            </a>
+                                                            if (item.GroupID != 0)
+                                                            {
+                                                                tbl_Group this_group = GroupTable.getbyid(item.GroupID.Value);
+                                                                if (this_group != null)
+                                                                {
+                                                                    <i class="fa fa-chevron-right mg-l-10 mg-r-10" style="color:#3462c8"></i>
+                                                                    <a href="/news-feed?group=@this_group.ID" class="username">
+                                                                        @this_group.GroupName
+                                                                    </a>
+                                                                }
+
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <a href="/news-feed?group=@ViewBag.GroupID&search=@("@")@accre.FullName" class="username">
+                                                                @if (accre.RoleID == 1)
+                                                                {
+                                                                    <span class="hasVerifiedBadge">@accre.FullName</span>
+                                                                }
+                                                                else
+                                                                { <span class="hasVerifiedBadge">@accre.FullName</span>}
+                                                            </a>
+                                                        }
+                                                    }
+                                                    <div class="date-comment-view">
+                                                        <span class="date">
+                                                            <span class="DateTime">@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @{
+                                                if (aclog.RoleID == 1 || aclog.UserName == item.CreatedBy)
+                                                {
+                                                    <div class="action-blog ">
+                                                        <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown"><i data-feather="more-vertical"></i></a>
+                                                        <ul class="action-lists dropdown-menu ">
+                                                            @{
+                                                                if (aclog.UserName == item.CreatedBy)
+                                                                {
+                                                                    <li class="action-link dropdown-item"><a href="javascript:;" style="display: block;" data-id="@item.ID" class="act-link edit-post">Edit</a></li>
+                                                                }
+                                                            }
+                                                            <li class="action-link dropdown-item"><a href="javascript:;" style="display: block;" data-id="@item.ID" class="act-link delete-post">Delete</a></li>
+
+                                                        </ul>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                        <div class="media-body"
+                                             style="background-image:url('@item.PostIMG');">
+                                            <h5 class="co-lat-h5" style="color:#fff;">@item.TitlePost</h5>
+                                        </div>
+
+                                        <div class="media-footer">
+                                            @{
+                                                <div class="comment-wrap-show">
+                                                    <div class="d-flex justify-content-between align-items-center pd-5">
+                                                        <nav class="nav nav-with-icon tx-14 ">
+                                                            <a href="javascript:;" class="nav-link comment-toggle">
+                                                                <svg width="24" height="24"
+                                                                     viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                     class="feather feather-message-square">
+                                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z">
+                                                                    </path>
+                                                                </svg> Bình luận
+                                                            </a>
+                                                        </nav>
+                                                        <a href="javascript:;" class="nav-link count-comment pd-r-15 comment-toggle">@cmtpost.Count Bình luận</a>
+                                                    </div>
+                                                    <div class="comment-block">
+                                                        <ul class="comment-lists mg-0" id="div-cmt-@item.ID">
+                                                            @{
+                                                                foreach (var cmm in cmtpost)
+                                                                {
+                                                                    string cmt = "/app-assets/zimv2/images/invis-user.png";
+                                                                    var acmt = AccountTable.getbyusername(cmm.CreatedBy);
+                                                                    if (acmt == null)
+                                                                    {
+                                                                        continue;
+                                                                    }
+                                                                    if (!string.IsNullOrEmpty(acmt.AvatarThumbnail))
+                                                                    {
+                                                                        cmt = acmt.AvatarThumbnail;
+                                                                    }
+
+                                                                    <li class="comment-item-wrap">
+                                                                        <div class="comment-item">
+                                                                            <div class="comment-avatar">
+                                                                                <a href="javascript:;" class="avatar">
+                                                                                    <img src="@cmt" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar">
+                                                                                </a>
+                                                                            </div>
+                                                                            <div class="comment-content">
+                                                                                <div class="comment-info">
+                                                                                    <a href="javascript:;">@acmt.FullName</a>
+                                                                                    <span class="content-cmt" style="white-space: pre-line;">@cmm.CMT</span>
+                                                                                </div>
+                                                                                <div class="comment-info-hourt">
+                                                                                    <span class="content-cmt-time">@cmm.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm") <a id="button-@cmm.ID" style="padding:0px;" href="javascript:;" data-id="@cmm.ID" class="rep-cmt">Reply</a></span>
+                                                                                </div>
+                                                                                <ul class="comment-lists mg-0" id="rep-@cmm.ID">
+                                                                                    @{
+                                                                                        var reps = PostCommentTable.getbypostcmtid(cmm.ID);
+                                                                                        foreach (var rep in reps)
+                                                                                        {
+                                                                                            string cmtrep = "/app-assets/zimv2/images/invis-user.png";
+                                                                                            var acmtrep = AccountTable.getbyusername(rep.CreatedBy);
+                                                                                            if (acmtrep == null)
+                                                                                            {
+                                                                                                continue;
+                                                                                            }
+                                                                                            if (!string.IsNullOrEmpty(acmtrep.AvatarThumbnail))
+                                                                                            {
+                                                                                                cmtrep = acmtrep.AvatarThumbnail;
+                                                                                            }
+
+                                                                                            <li class="comment-item-wrap">
+                                                                                                <div class="comment-item">
+                                                                                                    <div class="comment-avatar">
+                                                                                                        <a href="#" class="avatar">
+                                                                                                            <img src="@cmtrep" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" style="width:25px; height:25px; min-height: 25px;">
+                                                                                                        </a>
+                                                                                                    </div>
+                                                                                                    <div class="comment-content">
+                                                                                                        <div class="comment-info">
+                                                                                                            <a href="#">@acmtrep.FullName</a>
+                                                                                                            <span class="content-cmt" style="white-space: pre-line;">@rep.CMT</span>
+                                                                                                        </div>
+                                                                                                        <div class="comment-info-hourt">
+                                                                                                            <span class="content-cmt-time">@rep.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </li>
+                                                                                        }
+                                                                                    }
+                                                                                </ul>
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                }
+                                                            }
+                                                        </ul>
+                                                        <div class="comment-form-wrap">
+                                                            <div class="comment-item">
+                                                                <div class="comment-avatar">
+                                                                    <a href="javascript:;" class="avatar"><img src="@av" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar"></a>
+                                                                </div>
+                                                                <div class="comment-content">
+                                                                    <div class="cmt-area mg-b-5">
+                                                                        <div class="text-area">
+                                                                            <textarea id="txt-content-@item.ID" rows="1" required="" class="form-control" placeholder="..."></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <button type="button" data-id="@item.ID" style="float:right;" class="btn btn-primary btn-cmt">Gửi</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="media blog status-post image d-block" id="@item.ID">
+                                        <div class="media-header d-flex align-items-center justify-content-between">
+                                            <div class="author">
+                                                <a href="javascript:;" class="avatar"><img src="@avcr" alt="avatar"></a>
+                                                <div class="author-info">
+                                                    <a href="/news-feed?search=@("@")@accre.FullName" class="username">
+                                                        @if (accre.RoleID == 1)
+                                                        {
+                                                            <span class="hasVerifiedBadge">@accre.FullName</span>
+                                                        }
+                                                        else
+                                                        { <span class="hasVerifiedBadge">@accre.FullName</span>}
+                                                    </a>
+                                                    @if (item.GroupID != 0)
+                                                    {
+                                                        tbl_Group this_group = GroupTable.getbyid(item.GroupID.Value);
+                                                        if (this_group != null)
+                                                        {
+                                                            <i class="fa fa-chevron-right mg-l-10 mg-r-10" style="color:#3462c8"></i>
+                                                            <a href="/news-feed?group=@this_group.ID" class="username">
+                                                                @this_group.GroupName
+                                                            </a>
+                                                        }
+
+                                                    }
+                                                    <div class="date-comment-view">
+                                                        <span class="date">
+                                                            <span class="DateTime">@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @{
+                                                if (aclog.RoleID == 1 || aclog.UserName == item.CreatedBy)
+                                                {
+                                                    <div class="action-blog ">
+                                                        <a href="javascript:;" class="dropdown-toggle" data-toggle="dropdown"><i data-feather="more-vertical"></i></a>
+                                                        <ul class="action-lists dropdown-menu ">
+                                                            @{
+                                                                if (aclog.UserName == item.CreatedBy)
+                                                                {
+                                                                    <li class="action-link dropdown-item"><a href="javascript:;" data-id="@item.ID" style="display: block;" class="act-link edit-post">Sửa</a></li>
+                                                                }
+                                                            }
+                                                            <li class="action-link dropdown-item"><a href="javascript:;" data-id="@item.ID" style="display: block;" class="act-link delete-post">Xóa</a></li>
+
+                                                        </ul>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                        <div class="media-body">
+                                            <h5 class="co-lat-h5">@item.TitlePost</h5>
+                                            @{
+
+                                                if (!string.IsNullOrEmpty(item.PostIMG))
+                                                {
+                                                    if (item.PostType != null)
+                                                    {
+                                                        if (item.PostType == 1)
+                                                        {
+                                                            <a href="@item.PostIMG" data-lightbox="@item.PostIMG">
+                                                                <img src="@item.PostIMGThumbnail" />
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <video src="@item.PostIMG" controls style="width:100%;max-height:350px"></video>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <a href="@item.PostIMG" data-lightbox="@item.PostIMG">
+                                                            <img src="@item.PostIMGThumbnail" />
+                                                        </a>
+                                                    }
+
+                                                }
+                                            }
+                                        </div>
+                                        <div class="media-footer">
+                                            @{
+                                                <div class="comment-wrap-show">
+                                                    <div class="d-flex justify-content-between align-items-center pd-5">
+                                                        <nav class="nav nav-with-icon tx-14 ">
+                                                            <a href="javascript:;" class="nav-link comment-toggle">
+                                                                <svg width="24" height="24"
+                                                                     viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                                     class="feather feather-message-square">
+                                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z">
+                                                                    </path>
+                                                                </svg> Bình luận
+                                                            </a>
+                                                        </nav>
+                                                        <a href="javascript:;" class="nav-link count-comment pd-r-15 comment-toggle">@cmtpost.Count Bình luận</a>
+                                                    </div>
+                                                    <div class="comment-block">
+                                                        <ul class="comment-lists mg-0" id="div-cmt-@item.ID">
+                                                            @{
+                                                                foreach (var cmm in cmtpost)
+                                                                {
+                                                                    string cmt = "/app-assets/zimv2/images/invis-user.png";
+                                                                    var acmt = AccountTable.getbyusername(cmm.CreatedBy);
+                                                                    if (acmt == null)
+                                                                    {
+                                                                        continue;
+                                                                    }
+                                                                    if (!string.IsNullOrEmpty(acmt.AvatarThumbnail))
+                                                                    {
+                                                                        cmt = acmt.AvatarThumbnail;
+                                                                    }
+
+                                                                    <li class="comment-item-wrap">
+                                                                        <div class="comment-item">
+                                                                            <div class="comment-avatar">
+                                                                                <a href="javascript:;" class="avatar">
+                                                                                    <img src="@cmt" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar">
+                                                                                </a>
+                                                                            </div>
+                                                                            <div class="comment-content">
+                                                                                <div class="comment-info">
+                                                                                    <a href="javascript:;">@acmt.FullName</a>
+                                                                                    <span class="content-cmt" style="white-space: pre-line;">@cmm.CMT</span>
+                                                                                </div>
+                                                                                <div class="comment-info-hourt">
+                                                                                    <span class="content-cmt-time">@cmm.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm") <a id="button-@cmm.ID" style="padding:0px;" href="javascript:;" data-id="@cmm.ID" class="rep-cmt">Reply</a></span>
+                                                                                </div>
+                                                                                <ul class="comment-lists mg-0" id="rep-@cmm.ID">
+                                                                                    @{
+                                                                                        var reps = PostCommentTable.getbypostcmtid(cmm.ID);
+                                                                                        foreach (var rep in reps)
+                                                                                        {
+                                                                                            string cmtrep = "/app-assets/zimv2/images/invis-user.png";
+                                                                                            var acmtrep = AccountTable.getbyusername(rep.CreatedBy);
+                                                                                            if (acmtrep == null)
+                                                                                            {
+                                                                                                continue;
+                                                                                            }
+                                                                                            if (!string.IsNullOrEmpty(acmtrep.AvatarThumbnail))
+                                                                                            {
+                                                                                                cmtrep = acmtrep.AvatarThumbnail;
+                                                                                            }
+
+                                                                                            <li class="comment-item-wrap">
+                                                                                                <div class="comment-item">
+                                                                                                    <div class="comment-avatar">
+                                                                                                        <a href="#" class="avatar">
+                                                                                                            <img src="@cmtrep" alt="avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" style="width:25px; height:25px; min-height: 25px;">
+                                                                                                        </a>
+                                                                                                    </div>
+                                                                                                    <div class="comment-content">
+                                                                                                        <div class="comment-info">
+                                                                                                            <a href="#">@acmtrep.FullName</a>
+                                                                                                            <span class="content-cmt" style="white-space: pre-line;">@rep.CMT</span>
+                                                                                                        </div>
+                                                                                                        <div class="comment-info-hourt">
+                                                                                                            <span class="content-cmt-time">@rep.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </li>
+                                                                                        }
+                                                                                    }
+                                                                                </ul>
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                }
+                                                            }
+                                                        </ul>
+                                                        <div class="comment-form-wrap">
+                                                            <div class="comment-item">
+                                                                <div class="comment-avatar">
+                                                                    <a href="javascript:;" class="avatar"><img src="@av" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar"></a>
+                                                                </div>
+                                                                <div class="comment-content">
+                                                                    <div class="cmt-area mg-b-5">
+                                                                        <div class="text-area">
+                                                                            <textarea id="txt-content-@item.ID" rows="1" required="" class="form-control" placeholder="..."></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <button type="button" data-id="@item.ID" style="float:right;" class="btn btn-primary btn-cmt">Gửi</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+
+                        }
+                    }
+                }
+            </div>
+        </div>
+        <nav aria-label="Page navigation" class="mg-t-10">
+
+            @Html.PagedListPager(Model, page => Url.Action("ProfileUser", new { page, search = ViewBag.Search, group = ViewBag.GroupID }),
+                new PagedListRenderOptions
+                {
+                    UlElementClasses = new[] { "pagination mg-b-0 justify-content-center" },
+                })
+
+        </nav>
+
+    </div><!-- media-body -->
+
+
+    <div class="profile-sidebar mg-t-40 mg-lg-t-0 pd-lg-l-25">
+        <div class="row">
+            @{
+                List<tbl_SetPackage> listSetPremium = SetPackageTable.getSetPremium().OrderByDescending(n => n.CreatedDate).Take(3).ToList();
+                List<tbl_SetPackage> listFree = SetPackageTable.getSetFree().OrderByDescending(n => n.CreatedDate).Take(3).ToList();
+                <div class="col-sm-12">
+                    <div class="d-flex align-items-center justify-content-between mg-b-20">
+                        <h6 class="tx-16 tx-spacng-1 tx-uppercase tx-semibold mg-b-0">Top GÓI CAO CẤP</h6>
+                        <a href="@Url.Action("Store","SetPackage",new { area="Admin", type = 2})" class="link-03">Xem tất cả</a>
+                    </div>
+                    <div class="list-sets">
+                        @{
+                            foreach (var item in listSetPremium)
+                            {
+                                if (item != null)
+                                {
+                                    <div class="card bd-0 shadow-base mg-b-15">
+                                        <div class="card-body">
+                                            <div class="media d-block">
+                                                <div class="set-img rounded-3  mg-b-15">
+                                                    <div class="badge-wrap">
+                                                        <div class="trust-badge trust-badge-premium">
+                                                            <a href="#">Cao cấp</a>
+                                                            <div class="trust-badge-top"></div>
+                                                            <div class="trust-badge-bottom"></div>
+                                                        </div>
+                                                    </div>
+                                                    <img src="@item.PackageIMGThumbnail" class="wd-100p" alt="" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/sign-in.png';">
+                                                </div>
+                                                <div class="media-body">
+                                                    <h3 class="tx-14 tx-bold mg-b-5">
+                                                        <a href="javascript:;" class="tx-inverse" data-id="@item.ID" onclick="showSetDetail(this)">@item.PackageName</a>
+                                                    </h3>
+                                                    <div class="d-flex flex-wrap set-meta  mg-b-15  tx-color-03 tx-12" style="flex-flow:column;justify-content:start">
+
+                                                        <span class="mg-r-15">
+                                                            Học phí:<span class="mg-l-5 price tx-danger mg-sm-r-30 tx-bold">@string.Format("{0:N0}", item.Price)</span>
+                                                        </span>
+                                                        <span class="meta-buy mg-r-15 mg-sm-r-30">
+                                                            Thời gian:<span class="mg-l-5 tx-medium ">@SetPackageStudentTable.getbysetid(item.ID).Count phút</span>
+                                                        </span>
+                                                        <span class="meta-rating d-flex tx-color-01">
+                                                            Đánh giá:
+                                                            <span class="rating-star mg-l-5">
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                    <div class="d-lg-flex align-items-center d-sm-block">
+                                                        <a href="javascript:;" data-id="@item.ID" onclick="showSetDetail(this)"
+                                                           class="btn btn-primary mg-r-5">
+                                                            <i class="fa fa-eye mg-r-10 "></i> Xem
+                                                        </a>
+                                                        @if (aclog.RoleID == 5)
+                                                        {
+                                                            var setstudent = SetPackageStudentTable.get_by_setID_and_studentID(item.ID, aclog.ID);
+                                                            if (setstudent != null)
+                                                            {
+                                                                if (setstudent.Paid.Value)
+                                                                {
+                                                                    <a href="@Url.Action("SetPackage","StudentSet",new { area="",ID=item.ID})" class="btn btn-warning btn-sm flex-1" onclick="$(this).addClass('disabled')"><i class="fa fa-file-alt mg-r-10"></i>Test</a>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <a href="@Url.Action("MySet","StudentSet",new { area="",})" class="btn btn-success btn-sm flex-1" onclick="$(this).addClass('disabled')"><i class="fa fa-file-alt mg-r-10"></i>All</a>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <a href="@Url.Action("CheckOut","SetPackage",new { area="Admin",ID = item.ID})" onclick="$(this).addClass('disabled')" class="btn btn-info btn-sm flex-1">
+                                                                    <i class="fa fa-shopping-cart mg-r-10"></i> Mua
+                                                                </a>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+
+                    </div>
+                </div><!-- col -->
+                <div class="col-sm-12 mg-t-30">
+                    <div class="d-flex align-items-center justify-content-between mg-b-20">
+                        <h6 class="tx-16 tx-spacng-1 tx-uppercase tx-semibold mg-b-0">Top GÓI MIỄN PHÍ</h6>
+                        <a href="@Url.Action("Store","SetPackage",new { area="Admin", type = 1})" class="link-03">Xem tất cả</a>
+                    </div>
+                    <div class="list-sets">
+                        @{
+                            foreach (var item in listFree)
+                            {
+                                if (item != null)
+                                {
+                                    <div class="card bd-0 shadow-base mg-b-15">
+                                        <div class="card-body">
+                                            <div class="media d-block">
+                                                <div class="set-img rounded-3  mg-b-15">
+                                                    <div class="badge-wrap">
+                                                        <div class="trust-badge trust-badge-free">
+                                                            <a href="#">Miễn phí</a>
+                                                            <div class="trust-badge-top"></div>
+                                                            <div class="trust-badge-bottom"></div>
+                                                        </div>
+                                                    </div>
+                                                    <img src="@item.PackageIMGThumbnail" class="wd-100p" alt="" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/forgot-password.png';">
+                                                </div>
+                                                <div class="media-body">
+                                                    <h3 class="tx-14 tx-bold mg-b-5">
+                                                        <a href="javascript:;" class="tx-inverse" data-id="@item.ID" onclick="showSetDetail(this)">
+                                                            @item.PackageName
+                                                        </a>
+                                                    </h3>
+                                                    <div class="d-flex flex-wrap set-meta   mg-b-15  tx-color-03 tx-12" style="flex-flow:column;justify-content:start">
+                                                        <span class="mg-r-15">
+                                                            Học phí:<span class="mg-l-5 price tx-danger mg-sm-r-30 tx-bold">@string.Format("{0:N0}", item.Price)</span>
+                                                        </span>
+                                                        <span class="meta-buy mg-r-15 mg-sm-r-30">
+                                                            Thời gian:<span class="mg-l-5 tx-medium ">@SetPackageStudentTable.getbysetid(item.ID).Count phút</span>
+                                                        </span>
+                                                        <span class="meta-rating d-flex tx-color-01">
+                                                            Đánh giá:
+                                                            <span class="rating-star mg-l-5">
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                                <i class="fa fa-star tx-warning"></i>
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                    <div class="d-lg-flex align-items-center d-sm-block">
+                                                        <a href="javascript:;" data-id="@item.ID" onclick="showSetDetail(this)"
+                                                           class="btn btn-primary mg-r-5">
+                                                            <i class="fa fa-eye mg-r-10 "></i> Xem
+                                                        </a>
+                                                        @if (aclog.RoleID == 5)
+                                                        {
+                                                            var setstudent = SetPackageStudentTable.get_by_setID_and_studentID(item.ID, aclog.ID);
+                                                            if (setstudent != null)
+                                                            {
+                                                                <a href="@Url.Action("SetPackage","StudentSet",new { area="",ID= item.ID})" onclick="$(this).addClass('disabled')" class="btn btn-warning btn-sm flex-1"><i class="fa fa-file-alt mg-r-10"></i>Test</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a href="javascript:;" data-id="@item.ID" onclick="$(this).addClass('disabled')"
+                                                                   class="btn btn-primary get-set-free">
+                                                                    <i class="fa fa-file-alt mg-r-10"></i> Thêm
+                                                                </a>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+                </div><!-- col -->
+            }
+            @{
+                <div class="col-sm-6 col-md-5 col-lg-12 mg-t-20">
+                    <label class="tx-sans tx-10  tx-semibold tx-uppercase tx-color-01 tx-spacing-1 mg-b-15">Nhóm</label>
+                    <ul class="list-unstyled profile-info-list course mg-b-10">
+                        @{
+                            if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7)
+                            {
+                                <li>
+                                    <a href="#createGroup" class="tx-primary" data-toggle="modal" title="Click to create new group">
+                                        <i data-feather="plus-circle"></i>Tạo nhóm mới
+                                    </a>
+                                </li>
+                            }
+                            List<tbl_Group> G = GroupTable.getAvailableGroup(aclog.ID);
+                            if (aclog.RoleID == 4 || aclog.RoleID == 5)
+                            {
+                                G = G.Where(n => n.CourseID != 0).ToList();
+                                foreach (var item in G)
+                                {
+                                    if (PostContentTable.GetPostNewByGroupID(item.ID) > 0)
+                                    {
+                                        <li><i data-feather="flag"></i> <a style="position: relative;" href="/news-feed?group=@(item.ID)"><span>@item.GroupName</span><span class="badge-noti">@PostContentTable.GetPostNewByGroupID(item.ID)</span></a></li>
+                                    }
+                                    else
+                                    {
+                                        <li><i data-feather="flag"></i> <a style="position: relative;" href="/news-feed?group=@(item.ID)"><span>@item.GroupName</span></a></li>
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                G = G.Where(n => n.CourseID == 0).ToList();
+                                foreach (var item in G)
+                                {
+                                    if (item.CenterID != 0)
+                                    {
+                                        if (PostContentTable.GetPostNewByGroupID(item.ID) > 0)
+                                        {
+                                            <li><i data-feather="flag"></i> <a style="position: relative;" href="/news-feed?group=@(item.ID)"><span>@item.GroupName</span><span class="badge-noti">@PostContentTable.GetPostNewByGroupID(item.ID)</span></a></li>
+                                        }
+                                        else
+                                        {
+                                            <li><i data-feather="flag"></i> <a style="position: relative;" href="/news-feed?group=@(item.ID)"><span>@item.GroupName</span></a></li>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (aclog.RoleID == 1 || aclog.RoleID == 2)
+                                        {
+                                            if (PostContentTable.GetPostNewByGroupID(item.ID) > 0)
+                                            {
+                                                <li><i data-feather="flag"></i> <a style="position: relative;" href="/news-feed?group=@(item.ID)"><span>@item.GroupName</span><span class="badge-noti">@PostContentTable.GetPostNewByGroupID(item.ID)</span></a></li>
+                                            }
+                                            else
+                                            {
+                                                <li><i data-feather="flag"></i> <a style="position: relative;" href="/news-feed?group=@(item.ID)"><span>@item.GroupName</span></a></li>
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+                    </ul>
+                </div>
+            }
+        </div><!-- row -->
+    </div><!-- profile-sidebar -->
+</div>
+<!-- Modal -->
+<div class="modal fade" id="editProfile" tabindex="-1" role="dialog" aria-labelledby="editTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTitle">Chỉnh sửa</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            @using (Html.BeginForm("UpdateProfile", "Account", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+            {
+                <div class="modal-body">
+                    <fieldset class="form-fieldset">
+                        <legend>Thông tin chi tiết</legend>
+                        <div class="form-group row">
+                            <label for="full_name" class="col-sm-2 col-form-label">Tài khoản</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" disabled value="@aclog.UserName">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="full_name" class="col-sm-2 col-form-label">Họ và tên</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="txt-full-name" value="@aclog.FullName">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="phone_number" class="col-sm-2 col-form-label">Số điện thoại</label>
+                            <div class="col-sm-10">
+                                <input type="number" class="form-control" name="txt-phone" value="@aclog.Phone">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="email" class="col-sm-2 col-form-label">Email</label>
+                            <div class="col-sm-10">
+                                <input type="email" class="form-control" name="txt-email" value="@aclog.Email">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="address" class="col-sm-2 col-form-label">Địa chỉ</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="txt-address" value="@aclog.Address">
+                            </div>
+                        </div>
+                        @*<div class="form-group row">
+                                <label class="col-form-label col-sm-2 pt-0">Sex</label>
+                                <div class="col-sm-10 d-flex align-items-center">
+                                    <div class="custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" checked>
+                                        <label class="custom-control-label">Male</label>
+                                    </div>
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input">
+                                        <label class="custom-control-label">Female</label>
+                                    </div>
+                                </div>
+                            </div>*@
+                        <div class="form-group row">
+                            <label for="address" class="col-sm-2 col-form-label">Mật khẩu</label>
+                            <div class="col-sm-10">
+                                <input type="password" class="form-control" name="txt-password" placeholder="******" autocomplete="new-password" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="address" class="col-sm-2 col-form-label">Hình đại diện</label>
+                            <div class="col-sm-10">
+                                <input type="file" id="fileupload" name="fileupload" accept="image/*" class="dropify">
+                            </div>
+                        </div>
+
+                    </fieldset>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Lưu lại</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@{
+    if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7)
+    {
+        <div class="modal fade" id="createGroup" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered wd-sm-680" role="document">
+                <div class="modal-content">
+                    <div class="modal-body pd-20 pd-sm-40">
+                        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </a>
+                        <div>
+                            @using (Html.BeginForm("CreateGroup", "Account", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                            {
+                                <h4>Tạo nhóm mới</h4>
+                                <p class="tx-color-03">Tạo nhóm mới của bạn ngay bây giờ!</p>
+                                <div class="form-group">
+                                    <label>Tên nhóm</label>
+                                    <input type="text" class="form-control" id="txt-gr-name" name="txt-gr-name" placeholder="..." required>
+                                </div>
+
+                                if (aclog.RoleID == 1)
+                                {
+                                    <div class="form-group">
+                                        <label class="mg-b-0-f">Trung tâm</label>
+                                        <select class="select2" name="ddl-center" id="ddl-center" required>
+                                            @foreach (var item in lcenter)
+                                            {
+                                                <option value="@item.ID">@item.SchoolName</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="form-group" hidden>
+                                        <label class="mg-b-0-f">Khóa</label>
+                                        <select class="select2" name="ddl-course" id="ddl-course">
+                                            <option value="0" selected>-- Không --</option>
+                                        </select>
+                                    </div>
+                                }
+                                else
+                                {
+                                    List<tbl_Courses> lcourse = CoursesTable.getall().Where(n => n.SchoolID.Value == aclog.SchoolID.ToString().ToInt(0)).ToList();
+
+                                    <div class="form-group">
+                                        <label class="mg-b-0-f">Khóa <span class="text-info">(Hiển thị khóa học theo trung tâm)</span></label>
+                                        <select class="select2" name="ddl-course" id="ddl-course" required>
+                                            <option value="0" selected>-- Không --</option>
+                                            @foreach (var item in lcourse)
+                                            {
+                                                <option value="@item.ID">@item.CourseName</option>
+                                            }
+                                        </select>
+                                    </div>
+                                }
+                                <button type="submit" class="btn btn-primary btn-block">Xác nhận</button>
+                            }
+                        </div>
+                    </div><!-- modal-body -->
+                </div><!-- modal-content -->
+            </div><!-- modal-dialog -->
+        </div><!-- modal -->
+        <div class="modal fade" id="EditGroup" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+                <div class="modal-content">
+                    <div class="modal-body pd-20 pd-sm-40">
+                        <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </a>
+                        <div>
+                            @using (Html.BeginForm("EditGroup", "Account", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                            {
+                                <input type="hidden" name="hdfGroupID" id="hdfGroupID" value="0" />
+                                <h4>Chỉnh sửa</h4>
+                                <div class="form-group">
+                                    <label>Tên nhóm</label>
+                                    <input type="text" class="form-control" id="txtedit-gr-name" name="txtedit-gr-name" placeholder="" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="mg-b-0-f">Khóa</label>
+                                    <select class="select2" name="ddl-edit-course" id="ddl-edit-course" required>
+                                        <option value="0">--Không--</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                            }
+                        </div>
+                    </div><!-- modal-body -->
+                </div><!-- modal-content -->
+            </div><!-- modal-dialog -->
+        </div><!-- modal -->
+    }
+}
+
+<div class="modal fade view-list-member" id="viewListMember" tabindex="-1" role="dialog" aria-labelledby="viewListMember"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewListMember">Thành viên</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-header pb-0 bd-b-0">
+                <div class="d-flex add-member-select flex-grow-1">
+                    <div class="search-member">
+                        <input type="text" class="form-control" id="txt-search-member" name="txt-gr-name" placeholder="">
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary flex-shrink-0" onclick="Search()">Tìm kiếm</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="member-list-wrap">
+                    <div class="member-block pd-x-5" id="blockmember">
+                    </div>
+                    <div class="media blog" style="margin-top: 20px;">
+                        <div style="margin:0 auto;">
+                            <a href="javascript:;" class="btn btn-outline-info" onclick="LoadMember()">Xem thêm...</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal set detail -->
+<div class="modal fade" tabindex="-1" role="dialog" id="js-detailSet">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title package-name"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="set-information">
+                    <div class="set-img">
+                        <img style="max-height:200px;object-fit:contain;" class="package-img" src="#" alt="image">
+                    </div>
+                    <div class="set-description">
+                        <h3 class="title">Thông tin gói</h3>
+                        <div class="set-meta-wrap mg-b-15">
+                            <span class="mg-r-15 mg-sm-r-30">
+                                Học phí:<span class="mg-l-5 price tx-danger tx-bold package-price"></span>
+                            </span>
+                            <span class="meta-buy mg-r-15 mg-sm-r-30">
+                                Thời gian:<span class="mg-l-5 tx-medium student-set"></span>
+                            </span>
+                            <span class="meta-rating d-inline-flex tx-color-01">
+                                Đánh giá:
+                                <span class="rating-star mg-l-5">
+                                    <i class="fa fa-star tx-warning"></i>
+                                    <i class="fa fa-star tx-warning"></i>
+                                    <i class="fa fa-star tx-warning"></i>
+                                    <i class="fa fa-star tx-warning"></i>
+                                    <i class="fa fa-star tx-warning"></i>
+                                </span>
+                            </span>
+                        </div>
+                        <div class="package-description">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<input type="hidden" id="hdfIndex" value="0" />
+@section myScripts{
+    <script src="~/app-assets/zimv2/assets/lightbox/js/lightbox.min.js"></script>
+    <script>
+        function showSetDetail(obj) {
+            $.ajax({
+                    type: "POST",
+                    url: "/Admin/SetPackage/LoadInfoSet",
+                    data: '{id: ' + $(obj).attr('data-id') + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            $('.package-name').html(msg.d.PackageName);
+                            $('.package-description').html(msg.d.Note);
+                            $('.package-img').attr('src', msg.d.PackageIMG);
+                            $('.package-price').html(msg.p);
+                            $('.student-set').html(msg.count);
+                            $('#js-detailSet').modal('show');
+
+                        } else {
+                            console.log("éc éc");
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: éc éc oạc oạc");
+                    }
+                });
+
+        }
+        function UpdateMember(obj) {
+            var memberID = $(obj).attr('data-memid');
+            var groupID = $('#hdfGroup').val();
+            if ($(obj).attr('data-doing') == "remove") {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Account/RemoveMember",
+                    data: '{memberID: ' + memberID + ', groupID: ' + groupID + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            $(obj).removeClass('btn-outline-danger').addClass('btn-outline-success');
+                            $(obj).attr('data-doing', 'add');
+                            $(obj).html("Add");
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Success',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-success',
+                                timeout: 3000
+                            });
+                        } else {
+                            console.log("Ec'");
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: view-history");
+                    }
+                });
+            } else {
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Account/AddMember",
+                    data: '{memberID: ' + memberID + ', groupID: ' + groupID + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            $(obj).removeClass('btn-outline-success').addClass('btn-outline-danger');
+                            $(obj).attr('data-doing', 'remove');
+                            $(obj).html("Xóa");
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Success',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-success',
+                                timeout: 3000
+                            });
+                        } else {
+                            console.log("Ec'");
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: view-history");
+                    }
+                });
+            }
+
+        }
+        let loading = `<div class="div-loading" style="
+            display: flex;
+            justify-content: center;
+        ">
+            <div class="spinner-grow text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <div class="spinner-grow text-secondary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <div class="spinner-grow text-success" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <div class="spinner-grow text-danger" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+            </div>`;
+        function Search() {
+            $('#hdfIndex').val(0);
+            $('#blockmember').empty();
+            LoadMember();
+        };
+
+        function LoadMember() {
+
+            var group = $('#hdfGroup').val();
+            var pageIndex = $('#hdfIndex').val();
+            var search = $('#txt-search-member').val();
+            $('#blockmember').append(loading);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/LoadMemeber",
+                data: '{groupID: "' + group + '", PageIndex: ' + pageIndex + ', searchName:"' + search + '", PageSize: 25}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('.div-loading').remove();
+                        $('#blockmember').append(msg.data);
+                        $('#hdfIndex').val(msg.PageIndex);
+                    }
+                    else {
+                        $('.div-loading').remove();
+                        console.log("wrong");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: view-history");
+                }
+            });
+
+
+        }
+
+        $(document).ready(function () {
+            var groupID = $('#hdfGroup').val();
+            if (groupID != null) {
+                if (groupID != 0) {
+                    LoadMember();
+                }
+            }
+
+            //Auto resize textarea
+            $('[data-toggle="tooltip"]').tooltip();
+            $('.upload-image').on('click', function () {
+                $('.background-demo').hide();
+                $('.status-wrap').removeClass('active');
+                $('.status-wrap').attr('style', '');
+                $('.img-upload').click();
+                $('#hdfbg').val('');
+            });
+            $('.select-background').on('click', function () {
+                $('.background-demo').fadeToggle();
+                $('.image-demo').fadeOut(300);
+            });
+            $('.background-demo').on('click', '.demo-bg', function () {
+                const color = $(this).data('color');
+                const imageSrc = $(this).data('image');
+                $('.status-wrap').css('background-image', 'url("' + imageSrc + '")');
+                $('.status-wrap').css('color', color);
+                $('.status-wrap').addClass('active');
+
+                var id = $(this).attr('data-id');
+                $('#hdfbg').val(id);
+            });
+            //Auto resize textarea
+            $('body').on('keydown', '.cmt-area textarea', autosize);
+
+            function autosize() {
+                var el = this;
+                setTimeout(function () {
+                    el.style.cssText = 'height:auto; padding:10px';
+                    el.style.cssText = '-moz-box-sizing:content-box';
+                    el.style.cssText = 'height:' + el.scrollHeight + 'px';
+                }, 0);
+            }
+            const readUrl = (input) => {
+                try {
+                    if (input.files && input.files[0]) {
+                        if (input.files[0].type.split('/')[0] == 'video') {
+                            if (input.files[0].type.split('/')[1] == 'mp4' || input.files[0].type.split('/')[1] == 'webm' || input.files[0].type.split('/')[1] == 'ogg') {
+                                const reader = new FileReader();
+                                reader.onload = e => {
+                                    $('.image-demo video').attr('src', e.target.result);
+                                    $('.image-demo video').show();
+                                    $('.image-demo img').hide();
+                                }
+                                reader.readAsDataURL(input.files[0]);
+                                $('.image-demo').fadeIn(300);
+                            } else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Video không được hỗ trợ',
+                                    icon: 'warning',
+                                    classBackground: 'noti-warning',
+                                    timeout: 3000
+                                });
+                            }
+
+                        }
+                        else {
+                            const reader = new FileReader();
+                            reader.onload = e => {
+                                $('.image-demo img').attr('src', e.target.result);
+                                $('.image-demo img').show();
+                                $('.image-demo video').attr('src', '');
+                                $('.image-demo video').hide();
+                            }
+                            reader.readAsDataURL(input.files[0]);
+                            $('.image-demo').fadeIn(300);
+                        }
+
+
+
+
+                    }
+                    console.log(input.files);
+                    input.files[0] = "";
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+            $('.img-upload').on('change', function () {
+                readUrl(this);
+            });
+            $('.write-status').on('click', function () {
+                $('.create-new-status').slideToggle();
+            });
+            $('body').on('click', '.comment-toggle', function () {
+                $(this).closest('.comment-wrap-show').find('.comment-block').slideToggle();
+            });
+        });
+        $('.btn-cmt').click(function () {
+            var id = $(this).attr('data-id');
+            if (!ckstring($('#txt-content-' + id+'').val())) {
+                var content = btoa(unescape(encodeURIComponent($('#txt-content-'+id+'').val())));
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/PostNewFeed/CmtPost",
+                    data: '{id: ' + id + ', cmtid: 0, content:"' + content + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#div-cmt-' + id + '').append(msg.d);
+                        $('#txt-content-' + id + '').val('');
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: view-history");
+                    }
+                });
+            }
+        })
+
+        $('.rep-cmt').click(function () {
+            var id = $(this).attr('data-id');
+            var ht = '';
+            ht += '<li>';
+            ht += ' <div class="comment-item">';
+            ht += '     <div class="comment-avatar">';
+            ht += '         <a href="#" class="avatar">';
+            ht += '             <img src="@av"  onerror="this.onerror = null; this.src ="/app-assets/zimv/images/invis-user.png";" alt="avatar" style="width:25px; height:25px; min-height: 25px;">';
+            ht += '         </a>';
+            ht += '     </div>';
+            ht += '     <div class="comment-content">';
+            ht += '         <div class="cmt-area mg-b-5 pd-r-5">';
+            ht += '             <div class="text-area">';
+            ht += '                 <textarea id="txt-content-' + id + '" rows="1" required class="form-control" placeholder="..."></textarea>';
+            ht += '             </div>';
+            ht += '         </div>';
+            ht += '     </div>';
+            ht += '     <div>';
+            ht += '         <button type="button" style="float:right;" class="btn btn-primary btn-rep" data-id="' + id + '">Gửi</button>';
+            ht += '     </div>';
+            ht += ' </div>';
+            ht += '</li > ';
+            $('#rep-' + id + '').append(ht);
+            $(this).hide();
+            $('#txt-content-' + id + '').focus();
+
+        })
+        $(document).on("click", ".btn-rep", function () {
+            var id = $(this).attr('data-id');
+            var e = $(this);
+
+            if (!ckstring($('#txt-content-' + id + '').val())) {
+                var content = btoa(unescape(encodeURIComponent($('#txt-content-' + id + '').val())));
+                console.log(content);
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/PostNewFeed/CmtPost",
+                    data: '{id: 0, cmtid: ' + id + ', content:"' + content + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#rep-' + id + '').append(msg.d);
+                        $('#button-' + id + '').show();
+                        var li = $(e).closest('li');
+                        li.remove();
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: btn-rep");
+                    }
+                });
+            }
+        });
+        //d post
+        $(document).on("click", ".delete-post", function () {
+            if (confirm('Are you sure?')) {
+                var id = $(this).attr('data-id');
+                var e = $(this);
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/PostNewFeed/DeletePost",
+                    data: '{id: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            var li = $(e).closest('.media ');
+                            li.remove();
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: delete-post");
+                    }
+                });
+            }
+        });
+
+        $(document).on("click", ".edit-post", function () {
+            var id = $(this).attr('data-id');
+            var e = $(this);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/PostNewFeed/GetPost",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('.create-new-status').css('display', 'block');
+                        $('textarea[name = txt-title]').val(msg.p.TitlePost);
+                        $('textarea[name = txt-title]').focus();
+                        $('#hdfid').val(msg.p.ID);
+                        $('#btn-submit').text('Update');
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: delete-post");
+                }
+            });
+        });
+        $('.edit-group').click(() => {
+            var Grname = $('.edit-group').attr('data-groupname');
+            var GID = $('.edit-group').attr('data-groupid');
+            console.log(Grname);
+            $('#txtedit-gr-name').val(Grname);
+            $('#hdfGroupID').val(GID);
+            let centerId = $('.edit-group').attr('data-centerId');
+            LoadCourse(centerId);
+            let courseId = $('.edit-group').attr('data-groupcourse');
+            console.log(courseId);
+            $('select[name="ddl-edit-course"]').val(courseId);
+            $('#ddl-edit-course').trigger('change');
+            $('#EditGroup').modal();
+        });
+        function LoadCourse(centerId) {
+            $('.edit-group').addClass('sr-only')
+            $.ajax({
+                async:false,
+                type: "POST",
+                url: "/Admin/Account/GetListCourse",
+                data: '{centerId: ' + centerId + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#ddl-edit-course').empty();
+                        let newOption = new Option('--Không--', 0, false, false);
+                        $('#ddl-edit-course').append(newOption);
+
+                        for (var i = 0; i < msg.data.length; i++) {
+                            let item = msg.data[i];
+                            let newOption = new Option(item.CourseName, item.ID, false, false);
+                            $('#ddl-edit-course').append(newOption);
+                        }
+                        $('#ddl-edit-course').trigger('change');
+                        $('.edit-group').removeClass('sr-only')
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: rs.message,
+                            icon: 'warning',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        });
+                        $('.edit-group').removeClass('sr-only')
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: delete-post");
+                }
+            });
+        }
+        $('.get-set-free').click(function(){
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/GetSetFree",
+                data: '{ID: ' + $(this).attr('data-id') + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Notification!',
+                            text: 'Success',
+                            icon: 'check',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        });
+                        window.location.href = msg.link
+                    } else {
+                        toast.create({
+                            title: 'Notification!',
+                            text: msg.message,
+                            icon: 'warning',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: éc éc oạc oạc");
+                }
+            });
+        });
+        $('#ddl-center').on('change', function () {
+            let id = $(this).val();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/GetListCourse",
+                data: '{centerId: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#ddl-course').empty();
+
+                        let newOption = new Option('--Không--', 0, false, false);
+                        $('#ddl-course').append(newOption);
+
+                        for (var i = 0; i < msg.data.length; i++) {
+                            let item = msg.data[i];
+                            let newOption = new Option(item.CourseName, item.ID, false, false);
+                            $('#ddl-course').append(newOption);
+                        }
+                        $('#ddl-course').trigger('change');
+
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: rs.message,
+                            icon: 'warning',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: delete-post");
+                }
+            });
+        });
+        $('.delete-group').click(function () {
+            let cf = confirm("Are you sure you want to delete this group?\nThis group will be deleted immediately, you can't undo this action.");
+            if (cf === true) {
+                window.location.href = $(this).attr('data-link');
+            }
+        });
+    </script>
+}

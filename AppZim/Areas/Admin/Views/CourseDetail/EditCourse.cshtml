@@ -1,0 +1,1080 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+
+@{
+    ViewBag.Title = "EditCourse";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    tbl_Courses c = CoursesTable.getbyid(Model.ID);
+    List<tbl_Subject> subs = SubjectTable.getbyclassid(c.ClassID.Value);
+}
+
+@section myStyles{
+    <style>
+        .input-group {
+            padding: 0 0.5rem 0 0;
+        }
+    </style>
+    <link href="~/app-assets/mycalendar/Calender.css" rel="stylesheet" />
+    <script src="~/app-assets/mycalendar/js/moment.min.js"></script>
+    <script src="~/app-assets/mycalendar/js/myCalendar.js"></script>
+    <script src="~/app-assets/mycalendar/js/jquery-ui.min.js"></script>
+    <script src="~/app-assets/mycalendar/js/master.js"></script>
+    <style>
+        #calendar {
+            float: right;
+            width: unset;
+        }
+
+        ul {
+            list-style-position: inside
+        }
+
+            ul#draggablelist li > ul {
+                padding-left: 20px
+            }
+
+        .draggable-item {
+            z-index: 10
+        }
+
+        #draggablelist {
+            float: left;
+            display: block;
+            padding: 10px;
+            min-width: 200px;
+            min-height: 40px
+        }
+
+            #draggablelist .draggable-item {
+                padding: 5px 0
+            }
+
+            #draggablelist.ui-droppable-active {
+                background-color: #e1e1e1
+            }
+
+            #draggablelist.ui-droppable-hover {
+                background-color: beige
+            }
+
+        #calendar {
+            float: right
+        }
+
+            #calendar .header h1 {
+                color: white
+            }
+
+            #calendar .details {
+                height: 260px
+            }
+
+            #calendar .events {
+                height: 260px
+            }
+
+            #calendar .entry {
+                padding: 0 25px 0 25px
+            }
+
+        #draggablelist {
+            float: left;
+            display: block;
+            padding: 10px;
+            min-width: 200px;
+            list-style: none;
+            width: 100%;
+            height: 100%;
+            min-height: 300px !important;
+            margin-top: 0;
+            background: #424242;
+            -webkit-box-shadow: 10px 10px 44px -37px rgba(0,0,0,0.75);
+            -moz-box-shadow: 10px 10px 44px -37px rgba(0,0,0,0.75);
+            box-shadow: 10px 10px 44px -37px rgba(0,0,0,0.75)
+        }
+
+            #draggablelist li.draggable-item.event {
+                background: #fff;
+                margin: 10px 0;
+                border-radius: 2px;
+                padding: 10px
+            }
+
+        #calendar .events {
+            display: flex;
+            flex-flow: wrap;
+            justify-content: space-between
+        }
+
+            #calendar .events .event {
+                font-size: 0.85rem;
+                line-height: 1.3;
+                letter-spacing: .5px;
+                padding: 1rem;
+                vertical-align: top;
+                width: calc((100% / 2) - 1rem);
+                background: #fff;
+                color: #000;
+                margin: 0.5rem;
+                border-radius: 2px
+            }
+
+                #calendar .events .event > span {
+                    line-height: 2rem
+                }
+
+        .fcontrol {
+            border: 1px solid #000;
+            margin-left: 10px;
+            height: 2rem;
+            float: right
+        }
+
+        #calendar .events .event .cl-ul-tiet {
+            margin-bottom: 0;
+            display: flex;
+            padding: 0 1rem;
+            padding-top: 10px;
+            margin: 10px -1rem -10px;
+            list-style: none;
+            flex-flow: wrap;
+            justify-content: space-between;
+            border-top: 1px solid #d1d1d1
+        }
+
+            #calendar .events .event .cl-ul-tiet li {
+                margin: 0.5rem;
+                width: calc((100% / 2) - 1rem)
+            }
+
+        #calendar .events .event .tiethoc:after, #calendar .events .event .tiethoc:before {
+            display: table;
+            content: '';
+            clear: both
+        }
+
+        #calendar .event select {
+            margin-bottom: 10px
+        }
+
+        #draggablelist .draggable-item {
+            max-width: 80%;
+        }
+    </style>
+}
+<!-- Breadcrumb -->
+<div class="row mg-b-30">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">Khóa học </a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", c.ID })">@c.CourseName</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Chỉnh sửa</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<!-- End breadcrumb -->
+<div class="row">
+    <div class="col-12 pd-b-10">
+        <div class="row" style="display:none;">
+            <div class="col-4">
+                <label>Thời gian học:</label>
+                <input type="hidden" id="txt-study" value="@ViewBag.StudyList" />
+                <input type="hidden" id="txt-start" value="@DateTime.Now.Date.ToString("yyyy-MM-dd")" />
+                <input type="hidden" id="txt-end" value="@DateTime.Now.Date.AddDays(365).ToString("yyyy-MM-dd")" />
+                <select id="ddl-study-time" class="form-control select2" multiple="multiple">
+                    <option></option>
+                    @Html.Raw(ViewBag.StudyID)
+                </select>
+            </div>
+        </div>
+        <div class="row" style="padding-top:10px;">
+            <div class="col-12 d-md-flex align-items-center justify-content-between">
+                <div class="left-action d-flex">
+                    <div class="input-group no-wrap">
+                        <button type="button" id="btn-view-schedule" class="btn btn-info btn-block " style="background-color: #0097ae; border-color: #008ca1;"><i class="fas fa-exchange-alt"></i> Chuyển ca</button>
+                    </div>
+                    <div class="input-group no-wrap">
+                        <a href="#modal-add-day" data-toggle="modal" class="btn btn-primary btn-block"><i class="fas fa-plus"></i> Học bù</a>
+                    </div>
+                    <div class="input-group no-wrap">
+                        <a href="#modal-div-view" data-toggle="modal" id="btnview" class="btn btn-success btn-block "><i class="fas fa-save"></i> Lưu lại</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <ul id="draggablelist" class="ui-droppable"></ul>
+    </div>
+    <div class="col-12 col-md-8">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+@using (Html.BeginForm("UpdateCourse", "CourseDetail", FormMethod.Post, new { id = "form-update" }))
+{
+    <div class="modal fade" id="modal-div-view" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered " role="document">
+            <div class="modal-content">
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" id="btn-close-update" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Thông tin chỉnh sửa</h4>
+                        <div class="form-group" id="divview">
+
+                        </div>
+                        <a id="btn-save" href="javascript:;" class="btn btn-primary btn-block">Cập nhật</a>
+                    </div>
+                </div><!-- modal-body -->
+            </div><!-- modal-content -->
+        </div><!-- modal-dialog -->
+    </div><!-- modal -->
+
+    <input type="hidden" id="hdflistCalender" name="hdflistCalender" required />
+    <input type="hidden" id="hdfmonid" name="hdfmonid" value="0" required />
+    <input type="hidden" id="hdfaddday" name="hdfaddday" value="0" required />
+    <input type="hidden" name="hdfcourseid" value="@Model.ID" required />
+    <input type="hidden" name="hdfsalaryintimes" value="" required />
+}
+<div class="modal fade" id="modal-add-day" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            <div class="modal-body pd-20 pd-sm-40">
+                <a href="" id="btn-close" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div>
+                    <h4>Thêm ngày học</h4>
+
+                    <div class="form-group">
+                        <label>Số ngày:</label>
+                        <input id="txt-day" name="txt-edit-center" required type="number" class="validate form-control" placeholder="">
+                    </div>
+                    <a href="javascript:;" id="btn-add-schedule" class="btn btn-primary btn-block">view</a>
+                </div>
+            </div><!-- modal-body -->
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts{
+    <script>
+    $(document)
+        .ajaxStart(function () {
+            $('#AjaxLoader').show();
+        })
+
+        .ajaxStop(function () {
+            $('#AjaxLoader').hide();
+            });
+
+        var data = [];
+        var calendar = new Calendar('#calendar', data);
+        var teacher = @ViewBag.Teacher;
+        var studyTimeString = $('#txt-study').val();
+        var arr = (new Function("return [" + studyTimeString + "];")());
+        //lấy array ngày từ ngày hiện tại đến 356 ngày sau đó
+        var getDaysBetweenDates = function (startDate, endDate) {
+            var now = jQuery.extend({}, startDate), dates = [];
+
+            while (now.isSameOrBefore(endDate)) {
+                dates.push(now.format('MM/DD/YYYY'));
+                now.add(1, 'days');
+            }
+            return dates;
+        };
+
+        var startDate = moment($('#txt-start').val());
+        var endDate = moment($('#txt-end').val());
+        var dateList = getDaysBetweenDates(startDate, endDate);
+        var selectString = '';
+        dateList.forEach(e => selectString += '<option value="' + e + '">' + e + '</option> ' );
+
+    jQuery(document).ready(function () {
+        initDraggablelist();
+        function initDraggablelist() {
+            $(".draggable-item", $("#draggablelist")).draggable({
+                scroll: true,
+                refreshPositions: false,
+                axis: "",
+                revert: true,
+                zIndex: 10,
+                start: function (e, ui) {
+                    ///Cái này là dữ liệu của 1 buổi học trong ngày nào đó
+                    var monthEl = calendar.month;
+                    $(monthEl.querySelector('.details')).droppable({
+                        accept: ".draggable-item",
+                        over: function (event, ui) {
+                            var detailsBox = this;
+                            var lim = parseInt(detailsBox.getAttribute('data-limit'));
+                            var eventsCount = detailsBox.querySelector('.events').childElementCount;
+
+                            if (eventsCount >= lim) {
+                                $(detailsBox).addClass('outSlot');
+                            } else {
+                                $(detailsBox).removeClass('outSlot');
+                            }
+                        },
+                        drop: function (event, ui) {
+                            var $item = ui.draggable;
+                            var detailsBox = this;
+                            var lim = parseInt(detailsBox.getAttribute('data-limit'));
+                            var eventsCount = detailsBox.querySelector('.events').childElementCount;
+                            var date = detailsBox.getAttribute('data-for');
+                            if (eventsCount >= lim) {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Không còn chỗ',
+                                    icon: 'notifications_active',
+                                    classBackground: 'noti-warning',
+                                    timeout: 2500
+                                })
+                            } else {
+                                moveToCalendar($item, { limit: lim, date: date });
+                            }
+
+                        }
+                    });
+                },
+                drag: function (e, ui) {
+
+                },
+                stop: function (e, ui) {
+
+                }
+            });
+        }
+
+        $('#draggablelist').droppable({
+            accept: "#calendar .details .event",
+            over: function (event, ui) {
+
+            },
+            drop: function (event, ui) {
+                var $item = ui.draggable;
+                var $detail = $item.closest('.details');
+                var lim = $detail.attr('data-limit');
+                var date = $detail.attr('data-for');
+                moveToList($item, { limit: lim, date: date });
+            }
+        });
+
+        calendar.renderEventsCB = function (detail, evs) {
+            var $event = $(detail).find('.event:not(.empty)');
+            evs.forEach(function (ev) {
+                //load tutor
+                var evIndex = calendar.events.findIndex(function (item) {
+                    return item.id === ev.id && item.color != 'blank';
+                });
+                var $dateSelect = `<select class="cl-select-dates form-control" onchange="ChangeDate(` + ev.id + `,'` + ev.date.format('YYYY-MM-DD').toString() + `',$(this))" >` + selectString + `</select>`;
+                var $eventEl = $event.find('input[name="id"][value="' + ev.id + '"]').parent('.event');
+                var $deleteButton = `<button class="btn btn-primary mg-b-10 btn-delete-lesson" id="delete-` + ev.id + `" onclick="DeleteSchedule(` + ev.id + `,'` + ev.date.format('YYYY-MM-DD').toString() + `')" >Xóa</button>`;
+                if (@aclog.RoleID == 4) {
+                    $deleteButton = ``;
+                }
+                var $tutorSelect = $('<select class="cl-select-tutor form-control"></select>');
+                var $studySelect = $('<select class="cl-select-study form-control select2">tai-giao-vien</select>');
+
+                //if (!ev.hasOwnProperty('tutor')) {
+                if (!ev.hasOwnProperty('study')) {
+                    // chua co load ajax len nhe
+                    //lấy dữ liệu trong ngày
+                    var arrCa = calendar.events.filter(function (element) {
+                        return element.caID && element.date._i == ev.date._i;
+                    });
+                    var cadachon = '';
+                    if (arrCa.length > 0) {
+                        $(arrCa).each(function (index) {
+                            cadachon += arrCa[index].caID + ',';
+                        })
+                    }
+
+                    if ($('#hdfaddday').val() == 0) {// sửa khóa
+                        $.ajax({
+                            type: "POST",
+                            url: "/Admin/CourseDetail/TaiCaHoc",
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs == false) {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: 'Không có ca :(, không thể tạo lịch khi ca trống',
+                                        icon: 'notifications_active',
+                                        classBackground: 'noti-warning',
+                                        timeout: 2500
+                                    })
+                                }
+                                else {
+                                    // dữ liệu ca học
+                                    var data = msg.study;
+                                    calendar.events[evIndex].study = {
+                                        selected: data[0],
+                                        list: data
+                                    };
+                                    //calendar.events[evIndex].caID = msg.CaID;
+                                    calendar.events[evIndex].study.list.map(function (item) {
+                                        $studySelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    });
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+                                console.log("e: TaiCaHoc");
+                            }
+                        });
+                    }
+                    else {
+                        $.ajax({
+                            type: "POST",
+                            url: "/Admin/CourseDetail/TaiCaHoc",
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs == false) {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: 'Không có ca :(, không thể tạo lịch khi ca trống',
+                                        icon: 'notifications_active',
+                                        classBackground: 'noti-warning',
+                                        timeout: 2500
+                                    })
+                                }
+                                else {
+                                    // dữ liệu ca học
+                                    var data = msg.study;
+                                    calendar.events[evIndex].study = {
+                                        selected: data[0],
+                                        list: data
+                                    };
+                                    //calendar.events[evIndex].caID = msg.CaID;
+                                    calendar.events[evIndex].study.list.map(function (item) {
+                                        $studySelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    });
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+                                console.log("e: TaiCaHoc");
+                            }
+                        });
+                    }
+                }
+                else {
+                    //co roi lay ra thoi
+                    if (typeof calendar.events[evIndex].tutor !== "undefined") {
+                        var selectedItem = calendar.events[evIndex].tutor.selected;
+                        calendar.events[evIndex].tutor.list.map(function (item) {
+                            var isSL = selectedItem.id === item.id ? "selected" : "";
+                            $tutorSelect.append('<option value="' + item.id + '" ' + isSL + '>' + item.name + '</option>');
+                        });
+                    }
+
+                    if (typeof calendar.events[evIndex].study !== "undefined") {
+                        var selectedItemStudy = calendar.events[evIndex].study.selected;
+                        calendar.events[evIndex].study.list.map(function (item) {
+                            var isSLStudy = selectedItemStudy.id === item.id ? "selected" : "";
+                            $studySelect.append('<option value="' + item.id + '" ' + isSLStudy + '>' + item.name + '</option>');
+
+                        });
+                    }
+                }
+                $tutorSelect.on('change', function () {
+                    calendar.events[evIndex].tutor.selected = {
+                        id: parseInt($(this).children(':selected').val()),
+                        name: $(this).children(':selected').text()
+                    }
+                });
+
+                var idca = 0;
+                var previous;
+                $studySelect.on('focus', function () {
+                    previous = $(this).val();
+                }).change(function () {
+                    idca = parseInt($(this).val());
+                    //lấy dữ liệu ngày đã chọn
+                    var arrCa = calendar.events.filter(function (element) {
+                        return element.caID == idca && element.date._i == ev.date._i;
+                    });
+                    if (arrCa.length > 0) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Ca đã được chọn',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        })
+                        $studySelect.empty();
+                        calendar.events[evIndex].study.list.map(function (item) {
+                            var isSLStdy = parseInt(previous) === item.id ? "selected" : "";
+                            $studySelect.append('<option value="' + item.id + '" ' + isSLStdy + '>' + item.name + '</option>');
+                        });
+                        previous = null;
+                        $(this).blur();
+                        return;
+                    }
+
+                    //================================================================
+
+                    calendar.events[evIndex].study.selected = {
+                        id: parseInt($(this).children(':selected').val()),
+                        name: $(this).children(':selected').text()
+                    }
+                    var p = $(this).closest('.event');
+                    var te = p.find('.cl-select-tutor');
+                    if (idca == 0) {
+                        var selectca = p.find('.cl-select-study');
+                        idca = parseInt($(selectca).val());
+                    }
+
+                    $tutorSelect.empty();
+                    if ($('#hdfaddday').val() == 0) {//sửa khóa
+                        $.ajax({
+                            type: "POST",
+                            url: "/Admin/CourseDetail/TaiGiaoVien",
+                            data: '{courseid: ' + @Model.ID + ', date: "' + ev.date._i + '", studytime:' + idca + ', program:' + @Model.ClassID + ', teacher:' + 0 + '}',
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs == false) {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: 'Giáo viên đã có lịch dạy vào thời gian này, vui lòng chọn ca khác',
+                                        icon: 'notifications_active',
+                                        classBackground: 'noti-warning',
+                                        timeout: 2500
+                                    })
+                                }
+                                else {
+                                    var data = msg.l;
+                                    calendar.events[evIndex].tutor = {
+                                        selected: data[0],
+                                        list: data
+                                    };
+                                    calendar.events[evIndex].caID = idca;
+                                    calendar.events[evIndex].tutor.list.map(function (item) {
+                                        $tutorSelect.append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    });
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+                                console.log("e: TaiGiaoVien");
+                            }
+                        });
+                    }
+                    else {// thêm ngày mới
+                        $.ajax({
+                            type: "POST",
+                            url: "/Admin/CourseDetail/TaiGiaoVien",
+                            data: '{courseid: ' + 0 + ', date: "' + ev.date._i + '", studytime:' + idca + ', program:' + @Model.ClassID + ', teacher:' + 0 + '}',
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs == false) {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: 'Giáo viên đã có lịch dạy vào thời gian này, vui lòng chọn ca khác',
+                                        icon: 'notifications_active',
+                                        classBackground: 'noti-warning',
+                                        timeout: 2500
+                                    })
+                                }
+                                else {
+                                    // dữ liệu giáo viên
+                                    var data = msg.l;
+                                    //dữ liệu giáo viên
+                                    calendar.events[evIndex].tutor = {
+                                        selected: data[0],
+                                        list: data
+                                    };
+                                    calendar.events[evIndex].caID = msg.CaID;
+                                    $(te).empty();
+                                    calendar.events[evIndex].tutor.list.map(function (item) {
+                                        $(te).append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    });
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+                                console.log("e: TaiGiaoVien");
+                            }
+                        });
+                    }
+                    })
+
+                var $selectWrap = $('<div class="wrap-select">');
+
+                if ($('#hdfaddday').val() == 0) {
+                    $selectWrap.append($dateSelect);
+                    $selectWrap.append($deleteButton);
+                }
+                $selectWrap.append($studySelect);
+                $selectWrap.append($tutorSelect);
+                $selectWrap.insertAfter($eventEl.children('span'));
+
+                // reload tiet hoc
+
+                var ulTiet = $('<ul class="cl-ul-tiet"></ul>');
+                if (ev.hasOwnProperty('tiet')) {
+                    ev.tiet.map(function (item) {
+                        ulTiet.append('<li>' + item.name + '</li>');
+                    });
+                    $eventEl.append(ulTiet);
+                }
+
+                var monid = $('<input type="hidden" name="monid" value="' + ev.monid + '">');
+                $eventEl.append(monid);
+
+            });
+
+            $event.draggable({
+                scroll: true,
+                refreshPositions: false,
+                axis: "",
+                revert: true,
+                zIndex: 10,
+                helper: "clone",
+                appendTo: "#main-wrap",
+                revertDuration: 0,
+                start: function (e, ui) {
+
+                },
+                drag: function (e, ui) {
+
+                },
+
+                stop: function (e, ui) {
+
+                }
+            });
+        }
+        function moveToCalendar(el, data) {
+            data.eventName = el.find('[name="eventName"]').val();
+            data.calendar = el.find('[name="calendar"]').val();
+            data.color = el.find('[name="color"]').val();
+            data.id = parseInt(el.find('[name="id"]').val());
+            data.tiet = [];
+            data.monid = el.find('[name="monid"]').val();
+
+            el.find('.tiethoc-ul li').each(function (i, ele) {
+                data.tiet.push({
+                    id: $(ele).find('[name="tId"]').val(),
+                    name: $(ele).find('[name="tName"]').val()
+                });
+            });
+            calendar.pushEvent(data);
+            el.remove();
+        }
+        function moveToList(el, data) {
+            data.eventName = el.find('span').html();
+            data.id = parseInt(el.find('[name="id"]').val());
+            data.calendar = el.find('[name="calendar"]').val();
+            data.color = el.find('.event-category')[0].className.replace('event-category', '').trim();
+            data.monid = parseInt(el.find('[name="monid"]').val());
+
+            $('#draggablelist').append(`<li class="draggable-item event">${data.eventName}
+                       <input type="hidden" name="eventName" value="${data.eventName}">
+                       <input type="hidden" name="calendar" value="${data.calendar}">
+                       <input type="hidden" name="color" value="${data.color}">
+                       <input type="hidden" name="id" value="${data.id}">
+                       <input type="hidden" name="monid" value="${data.monid}">
+        <ul class="tiethoc-ul">${el.find('[name="tT"]').map(function (i, element) {
+
+                    return '<li>' + element.value.split(',')[1] + '<input type="hidden" name="tId" value="' + element.value.split(',')[0] + '"><input type="hidden" name="tName" value="' + element.value.split(',')[1] + '"></li>'
+
+                }).toArray().join('')}</ul>
+        </li>`);
+
+            initDraggablelist();
+
+            calendar.ejectEvent(data);
+            calendar.removeBlank(calendar.events);
+        }
+
+        //Nam=============================================================================================================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+        //Goi ham sửa khóa
+        document.getElementById('btn-view-schedule').addEventListener('click', function (e) {
+            $('#hdfaddday').val(0);
+            LoadTietHoc(0, 0);
+        });
+        //Goi ham thêm ngày học
+        document.getElementById('btn-add-schedule').addEventListener('click', function (e) {
+            //$('#hdfmonid').val($('#ddl-sub').val());
+            $('#hdfaddday').val(1);
+
+            //var subid = $('#ddl-sub').val();
+            var day = $('#txt-day').val();
+            if (day == 0) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập số ngày',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 2500
+                })
+                $('#txt-day').focus();
+                return;
+            }
+            LoadTietHoc(1, day);
+            $('#btn-close').click();
+        });
+
+        document.getElementById('btnview').addEventListener('click', function (e) {
+            $('input[name=hdfsalaryintimes]').val($('#tiencong').val());
+            Preview(e);
+        });
+
+        function LoadTietHoc(add, totalday) {
+            $("#draggablelist").empty();
+            calendar.events = [];
+            $(calendar.month).find('.day-events').html('');
+            $(calendar.month).find('.events.in').html('');
+            var op = "";
+            setTimeout(() => {
+                $.ajax({
+                        //async: false,
+                        type: "POST",
+                        url: "/Admin/CourseDetail/LoadTietHoc",
+                        data: '{CourseID: ' + @Model.ID + ', addday:' + add + ', totalday:' + totalday + '}',
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (msg) {
+                            var data = msg.d;
+                            if (data == null) {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Không có dữ liệu',
+                                    icon: 'notifications_active',
+                                    classBackground: 'noti-warning',
+                                    timeout: 2500
+                                })
+                            }
+                            else {
+                                for (var i = 0; i < data.length; i++) {
+                                    op += "<li class=\"draggable-item event\">" + data[i].eventName + "";
+                                    op += "<input type=\"hidden\" name=\"eventName\" value=\"" + data[i].eventName + "\">";
+                                    op += "<input type=\"hidden\" name=\"calendar\" value=\"" + data[i].calendar + "\">";
+                                    op += "<input type=\"hidden\" name=\"color\" value=\"" + data[i].Color + "\">";
+                                    op += "<input type=\"hidden\" name=\"id\" value=\"" + data[i].ID + "\">";
+                                    op += "</li>";
+
+                                    if ($('#hdfaddday').val() == 0) {
+                                        var gvnow = [];
+                                        gvnow.push({
+                                            id: data[i].TeacherID,
+                                            name: data[i].TeacherName,
+                                            select: true
+                                        });
+                                        var studynow = [];
+                                        studynow.push({
+                                            id: data[i].CaID,
+                                            name: data[i].CaName + ' ✅',
+                                            select: true
+                                        });
+                                        studynow = [...studynow, ...arr];
+
+                                        var objTiet = {
+                                            calendar: data[i].calendar,
+                                            color: data[i].Color,
+                                            date: data[i].date,
+                                            eventName: data[i].eventName,
+                                            id: data[i].ID,
+                                            limit: 5,
+                                            tutor: {
+                                                selected: gvnow[0],
+                                                list: gvnow
+                                            },
+                                            study: {
+                                                selected: studynow[0],
+                                                list: studynow
+                                            }
+                                        }
+                                        calendar.pushEvent(objTiet, { limit: 5, date: data[i].date });
+                                    }
+                                }
+                                if ($('#hdfaddday').val() == 1) {
+                                    $('#draggablelist').append(op);
+                                    initDraggablelist();
+                                }
+                            }
+                        },
+                        error: function (xmlhttprequest, textstatus, errorthrow)    {
+                            console.log(xmlhttprequest);
+                        }
+                    });
+            }, 100);
+            $.ajax({
+                //async: false,
+                type: "POST",
+                url: "/Admin/CourseDetail/TaiNgayHoc",
+                data: '{"CourseID": ' + @Model.ID + ', "Date":"' + $('#txt-date').val() + '", "addday":' + add + ', "caid":"' + $('#ddl-study-time').val() + '" }',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    var data = msg.d;
+                    if (data == null) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Đã kín lịch, ko thể tạo',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        })
+                    }
+                    else {
+                        for (var i = 0; i < data.length; i++) {
+                            var d = JSON.parse(data[i].Day);
+                            calendar.pushEvent(d);
+                        }
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: TaiNgayHoc");
+                }
+            });
+        }
+
+        $('#btn-save').click(function () {
+            if ($("#draggablelist")[0].childElementCount) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng xếp xong lịch học cho khóa học này :(',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 2500
+                })
+                return;
+            }
+            var sdata = '';
+            var errors = '';
+            var check = true;
+            var evs = calendar.removeBlank(calendar.events);
+
+            for (var i = 0; i < evs.length; i++) {
+                var Ngay = evs[i].date;
+                var checkday = true;
+                //giáo viên
+                var giaovien = 0;
+                if (typeof evs[i].tutor !== "undefined") {
+                    var lGV = evs[i].tutor;
+                    var GV = lGV.selected;
+                    if (GV.id == 0) {
+                        checkday = false;
+                    }
+                    giaovien = GV.id;
+                }
+                else {
+                    checkday = false;
+                }
+
+                //ca
+                var ca = 0;
+                if (typeof evs[i].study !== "undefined") {
+                    var lSTUDY = evs[i].study;
+                    var study = lSTUDY.selected;
+                    ca = study.id;
+                    if (study.id == 0) {
+                        checkday = false;
+                    }
+                }
+                else {
+                    checkday = false;
+                }
+
+                if (i != evs.length - 1) {
+                    sdata += evs[i].id + ',' + Ngay._i + ',' + giaovien + ',' + ca +  '|';
+                }
+                else {
+                    sdata += evs[i].id + ',' + Ngay._i + ',' + giaovien + ',' + ca;
+                }
+                if (!checkday) {
+                    errors += Ngay._i + ", ";
+                    check = false;
+                }
+            }
+            if (check) {
+                $("#hdflistCalender").val(sdata);
+                if ($("input[name=hdflistCalender]").val() == "" ||
+                    $("input[name=hdfaddday]").val() == "" ||
+                    $("input[name=hdfcourseid]").val() == "")
+                {
+                    return false;
+                }
+                $('#form-update').submit();
+                $(this).attr('disabled', true);
+            }
+            else {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn đủ dữ liệu cho ngày học: ' + errors + '',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3500
+                })
+            }
+        })
+
+        function Preview(e) {
+            var days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+            $("#divview").empty();
+
+            var sdata = '';
+
+            var evs = calendar.removeBlank(calendar.events);
+            for (var i = 0; i < evs.length; i++) {
+                var Ngay = evs[i].date;
+
+                var d = new Date(Ngay._i);
+                var dayName = days[d.getDay()];
+                var checkday = true;
+                //giáo viên
+                var giaovien = '';
+                if (typeof evs[i].tutor !== "undefined") {
+                    var lGV = evs[i].tutor;
+                    var GV = lGV.selected;
+                    giaovien = GV.name;
+                    if (GV.id == 0) {
+                        checkday = false;
+                    }
+                }
+                else {
+                    checkday = false;
+                }
+
+                //ca
+                var ca = '';
+                if (typeof evs[i].study !== "undefined") {
+                    var lSTUDY = evs[i].study;
+                    var study = lSTUDY.selected;
+                    ca = study.name;
+                    if (study.id == 0) {
+                        checkday = false;
+                    }
+                }
+                else {
+                    checkday = false;
+                }
+                if (!checkday) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn ca và giáo viên cho ngày ' + Ngay._i + '',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3500
+                    })
+                }
+                sdata += dayName + " - Ngày " + Ngay._i + " - " + ca + " - " + giaovien + "<br />";
+            }
+            $("#divview").append(sdata);
+        }
+    });//end ready
+
+    function ShowImagePreview(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $('#<%=imgDaiDien.ClientID%>').prop('src', e.target.result)
+                    //.width(240)
+                    .height(40);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    function DeleteSchedule(e, d) {
+            var check = confirm('Bạn có chắc muốn xóa buổi học này không ?');
+            if (check) {
+                $.ajax({
+                    //async: false,
+                    type: "POST",
+                    url: "/Admin/CourseDetail/DeleteSchedule",
+                    data: '{"coursesScheduleID": ' + e + ' }',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (!msg.rs) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Đã có lỗi xảy ra, vui lòng liên hệ Mona media',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Thành công',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-success',
+                                timeout: 2500
+                            });
+                            $('#delete-' + e + '').parent().parent().remove();
+                            document.querySelector('[data-date-string="' + d + '"] > .day-events > span').classList.remove('orange');
+                            document.querySelector('[data-date-string="' + d + '"] > .day-events > span').classList.add('blank');
+
+                            objIndex = calendar.events.findIndex((obj => obj.id == e));
+
+                            calendar.events[objIndex].id = 'd-' + calendar.events.length;
+                            calendar.events[objIndex].calendar = "blank";
+                            calendar.events[objIndex].eventName = "Blank Event";
+                            calendar.events[objIndex].color = "blank";
+                            delete calendar.events[objIndex].monid;
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: DeleteSchedule");
+                    }
+                });
+            }
+        }
+
+        //id event, d là ngày của event, e là slot với các dữ liệu mới nhất
+        function ChangeDate(id, d, e) {
+            let day = $(e)[0].selectedOptions[0].attributes.value.value;
+            let chooseDay = new Date(day);//ngày thay đổi
+            let checkIndex = calendar.events.findIndex((obj => obj.date._d.getTime() == chooseDay.getTime()));
+            if (checkIndex == -1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Không thể xếp lịch vào ngày này',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 2500
+                });
+                return;
+            }
+            objIndex = calendar.events.findIndex((obj => obj.id == id));
+
+            calendar.events[objIndex].eventName = moment(chooseDay).format('DD/MM') + calendar.events[objIndex].eventName.substring(5);
+            calendar.events[objIndex].date._d = chooseDay;
+            calendar.events[objIndex].date._i = moment(chooseDay).format('YYYY-MM-DD');
+            calendar.reRenderEvents(d);
+            // lấy ô ngày của d trên lịch
+            let oldDay = new Date(d);
+            let difference = monthDiff(oldDay, chooseDay);
+            if (difference > 0) {
+                calendar.nextMultipleMonth(difference);
+
+            } else if (difference < 0) {
+                calendar.prevMultipleMonth(difference * -1);
+            }
+
+            setTimeout(() => {
+                let ev = document.querySelector('[data-date-string="' + moment(day).format('YYYY-MM-DD') + '"]');
+                calendar.openDay(ev);
+            }, 500);
+        }
+
+        function monthDiff(d1, d2) {
+            var months;
+            months = (d2.getFullYear() - d1.getFullYear()) * 12;
+            months -= d1.getMonth();
+            months += d2.getMonth();
+            return months;
+        }
+    </script>
+}

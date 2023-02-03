@@ -1,0 +1,79 @@
+@charset "utf-8";
+//
+//VARIABLE :: BEGIN
+//
+
+$main-w: 1200;
+$sp-w: 768;
+$mb-w: 480;
+$money-color:#fb6b50;
+$primary-color: #3462C8;
+$primary-color-dark: #001737;
+$primary-txt-color: #001737;
+$primary-hover-color: #c49869;
+$sidenav-active-box-shadow: 3px 3px 20px 0 rgba(38, 198, 218, 0.4) !important;
+$border-color:rgba(72, 94, 144, 0.16);
+//
+//VARIABLE :: END
+//
+
+//
+//MIXIN :: BEGIN
+//
+@mixin box-shadow($shadow...) {
+  -webkit-box-shadow: $shadow; // iOS <4.3 & Android <4.1
+  box-shadow: $shadow;
+}
+
+@mixin coverbg($url) {
+  background: url($url) no-repeat center center;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  -ms-background-size: cover;
+  background-size: cover;
+}
+
+@mixin transition($s) {
+  -webkit-transition: all $s ease-in-out;
+  -moz-transition: all $s ease-in-out;
+  -o-transition: all $s ease-in-out;
+  -ms-transition: all $s ease-in-out;
+  transition: all $s ease-in-out;
+}
+
+@mixin media($point) {
+  @media screen and (max-width: $point) {
+    @content;
+  }
+}
+
+//
+//MIXIN :: END
+//
+
+//media template
+// @include media(1199px){
+//    width: 970px;
+//}
+//@include media(1199px){
+//    width: 970px;
+//}
+//@include media(991px){
+//    width: 750px;
+//}
+//@include media(767px){
+//    width: 100%;
+//}
+%clear {
+  &:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+  &:before {
+    display: table;
+    content: " ";
+  }
+}

@@ -1,0 +1,3 @@
+PageError: CustomerController    FunctionError: PaidDebts    loginUID: 1    MessageError: The SMTP server requires a secure connection or the client was not authenticated. The server response was: 5.7.0 Authentication Required. Learn more at    06/04/2021 15:51
+PageError: CustomerController    FunctionError: PaidDebts    loginUID: 1    MessageError: Object reference not set to an instance of an object.    06/04/2021 16:02
+PageError: CustomerController    FunctionError: PaidDebts    loginUID: 1    MessageError: The SMTP server requires a secure connection or the client was not authenticated. The server response was: 5.7.0 Authentication Required. Learn more at    06/04/2021 16:20

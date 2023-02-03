@@ -1,0 +1,25 @@
+﻿
+@{
+    ViewBag.Title = "CaHoc";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+
+@section scripts{
+    <script src="~/Scripts/loadpageajax/jquery.twbsPagination.min.js"></script>
+    <script src="~/Scripts/loadpageajax/cahoc.js"></script>
+}
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <td>ID</td>
+            <td>Name</td>
+            <td>Salary</td>
+            <td>Status</td>
+            <td>#</td>
+        </tr>
+    </thead>
+    <tbody id="tblData"></tbody>
+</table>
+<div id="pagination" class="pagination">
+</div>

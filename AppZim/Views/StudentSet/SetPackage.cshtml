@@ -1,0 +1,290 @@
+﻿@using AppZim.Models;
+@using AppZim.TableSql;
+@using AppZim.ZIM;
+@using MB.Extensions;
+@{
+    ViewBag.Title = "SetPackage";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_Account aclog = new tbl_Account();
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    else
+    {
+        aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    }
+    List<tbl_SetPackageDetail> details = SetPackageDetailTable.getbysetid(ViewBag.SetID);
+    details = details.Where(n => n.isHide != true).ToList();
+    tbl_SetPackage set = SetPackageTable.getbyid(Model.SetPackageID);
+}
+<style>
+    table.new-table {
+        table-layout: auto;
+        width: 100%
+    }
+
+        table.new-table th, td {
+            padding: 12px 0px 12px 10px
+        }
+
+        table.new-table thead {
+            background: #ccc
+        }
+
+        table.new-table tbody tr:not(:last-child) {
+            border-bottom: 1px solid
+        }
+
+        table.new-table p {
+            margin: 0;
+        }
+
+    .list-result {
+        display: none !important;
+    }
+
+        .list-result.show {
+            display: block !important;
+        }
+</style>
+<input type="hidden" name="hdfSetID" value="@set.ID" />
+<div class="exam__wrap">
+    <!-- Breadcrumb -->
+    <div class="row mg-b-30">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item"><a href="javascript:;">Bộ sưu tập </a></li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <!-- End breadcrumb -->
+    <div class="ready-for-test">
+        @{
+            <h3 class="mg-b-30">
+                @set.PackageName
+            </h3>
+            foreach (var skill in details)
+            {
+                var hiden = "hidden";
+                if(skill.TypeDetail == 1 || skill.TypeDetail == 2)
+                {
+                    hiden = "";
+                }
+                <div class="card mg-b-30" @hiden>
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div>
+                            @{
+                                switch (skill.TypeDetail.Value)
+                                {
+                                    case 1:
+                                        <h4 class="mg-b-5"><i class="fas fa-headphones-alt"></i> @skill.PackageDetailName</h4>
+                                        break;
+                                    case 2:
+                                        <h4 class="mg-b-5"><i class="fas fa-book-open"></i> @skill.PackageDetailName</h4>
+                                        break;
+                                    case 3:
+                                        <h4 class="mg-b-5"><i class="fas fa-pencil-alt"></i> @skill.PackageDetailName</h4>
+                                        break;
+                                    case 4:
+                                        <h4 class="mg-b-5"><i class="fas fa-microphone"></i> @skill.PackageDetailName</h4>
+                                        break;
+                                    default:
+                                        <h4 class="mg-b-5">@skill.PackageDetailName</h4>
+                                        break;
+                                }
+                            }
+                        </div>
+                        @{
+                            string metatitle = AppZim.ZIM.AssetCRM.UrlBeauty(AssetCRM.RemoveUnicode(skill.PackageDetailName.ToLower()));
+                            var sethistory = SetPackageHistoryTable.getbyStudentIDandSetDetailID(aclog.ID, skill.ID);
+                            if (sethistory != null && sethistory.ModifiedDate != null)
+                            {
+                                if (sethistory.IsDone.Value)
+                                {
+                                    if (skill.TypeDetail == 3 || skill.TypeDetail == 4)
+                                    {
+                                        if (skill.TypeDetail == 3)
+                                        {
+                                            <a href="javascript:;" class="btn btn-success btn-icon d-block open-result-list">
+                                                <i class="fas fa-info-circle"></i> Kết quả
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            var exf = ExerciseAddonStudentTable.getbyUIDStudent_SetPackageID_Type(sethistory.StudentID.Value, sethistory.SetpackageID.Value, 3);
+                                            <a href="@Url.Action("ExrciseDetailEssayFix","StudentExrcise",new {id=exf.ID})" class="btn btn-primary btn-icon d-block  ">
+                                                <i class="fas fa-info-circle"></i> Kết quả
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <a href="/done-test/@skill.ID/@metatitle" class="btn btn-primary btn-icon d-block">
+                                            <i class="fas fa-info-circle"></i> Kết quả
+                                        </a>
+                                    }
+
+
+                                }
+                                else
+                                {
+                                    <a href="/doing-test/@skill.ID/@metatitle" class="btn btn-info btn-icon d-block">
+                                        <i class="fas fa-play-circle"></i> Bắt đầu
+                                    </a>
+                                }
+
+                            }
+                            else
+                            {
+                                <a href="/doing-test/@skill.ID/@metatitle" class="btn btn-info btn-icon d-block">
+                                    <i class="fas fa-play-circle"></i> Bắt đầu
+                                </a>
+                            }
+                        }
+                    </div>
+                    @{
+                        if (skill.TypeDetail == 3)
+                        {
+                            if (sethistory != null && sethistory.ModifiedDate != null)
+                            {
+                                if (sethistory.IsDone.Value)
+                                {
+                                    List<tbl_SetPackageStudentExercise> lex = SetPackageStudentExerciseTable.getall(skill.SetPackageID.Value, aclog.ID).Where(n => n.PartNumber == 4 || n.PartNumber == 5).ToList();
+                                    if (lex.Count > 0)
+                                    {
+
+                                        <div class="card-header d-flex align-items-center justify-content-between list-result">
+                                            <table class="new-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width:10%">Task</th>
+                                                        <th>Question</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var item in lex)
+                                                    {
+                                                        if (item != null)
+                                                        {
+                                                            var exf = ExerciseAddonStudentTable.getbyUIDStudent_SetPackageID(item.StudentID.Value, item.ExerciseID.Value, item.SetPackageID.Value);
+                                                            string title = "";
+                                                            if (exf != null)
+                                                            {
+                                                                if (item.PartNumber == 4)
+                                                                {
+                                                                    title = "Task One";
+                                                                }
+                                                                if (item.PartNumber == 5)
+                                                                {
+                                                                    title = "Task Two";
+                                                                }
+                                                                if (!string.IsNullOrEmpty(item.ExerciseTitle))
+                                                                {
+                                                                    <tr>
+                                                                        <td>@title</td>
+                                                                        <td>@Html.Raw(item.ExerciseTitle)</td>
+                                                                        <td class="d-flex justify-content-end">
+                                                                            <a href="@Url.Action("ExrciseDetailEssayFix","StudentExrcise",new {id=exf.ID})" class="btn btn-primary btn-icon d-block">
+                                                                                <i data-feather="eye"></i> View Result
+                                                                            </a>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            }
+
+                                                        }
+
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                }
+                            }
+                        }
+                        @*else if (skill.TypeDetail == 4)
+                            {
+                                if (sethistory != null && sethistory.ModifiedDate != null)
+                                {
+                                    if (sethistory.IsDone.Value)
+                                    {
+                                        List<tbl_SetPackageStudentExercise> lex = SetPackageStudentExerciseTable.getall(skill.SetPackageID.Value, aclog.ID).Where(n => n.PartNumber == 1 || n.PartNumber == 2 || n.PartNumber == 3).ToList();
+                                        if (lex.Count > 0)
+                                        {
+                                            <div class="card-header d-flex align-items-center justify-content-between list-result">
+                                                <table class="new-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="width:10%">Task</th>
+                                                            <th>Question</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var item in lex)
+                                                        {
+                                                            if (item != null)
+                                                            {
+                                                                var exf = ExerciseAddonStudentTable.getbyUIDStudent_SetPackageID(item.StudentID.Value, item.ExerciseID.Value, item.SetPackageID.Value);
+                                                                if (exf != null)
+                                                                {
+                                                                    string title = "";
+                                                                    if (item.PartNumber == 1)
+                                                                    {
+                                                                        title = "Part 1";
+                                                                    }
+                                                                    if (item.PartNumber == 2)
+                                                                    {
+                                                                        title = "Part 2";
+                                                                    }
+                                                                    if (item.PartNumber == 3)
+                                                                    {
+                                                                        title = "Part 3";
+                                                                    }
+                                                                    if (!string.IsNullOrEmpty(item.ExerciseTitle))
+                                                                    {
+                                                                        <tr>
+                                                                            <td>@title</td>
+                                                                            <td>@Html.Raw(item.ExerciseTitle)</td>
+                                                                            <td class="d-flex justify-content-end">
+                                                                                <a href="@Url.Action("ExrciseDetailEssayFix","StudentExrcise",new {id=exf.ID})" class="btn btn-primary btn-icon d-block">
+                                                                                    <i data-feather="eye"></i> View Result
+                                                                                </a>
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                }
+
+                                                            }
+
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    }
+                                }
+
+                            }*@
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+<!---Create Teacher-->
+@section myScripts{
+    <script>
+        $('.open-result-list').on('click', function () {
+            if ($(this).closest('.card').find('.list-result').hasClass('show')) {
+                $(this).closest('.card').find('.list-result').removeClass('show');
+            } else {
+                $(this).closest('.card').find('.list-result').addClass('show');
+            }
+        });
+    </script>
+}

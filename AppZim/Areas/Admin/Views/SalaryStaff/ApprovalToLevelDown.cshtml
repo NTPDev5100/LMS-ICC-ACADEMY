@@ -1,0 +1,321 @@
+﻿@using AppZim.TableSql;
+@using AppZim.Models;
+@model List<Admin_ApprovalToLevelDown_GetList_Result>
+@{
+    ViewBag.Title = "ApprovalToLevelDown";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+}
+<style>
+    img {
+        width: unset;
+    }
+</style>
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item active" aria-current="page">Duyệt xuống cấp bậc</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    @using (Html.BeginForm("ApprovalToLevelDown", "SalaryStaff", FormMethod.Get, new { id = "form-search" }))
+    {
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+                <div class="form-group mg-r-5">
+                    <input type="text" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                </div>
+                <div class="form-group mg-r-5">
+                    <input type="text" name="to" class="form-control datetimepicker to-date date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                </div>
+                <div class="form-group mg-r-5">
+                    <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- End breadcrumb -->
+<div class="ready-for-test mg-t-30">
+    <div class="card mg-b-30">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-group-question table-vcenter">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Nhân viên</th>
+                            <th>Doanh thu</th>
+                            <th>Cấp bậc chưa thay đổi</th>
+                            <th>Cấp bậc thay đổi</th>
+                            <th>Mức thưởng thay đổi(%)</th>
+                            <th>Trạng thái</th>
+                            <th>Lý do</th>
+                            <th>Gửi mail</th>
+                            <th>Ngày tạo</th>
+                            <th class="wd-50"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tb-list-salary">
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.FullName</td>
+                                <td class="text-right">@String.Format("{0:0,0}", item.Revenue)</td>
+                                <td>@item.PositionName</td>
+                                <td>@item.PositionNameNew</td>
+                                <td>@item.PercentSalaryOld -> @item.PercentSalary</td>
+                                <td>
+                                    @if (item.Status == 0)
+                                    {
+                                        <span class="badge badge-info">Chưa duyệt</span>
+                                    }
+                                    else if (item.Status == 1)
+                                    {
+                                        <span class="badge badge-success">Đã duyệt</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-danger">Không duyệt</span>
+                                    }
+                                </td>
+                                <td>@item.Note</td>
+                                <td>
+                                    @if (item.IsSendMail == false)
+                                    {
+                                        <span class="badge badge-info">Chưa gửi</span>
+
+                                    }
+                                    @if (item.IsSendMail == true)
+                                    {
+                                        <span class="badge badge-success">Đã gửi</span>
+
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.CreatedDate != null)
+                                    {
+                                        <span>@item.CreatedDate.Value.ToString("dd/MM/yyyy")</span>
+                                    }
+                                </td>
+                                <td class="no-wrap">
+                                    @if (item.Status == 0)
+                                    {
+                                        <a class="pd-5 btn-edit" href="javascript:;" data-id="@item.ID" data-status="@item.Status" data-note="@item.Note" data-level="@item.NewRank"><i class="fas fa-edit"></i></a>
+                                    }
+                                    @if (item.IsSendMail == false)
+                                    {
+                                        <a href="javascript:;" title="Gửi mail" onclick="GetValue(@item.ID, '@item.Email')"><i class="fas fa-mail-bulk"></i></a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+                    <div class="pagination-container">
+                        @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+                    </div>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Gửi mail -->
+<div class="modal" id="div-send-mail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gửi mail</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="/Admin/SalaryStaff/GuiMailXuongRank" method="post">
+                    <input id="ID" name="ID" hidden />
+                    <label>Địa chỉ mail:</label>
+                    <input class="form-control" id="txt-emails" name="txt-emails" />
+                    <label>Tiêu đề:</label>
+                    <input class="form-control" id="txt-title" name="txt-title" />
+                    <label>Nội dung:</label>
+                    <textarea class="form-control" id="txt-content" name="txt-content" placeholder="Nội dung mail"></textarea>
+                    <input hidden id="submit" type="submit" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                <button type="button" class="btn btn-primary" onclick="Gui();">Gửi Mail</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="div-add" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateApprovalToLevelDown", "SalaryStaff", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" value="0" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Duyệt xuống cấp bậc</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Cấp bậc:</label>
+                                    <select name="slLevel" class="form-control">
+                                        @{
+                                            var positions = SalarySettingTable.getall();
+                                            foreach (var p in positions)
+                                            {
+                                                <option value="@p.ID">@p.PositionName</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Trạng thái:</label>
+                                    <select name="slStatus" required class="form-control">
+                                        <option value="1">Duyệt</option>
+                                        <option value="2">Không duyệt</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Lý do</label>
+                                    <textarea name="txt-note" type="text" class="form-control" placeholder="Lý do không duyệt" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+    <script>
+
+
+
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+
+        $(document).on("click", ".btn-edit", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('textarea[name=txt-note]').val($(this).attr('data-note'));
+            $('select[name=slStatus]').val($(this).attr('data-status'));
+            $('select[name=slStatus]').trigger('change');
+            $("select[name=slLevel]").val($(this).attr('data-level')).trigger('change');
+            $('#div-add').modal();
+        });
+
+        function GetValue(id, email) {
+            $("#ID").val(id);
+            $("#txt-emails").val(email);
+            $('#div-send-mail').modal('show');
+        }
+
+        function Gui() {
+            var tieude = $("#txt-title").val();
+            var noidung = tinymce.get('txt-content').contentDocument.activeElement.innerText;
+            if (tieude == "" || noidung == "") {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập đủ tiêu đề + nội dung',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                });
+                return false;
+            }
+            $("#submit").click();
+        }
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#txt-content',
+                height: 450,
+                width: '100%',
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            });
+        });
+    </script>
+}
+

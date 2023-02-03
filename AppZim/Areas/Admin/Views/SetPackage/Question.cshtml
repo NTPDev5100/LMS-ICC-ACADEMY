@@ -1,0 +1,2295 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using AppZim.ZIM;
+@using MB.Extensions
+
+@{
+    //Update 17-06-2020
+    ViewBag.Title = "Question";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    List<tbl_ExerciseGroup> gp = Model;
+    int setid = ViewBag.SetID;
+    int QuestionType = ViewBag.QuestionType;
+    tbl_SetPackageDetail setdetail = SetPackageDetailTable.getbysetid(setid).Where(n => n.TypeDetail == QuestionType).FirstOrDefault();
+    List<tbl_ExerciseGroup> listexg = ExerciseGroupTable.getbysetdetail(setdetail.ID);
+    List<tbl_Exercise> listexmc = new List<tbl_Exercise>();
+    foreach (var item in listexg)
+    {
+        List<tbl_Exercise> exmcitem = ExerciseTable.getbygroupid(item.ID);
+        listexmc.AddRange(exmcitem);
+    }
+}
+<style>
+    img {
+        width: unset;
+    }
+</style>
+<div class="exam__wrap">
+    <!-- Breadcrumb -->
+    <div class="row mg-b-30">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item"><a href="@Url.Action("ListSetPackage", "SetPackage", new { area = "Admin" })">Danh sách gói </a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@ViewBag.QuestionTitle</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <!-- End breadcrumb -->
+    <div class="ready-for-test">
+        <h3>@ViewBag.QuestionTitle</h3>
+        @using (Html.BeginForm("UpdateSetDetailSkill", "SetPackage", FormMethod.Post, new { id = "form-update-setdetail", @enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="hdf-set-id" value="@ViewBag.SetID" />
+            <input type="hidden" name="hdf-set-type" value="@ViewBag.QuestionType" />
+            <div class="row">
+                @{
+                    if (ViewBag.QuestionType == 1)
+                    {
+                        <div class="col-12">
+                            <label for="role" class="">Tệp âm thanh:</label>
+                            <input type="file" class="dropify" name="fileupload" accept="audio/*" />
+                        </div>
+                        if (!string.IsNullOrEmpty(setdetail.LinkAudio))
+                        {
+                            <div class="col-12">
+                                <audio controls style="width:100%;">
+                                    <source src="@setdetail.LinkAudio" type="audio/mpeg">
+                                </audio>
+                            </div>
+                        }
+                    }
+                    if (ViewBag.QuestionType == 2)
+                    {
+                        <div class="col-2 pd-t-10 pd-b-10">
+                            <input type="number" name="txt-time-set" class="form-control" placeholder="60 phút" value="@setdetail.Minute" />
+                        </div>
+                    }
+                    if (ViewBag.QuestionType == 3)
+                    {
+                        <input type="hidden" name="txt-time-set" class="form-control" value="60" />
+                    }
+                    <div class="col-12">
+                        <label for="role" class="">Mô tả:</label>
+                        <textarea name="txt-des" id="txt-description" class="form-control editor d-none" rows="2" required placeholder="....">@setdetail.Description</textarea>
+                    </div>
+                    <div class="col-6 pd-t-10 pd-b-10 justify-content-end">
+                        <a href="javascript:;" class="btn btn-primary update-setdetail">Cập nhật</a>
+                    </div>
+                }
+            </div>
+        }
+        @if (setdetail.TypeDetail != 3 && setdetail.TypeDetail != 4)
+        {
+            <div class="card mg-b-30">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="mg-b-5">Danh sách câu hỏi</h4>
+                        <p class="mg-b-0">
+                            Các câu hỏi sẽ được sắp xếp theo thứ tự chỉ số của nhóm tăng dần. Nhóm mới.
+                        </p>
+                    </div>
+                    <div>
+                        <a href="javascript:;" id="btn-group-new" class="btn btn-primary btn-icon" data-toggle="modal" data-target="#js-edit-group"><i data-feather="plus" class="left"></i> Thêm nhóm</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-group-question table-vcenter">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th></th>
+                                    <th class="th-name">Tên nhóm</th>
+                                    <th class="th-name">Bài tập</th>
+                                    <th class="th-name">Loại nhóm</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    foreach (var item in gp)
+                                    {
+                                        if (item.ExerciseGroupID != null)
+                                        {
+                                            if (item.ExerciseGroupID > 0)
+                                            {
+                                                var g = ExerciseGroupTable.getbyid(item.ExerciseGroupID.Value);
+                                                item.SetPackageQuestion = g.SetPackageQuestion;
+                                            }
+                                        }
+                                        List<tbl_Exercise> lq = ExerciseTable.getbygroupid(item.ID).Where(n => n.isHide != true).ToList();
+                                        if (item.TypeMultiChoice == 1)
+                                        {
+                                            <tr class="tr-row">
+                                                <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                                                <td>@item.ExerciseGroupName</td>
+                                                <td>@lq.Count câu hỏi</td>
+                                                <td><span>Chọn 1 đáp án</span></td>
+                                                <td>
+                                                    <div class="dropdown dropdown-icon">
+                                                        <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                                           data-toggle="dropdown" aria-haspopup="true"
+                                                           aria-expanded="false">more_vert</a>
+                                                        <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                                            <a class="dropdown-item btn-icon edit-group-drag" href="javascript:;" data-id="@item.ID" data-toggle="modal" data-target="#js-edit-group"><i data-feather="edit"></i> Sửa nhóm</a>
+                                                            <a class="dropdown-item btn-icon delete-group" href="javascript:;" data-id="@item.ID"><i data-feather="trash"></i> Xóa</a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="collapse-row">
+                                                <td colspan="7">
+                                                    <div class="collapse-content pd-y-15-f">
+                                                        <h5 class="mg-b-15">Câu hỏi</h5>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-bordered table-question">
+                                                                <thead class="thead-dark">
+                                                                    <tr>
+                                                                        <th><span class="nowrap">Câu hỏi</span></th>
+                                                                        <th><span class="nowrap">Đáp án</span></th>
+                                                                        <th><span class="nowrap">Trạng thái</span></th>
+                                                                        <th></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @{
+                                                                        foreach (var ex in lq)
+                                                                        {
+                                                                            if (ex.isHide.Value)
+                                                                            {
+                                                                                continue;
+                                                                            }
+                                                                            <tr>
+                                                                                <td>@Html.Raw(ex.ExerciseTitle)</td>
+                                                                                <td>
+                                                                                    @{
+                                                                                        var answers = ExerciceMultiChoiseTable.getbyexeid(ex.ID);
+                                                                                        foreach (var ans in answers)
+                                                                                        {
+                                                                                            if (ans.isTrue.Value)
+                                                                                            {
+                                                                                                <p class="nowrap">@ans.AnswerTitle <span class="badge badge-success">Đúng</span></p>
+                                                                                            }
+                                                                                            else
+                                                                                            {
+                                                                                                <p class="nowrap">@ans.AnswerTitle</p>
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                </td>
+                                                                                <td>
+                                                                                    @{
+                                                                                        if (ex.isHide.Value)
+                                                                                        {
+                                                                                            <span class="badge badge-danger">Khóa</span>
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <span class="badge badge-success">Mở</span>
+                                                                                        }
+                                                                                    }
+                                                                                </td>
+                                                                                <td>
+                                                                                    <div class="d-flex align-items-center">
+                                                                                        <a href="#canvas-question" data-toggle="modal" data-target="#js-question-choice" class="btn btn-outline-info btn-icon mg-r-10 edit-question-choice" data-id="@ex.ID" data-group="@item.ID" data-multi="0"><i data-feather="edit"></i> Sửa</a>
+                                                                                        <a href="javascript:;" class="btn btn-outline-danger btn-icon delete-question-choice" data-id="@ex.ID"><i data-feather="trash"></i> Xóa</a>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <a href="javascript:;"
+                                                           class="add-more-question btn btn-warning btn-icon mg-y-15 add-question-choice"
+                                                           data-toggle="modal" data-id-group="@item.ID"
+                                                           data-target="#js-question-choice">
+                                                            <i data-feather="plus" class="mg-r-10 left"></i>
+                                                            Thêm câu hỏi
+                                                        </a>
+                                                        <h5 class="mg-b-15 mg-t-15">Nội dung câu hỏi</h5>
+                                                        <div class="drop-answer group-question">
+                                                            @Html.Raw(item.SetPackageQuestion)
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        if (item.TypeMultiChoice == 2)//drag
+                                        {
+                                            <tr class="tr-row">
+                                                <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                                                <td>@item.ExerciseGroupName</td>
+                                                <td>@lq.Count câu hỏi</td>
+                                                <td><span>Kéo thả</span></td>
+                                                <td>
+                                                    <div class="dropdown dropdown-icon">
+                                                        <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                                           data-toggle="dropdown" aria-haspopup="true"
+                                                           aria-expanded="false">more_vert</a>
+                                                        <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                                            <a class="dropdown-item btn-icon edit-group-drag" href="javascript:;" data-id="@item.ID" data-toggle="modal" data-target="#js-edit-group"><i data-feather="edit"></i> Sửa nhóm</a>
+                                                            <a class="dropdown-item btn-icon delete-group" href="javascript:;" data-id="@item.ID"><i data-feather="trash"></i> Xóa</a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="collapse-row">
+                                                <td colspan="7">
+                                                    <div class="collapse-content pd-y-15-f">
+
+                                                        <h5 class="mg-b-15">Dữ liệu câu hỏi</h5>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-bordered table-question w-auto">
+                                                                <thead class="thead-dark">
+                                                                    <tr>
+                                                                        <th><span class="nowrap">STT</span></th>
+                                                                        <th class="quest-title">Đáp án đúng</th>
+                                                                        <th><span class="nowrap">Đáp án sai nhiễu</span></th>
+                                                                        <th></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @{
+                                                                        int index = 0;
+                                                                        foreach (var etem in lq)
+                                                                        {
+                                                                            index += 1;
+                                                                            List<tbl_ExerciceMultiChoise> lanw = ExerciceMultiChoiseTable.getbyexeid(etem.ID).Where(n => n.isTrue == false).ToList();
+                                                                            if (ExerciceMultiChoiseTable.getbyexeid(etem.ID).Where(n => n.isTrue == true).FirstOrDefault() == null)
+                                                                            {
+                                                                                continue;
+                                                                            }
+                                                                            string noise = "";
+                                                                            for (int i = 0; i < lanw.Count; i++)
+                                                                            {
+                                                                                if (i != lanw.Count - 1)
+                                                                                {
+                                                                                    noise += lanw[i].AnswerTitle + ", ";
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    noise += lanw[i].AnswerTitle;
+                                                                                }
+                                                                            }
+                                                                            <tr>
+                                                                                <td><span class="nowrap">Câu @index</span></td>
+                                                                                <td><p class="line-clamp clamp-2 mg-b-0">@ExerciceMultiChoiseTable.getbyexeid(etem.ID).Where(n => n.isTrue == true).FirstOrDefault().AnswerTitle</p></td>
+                                                                                <td><span>@noise</span></td>
+                                                                                <td>
+                                                                                    <div class="d-flex align-items-center">
+                                                                                        <a href="#canvas-question" data-toggle="modal" data-target="#js-question-drag" data-id="@etem.ID" class="btn btn-outline-info btn-icon mg-r-10 edit-answer-drag"><i data-feather="edit"></i> Sửa</a>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <h5 class="mg-b-15 mg-t-15">Nội dung câu hỏi</h5>
+                                                        <div class="drop-answer group-question">
+                                                            @Html.Raw(item.SetPackageQuestion)
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        if (item.TypeMultiChoice == 3)//write
+                                        {
+                                            <tr class="tr-row">
+                                                <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                                                <td>@item.ExerciseGroupName</td>
+                                                <td>@lq.Count câu hỏi</td>
+                                                <td><span>Điền vào ô trống</span></td>
+                                                <td>
+                                                    <div class="dropdown dropdown-icon">
+                                                        <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                                           data-toggle="dropdown" aria-haspopup="true"
+                                                           aria-expanded="false">more_vert</a>
+                                                        <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                                            <a class="dropdown-item btn-icon edit-group-drag" href="javascript:;" data-id="@item.ID" data-toggle="modal" data-target="#js-edit-group"><i data-feather="edit"></i>Sửa nhóm</a>
+                                                            <a class="dropdown-item btn-icon delete-group" href="javascript:;" data-id="@item.ID"><i data-feather="trash"></i>Xóa nhóm</a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="collapse-row">
+                                                <td colspan="7">
+                                                    <div class="collapse-content pd-y-15-f">
+                                                        <h5 class="mg-b-15">Dữ liệu câu hỏi</h5>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-bordered table-question w-auto">
+                                                                <thead class="thead-dark">
+                                                                    <tr>
+                                                                        <th><span class="nowrap">STT</span></th>
+                                                                        <th class="quest-title">Đáp án</th>
+                                                                        <th></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @{
+                                                                        int index = 0;
+                                                                        foreach (var etem in lq)
+                                                                        {
+                                                                            index += 1;
+                                                                            List<tbl_ExerciceMultiChoise> lanw = ExerciceMultiChoiseTable.getbyexeid(etem.ID).Where(n => n.isTrue == true).ToList();
+                                                                            string trueans = "";
+                                                                            for (int i = 0; i < lanw.Count; i++)
+                                                                            {
+                                                                                if (i != lanw.Count - 1)
+                                                                                {
+                                                                                    trueans += lanw[i].AnswerTitle + ", ";
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    trueans += lanw[i].AnswerTitle;
+                                                                                }
+                                                                            }
+                                                                            <tr>
+                                                                                <td><span class="nowrap">Câu @index</span></td>
+                                                                                <td><span>@trueans</span></td>
+                                                                                <td>
+                                                                                    <div class="d-flex align-items-center">
+                                                                                        <a href="#canvas-question" data-toggle="modal" data-target="#js-question-write" data-id="@etem.ID" class="btn btn-outline-info btn-icon mg-r-10 edit-type-write"><i data-feather="edit"></i> Sửa</a>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <h5 class="mg-b-15 mg-t-15">Nội dung câu hỏi</h5>
+                                                        <div class="drop-answer group-question">
+                                                            @Html.Raw(item.SetPackageQuestion)
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        if (item.TypeMultiChoice == 4)//nhiều đáp án
+                                        {
+                                            <tr class="tr-row">
+                                                <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                                                <td>@item.ExerciseGroupName</td>
+                                                <td>@lq.Count câu hỏi</td>
+                                                <td><span>Chọn nhiều đáp án</span></td>
+                                                <td>
+                                                    <div class="dropdown dropdown-icon">
+                                                        <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                                           data-toggle="dropdown" aria-haspopup="true"
+                                                           aria-expanded="false">more_vert</a>
+                                                        <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                                            <a class="dropdown-item btn-icon edit-group-drag" href="javascript:;" data-id="@item.ID" data-toggle="modal" data-target="#js-edit-group"><i data-feather="edit"></i>Sửa nhóm</a>
+                                                            <a class="dropdown-item btn-icon delete-group" href="javascript:;" data-id="@item.ID"><i data-feather="trash"></i>Xóa nhóm</a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="collapse-row">
+                                                <td colspan="7">
+                                                    <div class="collapse-content pd-y-15-f">
+                                                        <h5 class="mg-b-15">Dữ liệu câu hỏi</h5>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-bordered table-question">
+                                                                <thead class="thead-dark">
+                                                                    <tr>
+                                                                        <th><span class="nowrap">Câu hỏi</span></th>
+                                                                        <th><span class="nowrap">Đáp án</span></th>
+                                                                        <th><span class="nowrap">Trạng thái</span></th>
+                                                                        <th></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @{
+                                                                        foreach (var ex in lq)
+                                                                        {
+                                                                            if (ex.isHide.Value)
+                                                                            {
+                                                                                continue;
+                                                                            }
+                                                                            <tr>
+                                                                                <td>@Html.Raw(ex.ExerciseTitle)</td>
+                                                                                <td>
+                                                                                    @{
+                                                                                        var answers = ExerciceMultiChoiseTable.getbyexeid(ex.ID);
+                                                                                        foreach (var ans in answers)
+                                                                                        {
+                                                                                            if (ans.isTrue.Value)
+                                                                                            {
+                                                                                                <p class="nowrap">@ans.AnswerTitle <span class="badge badge-success">Đúng</span></p>
+                                                                                            }
+                                                                                            else
+                                                                                            {
+                                                                                                <p class="nowrap">@ans.AnswerTitle</p>
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                </td>
+                                                                                <td>
+                                                                                    @{
+                                                                                        if (ex.isHide.Value)
+                                                                                        {
+                                                                                            <span class="badge badge-danger">Khóa</span>
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <span class="badge badge-success">Mở</span>
+                                                                                        }
+                                                                                    }
+                                                                                </td>
+                                                                                <td>
+                                                                                    <div class="d-flex align-items-center">
+                                                                                        <a href="#canvas-question" data-toggle="modal" data-target="#js-question-multi-choice" class="btn btn-outline-info btn-icon mg-r-10 edit-question-choice" data-id="@ex.ID" data-group="@item.ID" data-multi="1"><i data-feather="edit"></i> Sửa</a>
+                                                                                        <a href="javascript:;" class="btn btn-outline-danger btn-icon delete-question-choice" data-id="@ex.ID"><i data-feather="trash"></i> Xóa</a>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <a href="#js-question-multi-choice"
+                                                           class="add-more-question btn btn-warning btn-icon mg-y-15 add-question-multi-choice"
+                                                           data-toggle="modal" data-id-group="@item.ID">
+                                                            <i data-feather="plus" class="mg-r-10 left"></i> Thêm câu hỏi
+                                                        </a>
+                                                        <h5 class="mg-b-15 mg-t-15">Nội dung câu hỏi</h5>
+                                                        <div class="drop-answer group-question">
+                                                            @Html.Raw(item.SetPackageQuestion)
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        if (item.TypeMultiChoice == 5)//map
+                                        {
+                                            <tr class="tr-row">
+                                                <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                                                <td>@item.ExerciseGroupName</td>
+                                                <td>@lq.Count câu hỏi</td>
+                                                <td><span>Ghép đôi đáp án</span></td>
+                                                <td>
+                                                    <div class="dropdown dropdown-icon">
+                                                        <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                                           data-toggle="dropdown" aria-haspopup="true"
+                                                           aria-expanded="false">more_vert</a>
+                                                        <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                                            <a class="dropdown-item btn-icon edit-group-drag" href="javascript:;" data-id="@item.ID" data-toggle="modal" data-target="#js-edit-group"><i data-feather="edit"></i> Sửa nhóm</a>
+                                                            <a class="dropdown-item btn-icon delete-group" href="javascript:;" data-id="@item.ID"><i data-feather="trash"></i> Xóa nhóm</a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr class="collapse-row" data-group="">
+                                                <td colspan="7">
+                                                    <div class="collapse-content pd-y-15-f">
+                                                        <h5 class="mg-b-15">Dữ liệu câu hỏi</h5>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-bordered table-question">
+                                                                <thead class="thead-dark">
+                                                                    <tr>
+                                                                        <th><span class="nowrap">Câu hỏi</span></th>
+                                                                        <th><span class="nowrap">Đáp án</span></th>
+                                                                        <th><span class="nowrap">Trạng thái</span></th>
+                                                                        <th></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @{
+                                                                        foreach (var ex in lq)
+                                                                        {
+                                                                            if (ex.isHide.Value)
+                                                                            {
+                                                                                continue;
+                                                                            }
+                                                                            <tr>
+                                                                                <td>@Html.Raw(ex.ExerciseTitle)</td>
+                                                                                <td>
+                                                                                    @{
+                                                                                        var answers = ExerciceMultiChoiseTable.getbyexeid(ex.ID);
+                                                                                        foreach (var ans in answers)
+                                                                                        {
+                                                                                            if (ans.isTrue.Value)
+                                                                                            {
+                                                                                                <p class="nowrap">@ans.AnswerTitle <span class="badge badge-success">Đúng</span></p>
+                                                                                            }
+                                                                                            else
+                                                                                            {
+                                                                                                <p class="nowrap">@ans.AnswerTitle</p>
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                </td>
+                                                                                <td>
+                                                                                    @{
+                                                                                        if (ex.isHide.Value)
+                                                                                        {
+                                                                                            <span class="badge badge-danger">Khóa</span>
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <span class="badge badge-success">Mở</span>
+                                                                                        }
+                                                                                    }
+                                                                                </td>
+                                                                                <td>
+                                                                                    <div class="d-flex align-items-center">
+                                                                                        <a href="#canvas-question" data-toggle="modal" data-target="#js-question-map" class="btn btn-outline-info btn-icon mg-r-10 edit-question-choice" data-id="@ex.ID" data-group="@item.ID" data-multi="2"><i data-feather="edit"></i> Sửa</a>
+                                                                                        <a href="javascript:;" class="btn btn-outline-danger btn-icon delete-question-choice" data-id="@ex.ID"><i data-feather="trash"></i> Xóa</a>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                        List<tbl_ExerciceMultiChoise> listnoiseword = ExerciceMultiChoiseTable.getnoisewordbyExGroupID(item.ID);
+                                                                        foreach (var noise in listnoiseword)
+                                                                        {
+                                                                            <tr>
+                                                                                <td></td>
+                                                                                <td colspan="2">@Html.Raw(noise.AnswerTitle)</td>
+                                                                                <td>
+                                                                                    <div class="d-flex align-items-center">
+                                                                                        <a href="javascript:;" class="btn btn-outline-info btn-icon mg-r-10 edit-map-noise-word" data-title="@noise.AnswerTitle" data-id="@noise.ID" data-id-group="@noise.ExerciseGroupID" data-multi="2"><i data-feather="edit"></i> Sửa</a>
+                                                                                        <a href="javascript:;" class="btn btn-outline-danger btn-icon delete-map-noise-word" data-id="@noise.ID"><i data-feather="trash"></i> Xóa</a>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <a href="javascript:;"
+                                                           class="add-more-question btn btn-warning btn-icon mg-y-15 add-question-map"
+                                                           data-toggle="modal" data-id-group="@item.ID"
+                                                           data-target="#js-question-map">
+                                                            <i data-feather="plus" class="mg-r-10 left"></i> Thêm câu hỏi
+                                                        </a>
+                                                        <a href="javascript:;"
+                                                           class="add-more-question btn btn-warning btn-icon mg-y-15 add-noise-map"
+                                                           data-id-group="@item.ID">
+                                                            <i data-feather="plus" class="mg-r-10 left"></i> Thêm đáp án sai
+                                                        </a>
+                                                        <h5 class="mg-b-15 mg-t-15">Nội dung câu hỏi</h5>
+                                                        <div class="drop-answer group-question">
+                                                            @Html.Raw(item.SetPackageQuestion)
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+</div>
+<!-- Choice edit -->
+<div class="modal" tabindex="-1" role="dialog" id="js-question-choice">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddExerciseChoice", "SetPackage", FormMethod.Post, new { id = "f-create-q-choice" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdf-group-id" />
+                <input type="hidden" name="hdf-id" />
+                <input type="hidden" name="hdf-question" />
+                <input type="hidden" name="hdf-answer-true" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Câu hỏi một đáp án</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Nội dung câu hỏi:</label>
+                                <textarea id="txt-question-choice" rows="5" class="form-control editor" placeholder="Nhập nội dung câu hỏi..."></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-md-6 d-flex align-items-center">
+                                    <div class="check-flag">
+                                        <label class="custom-checkbox">
+                                            <input id="rda" class="check-input " type="radio" name="checkFlag" checked>
+                                            <span class="ip-avata"></span>
+                                        </label>
+                                    </div>
+                                    <input type="text" name="txt-answer-a" placeholder="A" class="form-control answer-choice">
+                                </div>
+                                <div class="form-group col-md-6 d-flex align-items-center">
+                                    <div class="check-flag">
+                                        <label class="custom-checkbox">
+                                            <input id="rdb" class="check-input " type="radio" name="checkFlag" value="0">
+                                            <span class="ip-avata"></span>
+                                        </label>
+                                    </div>
+                                    <input type="text" name="txt-answer-b" placeholder="B" class="form-control answer-choice">
+                                </div>
+                                <div class="form-group col-md-6 d-flex align-items-center">
+                                    <div class="check-flag">
+                                        <label class="custom-checkbox">
+                                            <input id="rdc" class="check-input " type="radio" name="checkFlag" value="0">
+                                            <span class="ip-avata"></span>
+                                        </label>
+                                    </div>
+                                    <input type="text" name="txt-answer-c" placeholder="C" class="form-control answer-choice">
+                                </div>
+                                <div class="form-group col-md-6 d-flex align-items-center">
+                                    <div class="check-flag">
+                                        <label class="custom-checkbox">
+                                            <input id="rdd" class="check-input " type="radio" name="checkFlag" value="0">
+                                            <span class="ip-avata"></span>
+                                        </label>
+                                    </div>
+                                    <input type="text" name="txt-answer-d" placeholder="D" class="form-control answer-choice">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Giải thích đáp án:</label>
+                                <textarea id="txt-giaithich-answer" name="txt-giaithich-answer" rows="2" class="form-control" placeholder="..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-submit-choice" class="btn btn-primary">Lưu lại</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Drag answer edit -->
+<div class="modal" tabindex="-1" role="dialog" id="js-question-drag">
+    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateAnswerDrag", "SetPackage", FormMethod.Post, new { id = "f-edit-answer-drag" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdf-id" />
+                <input type="hidden" name="hdf-data" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Chỉnh sửa</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Đáp án đúng:</label>
+                                <input type="text" name="txt-edit-answer-drag-true" class="form-control" placeholder="...">
+                            </div>
+                            <div class="form-group" style="line-height: 40px;">
+                                <label>Đáp án sai nhiễu:</label>
+                                <button type="button" class="btn btn-primary" id="btn-add-noise" style="float:right">Thêm</button>
+                            </div>
+                            <div class="form-group" id="div-noise">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-update-answer-update" class="btn btn-primary">Cập nhật</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal" tabindex="-1" role="dialog" id="js-question-write">
+    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateAnswerWrite", "SetPackage", FormMethod.Post, new { id = "f-edit-answer-write" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdf-id" />
+                <input type="hidden" name="hdf-data" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Chỉnh sửa đáp án</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group" style="line-height: 40px;">
+                                <label>Đáp án đúng:</label>
+                                <button type="button" class="btn btn-primary" id="btn-add-correctword" style="float:right">Thêm</button>
+                            </div>
+                            <div class="form-group" id="div-correct">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-update-answer-write" class="btn btn-primary">Cập nhật</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Multi choise answer edit -->
+<div class="modal" tabindex="-1" role="dialog" id="js-question-multi-choice">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddExerciseChoice", "SetPackage", FormMethod.Post, new { id = "f-create-multi-choice" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdf-group-id"/>
+                <input type="hidden" name="hdf-id" />
+                <input type="hidden" name="hdf-question" />
+                <input type="hidden" name="hdf-answer" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Câu hỏi nhiều đáp án</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12" id="question-multi-choice-form">
+
+                            <div class="form-group">
+                                <label>Câu hỏi cha:</label>
+                                <select class="form-control select2" id="slt-parent-question" name="slt-parent-question">
+                                    <option value="0">Không</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nội dung câu hỏi:</label>
+                                <textarea id="txt-question-multi-choice" rows="5" class="form-control editor" placeholder="Nhập nội dung câu hỏi..."></textarea>
+                            </div>
+                            <div class="row pd-15">
+                                <a href="javascript:;" class="btn btn-primary btn-add-answer-multi-choice">Thêm đáp án</a>
+                            </div>
+                            <div class="row" id="div-answer-multi-choice">
+
+                            </div>
+                            <div class="form-group">
+                                <label>Giải thích đáp án:</label>
+                                <textarea id="txt-giaithich-answer-muti" name="txt-giaithich-answer" rows="2" class="form-control" placeholder="..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-submit-multi-choice" class="btn btn-primary">Lưu lại</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Multi choise answer edit -->
+<div class="modal" tabindex="-1" role="dialog" id="js-question-map">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddExerciseChoice", "SetPackage", FormMethod.Post, new { id = "f-create-map" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdf-group-id" />
+                <input type="hidden" name="hdf-id" />
+                <input type="hidden" name="hdf-question" />
+                <input type="hidden" name="hdf-answer" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Ghép đôi đáp án</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Nội dung câu hỏi:</label>
+                                <textarea id="txt-question-map" rows="5" class="form-control editor" placeholder="Nhập nội dung câu hỏi..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Đáp án:</label>
+                                <input type="text" id="txt-answer-map" name="txt-answer-map" class="form-control" placeholder="Nhập đáp án...">
+                            </div>
+                            <div class="form-group">
+                                <label>Giải thích đáp án:</label>
+                                <textarea id="txt-giaithich-answer-map" name="txt-giaithich-answer" rows="2" class="form-control" placeholder="..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-submit-map" class="btn btn-primary">Lưu lại</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!--Edit noise answer-->
+<div class="modal" tabindex="-1" role="dialog" id="js-edit-noise-map">
+    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateAnswerMap", "SetPackage", FormMethod.Post, new { id = "f-edit-answer-map" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfMapID" value="0" />
+                <input type="hidden" name="hdfMapNoiseID" value="0" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Đáp án sai</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Thêm đáp sai vào đây:</label>
+                                <input type="text" name="txt-edit-answer-noise-map" class="form-control" required placeholder="...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-update-noise-map" class="btn btn-primary">Lưu lại</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Group create -->
+<div class="modal" tabindex="-1" role="dialog" id="js-edit-group">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddGroupSet", "SetPackage", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="hdf-group-id" value="0" />
+                <input type="hidden" name="hdf-set-detail-id" value="@setdetail.ID" />
+                <input type="hidden" name="hdf-group-type" value="@ViewBag.TypeSkill" />
+                <input type="hidden" name="hdf-content" />
+                <input type="hidden" name="hdf-introduction" />
+                <input type="hidden" name="hdf-group-question" />
+                <input type="hidden" name="hdf-anwer" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Tạo nhóm câu hỏi mới</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="form-group col-md-8">
+                            <label>Tên nhóm:</label>
+                            <input type="text" class="form-control" name="txt-group-name" placeholder="..." required>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Loại:</label>
+                            <select name="ddl-type" required onchange="ChangeType(this)" class="form-control">
+                                <option value="">----</option>
+                                <option value="1">Chọn một đáp án</option>
+                                <option value="2">Kéo thả</option>
+                                <option value="3">Điền vào ô trống</option>
+                                <option value="4">Chọn nhiều đáp án</option>
+                                <option value="5">Ghép đôi đáp án</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-12">
+                            <label for="">Nhóm câu hỏi:</label>
+                            <select name="ddl-group-id" class="form-control">
+                                <option value="0">------</option>
+                                @{
+                                    foreach (var g in gp)
+                                    {
+                                        <option value="@g.ID">@g.ExerciseGroupName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-12">
+                            <label for="">Giới thiệu:</label>
+                            <textarea rows="5" id="txt-introduction" class="introdution-editor form-control" placeholder="..."></textarea>
+                        </div>
+                        <div class="form-group col-12">
+                            <label for="">Câu hỏi:</label>
+                            <textarea rows="5" id="txt-question" class="drag-editor form-control" placeholder="..."></textarea>
+                        </div>
+                        <div class="form-group col-12 answer__list">
+                            <div class="form-row" id="question-answer-list">
+                            </div>
+                        </div>
+                        <div class="form-group col-12" id="answer-noise">
+                            <label>Thêm đáp án khác:</label>
+                            <div class="form-row answer-noise-list" id="div-answer-noise-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-submit-drag" class="btn btn-primary">Lưu lại</button>
+                    <button type="submit" id="form-create" style="display:none"></button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+     @*<script src="https://cdn.tiny.cloud/1/dwosd5t49p472xnt7swnbk5x2gindl7eajzu3iu5jz7kvlz0/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>*@
+    <script>
+        //Bùa chèn được link trong form trên modal
+        $(document).on('focusin', function (e) {
+            if ($(e.target).closest(".tox-dialog").length) {
+                e.stopImmediatePropagation();
+            }
+        });
+
+        //nút thêm phiên âm tiếng nhật
+        const dialogConfig = {
+            title: 'Phiên âm',
+            body: {
+                type: 'panel',
+                items: [
+                    {
+                        type: 'input',
+                        name: 'dataInputKey',
+                        label: 'Nhập nội dung phiên âm'
+                    }
+                ]
+            },
+            buttons: [
+                {
+                    type: 'cancel',
+                    name: 'closeButton',
+                    text: 'Cancel'
+                },
+                {
+                    type: 'submit',
+                    name: 'submitButton',
+                    text: 'Save',
+                    primary: true
+                }
+            ],
+            initialData: {
+                dataInputKey: '',
+            },
+            onSubmit: function (api) {
+                var data = api.getData();
+                var textCt = data.dataInputKey;
+                const selectedContent = tinymce.activeEditor.selection.getContent();
+                tinymce.activeEditor.execCommand('mceInsertContent', false, ' <ruby> ' + selectedContent + ' <rt style="font-size:50%">' + textCt + '</rt></ruby> <br> ');
+                api.close();
+            }
+        };
+        
+
+        let questId = @listexmc.Count;
+        let group =  @(listexg.Count); // Group id question
+        let groupIndex =  @(listexg.Count+1);
+        //console.log(group);
+        //console.log(questId);
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+            const desEditor = {
+                selector: 'textarea.editor',
+                menubar: false,
+                inline: false,
+                min_height: 300,
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste',
+                    'autoresize',
+                    'stickytoolbar',
+                    'link',
+                    'media',
+                    'code'
+                ],
+                oninit: "setPlainText",
+                paste_as_text: true,
+                entity_encoding: "raw", //config utf8
+                autoresize_bottom_margin: 30,
+                toolbar: 'undo redo | formatselect | fontsizeselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | UploadImage link media | code | customInsertButton',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt",
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                    editor.ui.registry.addButton('customInsertButton', {
+                        text: 'Furigana', //phiên âm
+                        onAction: function (_) {
+                            // editor.insertContent('&nbsp;<strong>It\'s my button!</strong>&nbsp;');
+                            editor.windowManager.open(dialogConfig)
+                        }
+                    });
+
+                }
+            };
+            const matches = function (el, selector) {
+                return (el.matches || el.matchesSelector || el.msMatchesSelector || el.mozMatchesSelector || el
+                    .webkitMatchesSelector || el.oMatchesSelector).call(el, selector);
+            };
+            const setObjectAttribute = function (ele, objects) {
+                if (!Object.prototype.forEach) {
+                    Object.defineProperty(Object.prototype, 'forEach', {
+                        value: function (callback, thisArg) {
+                            if (this == null) {
+                                throw new TypeError('Not an object');
+                            }
+                            thisArg = thisArg || window;
+                            for (var key in this) {
+                                if (this.hasOwnProperty(key)) {
+                                    callback.call(thisArg, this[key], key, this);
+                                }
+                            }
+                        }
+                    });
+                }
+                objects.forEach(function (item, key) {
+                    ele.setAttribute(key, item);
+                });
+            }
+            const createAnswerByQuestion = (id, group, answer) => {
+                let answerWrap = document.createElement('div');
+                answerWrap.setAttribute('class', 'col-12 col-md-6 form-group correct-answer');
+                let inputEl = document.createElement('input');
+                setObjectAttribute(inputEl, {
+                    'class': 'form-control class-answer',
+                    'data-answer-id': 0,
+                    'data-question': id,
+                    'data-id': 'answer-' + id,
+                    'quest-group-id': group,
+                    'autocomplete': 'off',
+                    'placeholder': 'Answer',
+                    'answer-true': answer
+                });
+                answerWrap.appendChild(inputEl);
+                return answerWrap;
+            }
+            //let questId = 0;
+
+            const createEmptySpace = () => {
+                questId += 1;
+                let questionId = "quest-id-" + questId;
+                console.log(questId);
+                let groupId = "quest-group-" + group;
+                let currentEditor = tinymce.activeEditor;
+                let answerContainer = document.getElementById('question-answer-list');
+                let htmlZone =
+                    `<div class="dropwrap question__wrap question-each" contenteditable="false" id="${questionId}" data-question="${questId}" quest-group-id="${groupId}"></div>`;
+                const answerNode = createAnswerByQuestion(questionId, groupId, true);
+                let addNoiseEl = document.createElement('a');
+                let type = $('select[name="ddl-type"]').val();
+                if (type == 3) {
+                    addNoiseEl.innerHTML = '<i data-feather="plus"></i> Thêm';
+                }
+                else {
+                    addNoiseEl.innerHTML = '<i data-feather="plus"></i> Noise';
+                }
+                setObjectAttribute(addNoiseEl, {
+                    'href': 'javascript:;',
+                    'class': 'add-noise btn btn-warning action-icon'
+                });
+                addNoiseEl.addEventListener('click', function (e) {
+                    let noiseList = document.querySelector('#answer-noise .answer-noise-list');
+                    let questId = this.previousElementSibling.getAttribute('data-question');
+                    let answerEl = createAnswerByQuestion(questId, group, false);
+                    answerEl.classList.add('noise-word');
+                    let deleteNoiseEl = document.createElement('a');
+                    deleteNoiseEl.innerHTML = '<i data-feather="minus-circle"></i>';
+
+                    setObjectAttribute(deleteNoiseEl, {
+                        'href': 'javascript:;',
+                        'class': 'delete-noise btn btn-transparent tx-danger action-icon'
+                    });
+                    deleteNoiseEl.addEventListener('click', function (e) {
+                        let parentEl = this.parentNode;
+                        parentEl.parentNode.removeChild(parentEl);
+                    });
+                    answerEl.appendChild(deleteNoiseEl);
+                    noiseList.appendChild(answerEl);
+                    feather.replace();
+                });
+                answerNode.appendChild(addNoiseEl);
+                currentEditor.selection.setContent(htmlZone);
+                answerContainer.appendChild(answerNode);
+                document.getElementById('answer-noise').style.display = 'block';
+                feather.replace();
+            };
+
+            let dragEditor = {
+                selector: '.drag-editor',
+                menubar: false,
+                inline: false,
+                min_height: 300,
+                auto_focus: false,
+                body_class: 'drop-answer',
+                forced_root_block: 'div',
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste',
+                    'autoresize',
+                    'stickytoolbar',
+                    'link',
+                    'media',
+                    'table',
+                    'code'
+                ],
+                paste_as_text: true,
+                entity_encoding: "raw", //config utf8
+                autoresize_bottom_margin: 30,
+                toolbar: 'undo redo | formatselect | fontsizeselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | removeformat emptySpace | UploadImage link media | table tabledelete | tableprops tablerowprops tablecellprops | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | code | customInsertButton',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                    '/app-assets/zimv2/assets/css/custom.css?v=' + new Date().getTime()
+                ],
+                //   valid_elements: 'span.dropwrap',
+                //images_dataimg_filter: function (img) {
+                //    return img.hasAttribute('internal-blob');
+                //},
+                setup: (editor) => {
+                    //Add custom button
+                    editor.ui.registry.addButton('emptySpace', {
+                        text: 'Add space question',
+                        onAction: createEmptySpace
+                    });
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                    editor.ui.registry.addButton('customInsertButton', {
+                        text: 'Furigana', //phiên âm
+                        onAction: function (_) {
+                            // editor.insertContent('&nbsp;<strong>It\'s my button!</strong>&nbsp;');
+                            editor.windowManager.open(dialogConfig)
+                        }
+                    });
+                },
+                fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt",
+                init_instance_callback: function (editor) {
+                    const iframeDoc = editor.iframeElement.contentWindow.document;
+                    //Remove hover style
+                    const removeHoverStyle = () => {
+                        let questions = iframeDoc.getElementsByClassName('question__wrap');
+                        let answers = document.querySelectorAll('[data-question]');
+                        let noises = document.querySelectorAll('.noise-word input');
+                        [...answers].map(el => el.classList.remove('highlight-box'));
+                        [...questions].map(el => el.classList.remove('highlight-box'));
+                        [...noises].map(el => el.classList.remove('highlight-box'));
+                    }
+                    //Check editor content change and delete answer
+                    editor.on('keyup', function (e) {
+                        let currentQuestions = iframeDoc.querySelectorAll('.question__wrap');
+                        if (currentQuestions.length < 1) {
+                            let answerContainer = document.getElementById('question-answer-list');
+                            while (answerContainer.firstElementChild) {
+                                document.getElementById('answer-noise').style.display = 'none';
+                                answerContainer.removeChild(answerContainer.firstElementChild);
+                            }
+                            return false;
+                        }
+                        let listIds = [...currentQuestions].map(x => x.id);
+                        let listCurAnswers = document.querySelectorAll('.class-answer');
+                        console.log(listCurAnswers);
+                        let listNewAnswers = [...listCurAnswers].filter(x => {
+                            if (!listIds.includes(x.getAttribute('data-question'))) {
+                                x.parentNode.parentNode.removeChild(x.parentNode);
+                            }
+                        });
+                    });
+
+                    // Hover drop block in editor
+                    editor.on('mouseover', function (e) {
+                        let element = e.target;
+                        removeHoverStyle();
+                        if (!matches(element, '.question__wrap')) {
+                            removeHoverStyle();
+                            return false;
+                        }
+                        let id = element.id;
+                        let answer = document.querySelectorAll('[data-question="' + id + '"]');
+                        element.classList.add('highlight-box');
+                        [...answer].map(x => x.classList.add('highlight-box'));
+                    });
+
+                    // Hover input  in answer list
+                    $(document).on('mouseover', function (e) {
+                        let element = e.target;
+                        removeHoverStyle();
+                        if (!matches(element, '[data-question]')) {
+                            return false;
+                        }
+                        const id = element.getAttribute('data-question');
+                        let questionEl = iframeDoc.getElementById(id);
+                        let answer = document.querySelectorAll('[data-question="' + id + '"]');
+                        if (questionEl) {
+                            questionEl.classList.add('highlight-box');
+                            [...answer].map(x => x.classList.add('highlight-box'));
+                        }
+
+                    });
+                }
+            }
+            let introduceEditor = {
+                selector: '.introdution-editor',
+                menubar: false,
+                inline: false,
+                min_height: 300,
+                auto_focus: false,
+                body_class: 'drop-answer',
+                forced_root_block: 'div',
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste',
+                    'autoresize',
+                    'stickytoolbar',
+                    'link',
+                    'media',
+                    'table',
+                    'code'
+                ],
+                paste_as_text: true,
+                entity_encoding: "raw", //config utf8
+                autoresize_bottom_margin: 30,
+                toolbar: 'undo redo | formatselect | fontsizeselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | removeformat | UploadImage link media | table tabledelete | tableprops tablerowprops tablecellprops | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | code | customInsertButton',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                    '/app-assets/zimv2/assets/css/custom.css?v=' + new Date().getTime()
+                ],
+                //   valid_elements: 'span.dropwrap',
+                //images_dataimg_filter: function (img) {
+                //    return img.hasAttribute('internal-blob');
+                //},
+                setup: (editor) => {
+
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                    editor.ui.registry.addButton('customInsertButton', {
+                        text: 'Furigana', //phiên âm
+                        onAction: function (_) {
+                            // editor.insertContent('&nbsp;<strong>It\'s my button!</strong>&nbsp;');
+                            editor.windowManager.open(dialogConfig)
+                        }
+                    });
+                },
+                fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt",
+                init_instance_callback: function (editor) {
+
+                }
+            }
+            //Init editor
+            tinymce.init(desEditor);
+            tinymce.init(dragEditor);
+            tinymce.init(introduceEditor);
+            const readURL = function (input) {
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        if (e.target.result !== null)
+                            $('.thumbnail-preview img').attr('src', e.target.result);
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+            const readAudioURL = (input) => {
+                if (input.files && input.files[0]) {
+                    let filesArr = [...input.files];
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        let $inputWrap = $(input).closest('.setting-audio').find('.custom-file');
+                        let $preview = $(input).closest('.setting-audio').find('.preview-audio');
+                        let $fileName = $(input).closest('.setting-audio').find('.custom-file-label');
+                        console.log(filesArr);
+                        if (e.target.result !== null) {
+                            const $audio = $('<audio style="height:2.375rem; width:100%;" controls src="' + e
+                                .target.result + '"></audio>');
+                            $preview.children().remove();
+                            $preview.append($audio);
+                            $preview.removeClass('d-none');
+                            $fileName.text(filesArr[0].name);
+                        }
+                    }
+                    reader.readAsDataURL(filesArr[0]);
+                }
+            }
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/SetPackage/UploadFilePost',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '" style="width: unset;" />');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+
+      
+          
+            
+
+            $(".file-upload").on('change', function () {
+                readURL(this);
+            });
+            $(".audio-upload").on('change', function () {
+                readAudioURL(this);
+            });
+
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content').stop()
+                    .slideToggle(
+                        200);
+            });
+
+            $('.custom-checkbox').on('click', function () {
+                let $input = $(this).find('input');
+                $input.prop('checked', $input.prop('checked'))
+            });
+            $('body').on('click', '.match-label-list .badge', function () {
+                $('#js-add-label').modal('show');
+            });
+
+
+        });
+        $(document).on('click', '.update-setdetail', function () {
+            var content = tinymce.get('txt-description').contentDocument.activeElement.innerHTML;
+            $('textarea[name="txt-des"]').text(content);
+            $(this).addClass('disabled');
+            $('#form-update-setdetail').submit();
+
+        });
+        //tạo câu hỏi drag
+        $('#btn-submit-drag').click(function () {
+            var quesindex = '';
+            var anwerindex = '';
+            var content = tinymce.get('txt-question').contentDocument.activeElement.innerHTML;
+            var introduction = tinymce.get('txt-introduction').contentDocument.activeElement.innerHTML;
+            var text = tinymce.get('txt-question').contentDocument.activeElement.innerText;
+            console.log($('select[name=ddl-type]').val().length);
+
+            if (ckstring($('input[name=txt-group-name]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập tên nhóm!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                $('input[name=txt-group-name]').focus();
+                return;
+            }
+
+            if ($('select[name=ddl-type]').val().length == 0) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn loại câu hỏi!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                $('select[name=ddl-type]').focus();
+                return;
+            }
+            var t = parseInt($('select[name=ddl-type]').val());
+            console.log(t);
+            if (t == 2 || t == 3) {
+                //kiểm tra xem có nhập câu hỏi chưa
+                if (text.length == 1) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập câu hỏi!',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    });
+                    return;
+                }
+                //cau hoi
+                var dem = 0;
+                let $iframe = $('#txt-question_ifr').contents();
+                $iframe.find('.question-each').each(function () {
+                    dem += 1;
+                    quesindex += $(this).attr('data-question') + '⅃';
+
+                });
+                //kiểm tra xem tạo câu hỏi chưa
+                if (dem === 0) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập câu hỏi!',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    });
+                    return;
+                }
+                //câu trả lời
+                $('.class-answer').each(function () {
+                    console.log(this);
+                    if (ckstring($(this).val())) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Vui lòng nhập câu trả lời!',
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        });
+                        $(this).focus();
+                        return false;
+                    }
+                    else {
+                        anwerindex += $(this).attr('data-question') + '⅂' + $(this).attr('answer-true') + '⅂' + $(this).val() + '⅂' + $(this).attr('data-answer-id') + '⅃';
+
+                    }
+                })
+            }
+            else {
+
+            }
+            $('input[name=hdf-content]').val(content);
+            $('input[name=hdf-introduction]').val(introduction);
+            $('input[name=hdf-group-question]').val(quesindex);
+            $('input[name=hdf-anwer]').val(anwerindex);
+
+            $('#form-create').click();
+            $(this).attr('disabled', "");
+        })
+        //tạo nhóm câu hỏi
+        $('#btn-group-new').click(function () {
+            var id = $(this).attr('data-id');
+            group = groupIndex;
+            console.log(group);
+            $('input[name=hdf-group-id]').val(id);
+            console.log($('input[name=hdf-group-id]').val());
+            $('#question-answer-list').empty();
+            $('#div-answer-noise-list').empty();
+            tinymce.get('txt-question').getBody().innerHTML = '';
+            tinymce.get('txt-introduction').getBody().innerHTML = '';
+            //questId = 0;
+            $('input[name=txt-group-name]').val('');
+            $('select[name=ddl-type]').val('');
+        })
+        //edit nhóm câu hỏi
+        $('.edit-group-drag').click(function () {
+
+            var id = $(this).attr('data-id');
+            $('input[name=hdf-group-id]').val(id);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/GetInfoGroup",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        tinymce.get('txt-question').getBody().innerHTML = msg.d.SetPackageQuestion;
+                        tinymce.get('txt-introduction').getBody().innerHTML = msg.d.Introduction;
+                        group = msg.index;
+                        console.log(group);
+                        $('#question-answer-list').empty();
+                        $('#div-answer-noise-list').empty();
+
+                        $('#question-answer-list').append(msg.answer);
+                        $('#div-answer-noise-list').append(msg.noise);
+
+                        $('input[name=txt-group-name]').val(msg.d.ExerciseGroupName);
+                        $('select[name=ddl-type]').val(msg.d.TypeMultiChoice);
+                        $('select[name="ddl-group-id"]').val(msg.d.ExerciseGroupID);
+                        feather.replace();
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("edit-answer-drag");
+                }
+            });
+        })
+        //edit câu hỏi
+        $('.edit-question-choice').click(function () {
+            var id = $(this).attr('data-id');
+            var multi = $(this).attr('data-multi');
+            $('input[name=hdf-id]').val(id);
+            $('input[name=hdf-group-id]').val($(this).attr('data-group'));
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/GetInfoExerciseChoice",
+                data: '{id: ' + id + ', multi:' + multi + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        if (multi == 0) {//dạng chọn 1
+                            tinymce.get('txt-question-choice').getBody().innerHTML = msg.d.ExerciseTitle;
+                            $('input[name=txt-answer-a]').val("");
+                            $('input[name=txt-answer-b]').val("");
+                            $('input[name=txt-answer-c]').val("");
+                            $('input[name=txt-answer-d]').val("");
+                            if (typeof msg.A !== 'undefined') {
+                                $('input[name=txt-answer-a]').val(msg.A.AnswerTitle);
+                            }
+                            if (typeof msg.B !== 'undefined') {
+                                $('input[name=txt-answer-b]').val(msg.B.AnswerTitle);
+                            }
+                            if (typeof msg.C !== 'undefined') {
+                                $('input[name=txt-answer-c]').val(msg.C.AnswerTitle);
+                            }
+                            if (typeof msg.D !== 'undefined') {
+                                $('input[name=txt-answer-d]').val(msg.D.AnswerTitle);
+                            }
+                            if (typeof msg.A !== 'undefined') {
+                                if (msg.A.isTrue) {
+                                    $('#rda').prop('checked', true);
+                                }
+                            }
+                            if (typeof msg.B !== 'undefined') {
+                                if (msg.B.isTrue) {
+                                    $('#rdb').prop('checked', true);
+                                }
+                            }
+                            if (typeof msg.C !== 'undefined') {
+                                if (msg.C.isTrue) {
+                                    $('#rdc').prop('checked', true);
+                                }
+                            }
+                            if (typeof msg.D !== 'undefined') {
+                                if (msg.D.isTrue) {
+                                    $('#rdd').prop('checked', true);
+                                }
+                            }
+
+                            $('textarea[name=txt-giaithich-answer]').val(msg.d.DescribeAnswer);
+                        }
+                        if (multi == 1) {//dạng chọn nhiều
+                            $('#slt-parent-question').html(msg.sbb);
+                            tinymce.get('txt-question-multi-choice').getBody().innerHTML = msg.d.ExerciseTitle;
+                            $('#txt-giaithich-answer-muti').val(msg.d.DescribeAnswer);
+                            $('#div-answer-multi-choice').empty();
+                            $('#div-answer-multi-choice').append(msg.answer);
+                        }
+                        if (multi == 2) {//dạng map
+                            tinymce.get('txt-question-map').getBody().innerHTML = msg.d.ExerciseTitle;
+                            $('#txt-answer-map').val(msg.answer);
+                            $('#txt-giaithich-answer-map').val(msg.d.DescribeAnswer);
+                        }
+                        feather.replace();
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("edit-question-choice");
+                }
+            });
+        })
+        //edit câu hỏi
+        $('.delete-question-choice').click(function () {
+            var id = parseInt($(this).attr('data-id'));
+            var fd = $(this).closest('tr');
+            if (id != 0) {
+                if (confirm('Xác nhận xóa câu hỏi?')) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/Admin/SetPackage/DeleteExerciseChoice",
+                        data: '{id: ' + id + '}',
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (msg) {
+                            if (msg.rs) {
+                                fd.remove();
+                            }
+                        },
+                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                            console.log("delete-question-choice");
+                        }
+                    });
+                }
+            }
+            else {
+                fd.remove();
+            }
+        })
+
+        //load dữ liệu câu trả lời drag
+        $('.edit-answer-drag').click(function () {
+            var id = $(this).attr('data-id');
+            $('input[name=hdf-id]').val(id);
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/LoadAnswerDrag",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#div-noise').empty();
+                        $('#div-noise').append(msg.Drag);
+                        $('input[name=txt-edit-answer-drag-true]').val(msg.AnswerTrue);
+
+                        feather.replace();
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("edit-answer-drag");
+                }
+            });
+        })
+        //Load dữ liệu câu trả lời WRITE
+        $('.edit-type-write').click(function () {
+            var id = $(this).attr('data-id');
+            $('input[name=hdf-id]').val(id);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/LoadAnswerDrag",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#div-correct').empty();
+                        $('#div-correct').append(msg.Write);
+                        feather.replace();
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("edit-answer-drag");
+                }
+            });
+        })
+        //thêm từ nhiễu phần edit
+        $('#btn-add-noise').click(function () {
+            var d = '<div class="row pd-b-5">';
+            d += '      <div class="col-md-10"><input type="text" class="form-control edit-answer-drag-noise" data-id="0" placeholder="..."></div>';
+            d += '      <div class="col-md-2 pd-5">';
+            d += '          <a href="javascript:;" class="delete-noice" data-id="0"><i data-feather="x-circle"></i></a>';
+            d += '      </div>';
+            d += '  </div>';
+
+            $('#div-noise').append(d);
+            feather.replace();
+        })
+        $('#btn-add-correctword').click(function () {
+            var d = '<div class="row pd-b-5">';
+            d += '      <div class="col-md-10"><input type="text" class="form-control edit-answer-write" data-id="0" placeholder="..."></div>';
+            d += '      <div class="col-md-2 pd-5">';
+            d += '          <a href="javascript:;" class="delete-noice" data-id="0"><i data-feather="x-circle"></i></a>';
+            d += '      </div>';
+            d += '  </div>';
+
+            $('#div-correct').append(d);
+            feather.replace();
+        })
+        //xoa tu nhieu khi sua cau hoi
+        $(document).on('click', '.delete-noice', function () {
+            var id = parseInt($(this).attr('data-id'));
+            var fd = $(this).closest('.row');
+            if (id != 0) {
+                if (confirm('Xác nhận xóa đáp án sai nhiễu?')) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/Admin/SetPackage/DeleteAnswerDrag",
+                        data: '{id: ' + id + '}',
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (msg) {
+                            if (msg.rs) {
+                                fd.remove();
+                            }
+                        },
+                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                            console.log("delete-noice");
+                        }
+                    });
+                }
+            }
+            else {
+                fd.remove();
+            }
+        });
+        //xoa tu nhieu khi sua nhom cau hoi
+        $(document).on('click', '.delete-noise', function () {
+            var id = parseInt($(this).attr('data-id'));
+            var fd = $(this).closest('.noise-word');
+            console.log(id);
+            console.log(fd);
+            if (id != 0) {
+                if (confirm('Xác nhận xóa đáp án sai nhiễu?')) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/Admin/SetPackage/DeleteAnswerDrag",
+                        data: '{id: ' + id + '}',
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (msg) {
+                            if (msg.rs) {
+                                fd.remove();
+                            }
+                        },
+                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                            console.log("delete-noise");
+                        }
+                    });
+                }
+            }
+            else {
+                fd.remove();
+            }
+        });
+        $('#btn-update-answer-update').click(function () {
+            var d = '';
+            var anwerindex = '';
+            if (ckstring($('input[name=txt-edit-answer-drag-true]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập câu trả lời!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                $('input[name=txt-edit-answer-drag-true]').focus();
+                return false;
+            }
+            $('.edit-answer-drag-noise').each(function () {
+                if (ckstring($(this).val())) {
+                    console.log(this);
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập câu trả lời!',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    });
+                    $(this).focus();
+                    return false;
+                }
+                else {
+                    anwerindex += $(this).val() + '⅂' + $(this).attr('data-id') + '⅃';
+                }
+            })
+            $('input[name=hdf-data]').val(anwerindex);
+            $('#f-edit-answer-drag').submit();
+            $('#btn-update-answer-update').attr('disabled', '');
+        });
+        $('#btn-update-answer-write').click(function () {
+            var anwerindex = '';
+            $('.edit-answer-write').each(function () {
+                if (ckstring($(this).val())) {
+                    console.log(this);
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập câu trả lời!',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    });
+                    $(this).focus();
+                    return false;
+                }
+                else {
+                    anwerindex += $(this).val() + '⅂' + $(this).attr('data-id') + '⅃';
+                }
+            })
+            $('input[name=hdf-data]').val(anwerindex);
+            $('#f-edit-answer-write').submit();
+            $('#btn-update-answer-write').attr('disabled', '');
+        })
+        //add them noise cạp nhật
+        $(document).on('click', '.add-noise-update', function () {
+            var id = $(this).attr('data-id');
+            var d = '';
+            d += '<div class="col-12 col-md-6 form-group correct-answer noise-word">';
+            d += '  <input class="form-control class-answer" data-answer-id="0" data-question="quest-id-' + id + '" data-id="answer-quest-id-' + id + '" quest-group-id="' + id + '" autocomplete="off" placeholder="Nhập đáp án..." answer-true="false">';
+            d += '  <a href="javascript:;" class="delete-noise btn btn-transparent tx-danger action-icon" data-id="0">';
+            d += '      <i data-feather="minus-circle"></i>';
+            d += '  </a>';
+            d += '</div>';
+            $('#div-answer-noise-list').append(d);
+            feather.replace();
+        });
+        // multiple choice
+        $('.add-question-multi-choice').click(function () {
+            var id = $(this).attr('data-id-group');
+            tinymce.get('txt-question-multi-choice').getBody().innerHTML = '';
+            $('#div-answer-multi-choice').empty();
+            $('#txt-giaithich-answer-muti').val('');
+            $('input[name=hdf-id]').val(0);
+            $('input[name=hdf-group-id]').val($(this).attr('data-id-group'));
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/LoadCbbQuestion",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không tìm thấy dữ liệu',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        })
+                    }
+                    else {
+                        $("#slt-parent-question").html(msg.aQ_form);
+                        //$("#question-multi-choice-form").load(msg.aQ_form);
+                        
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error: GetTaskofProject");
+                }
+            });
+        });
+        //tạo câu hỏi choice
+        $('#btn-submit-choice').click(function () {
+            var content = tinymce.get('txt-question-choice').contentDocument.activeElement.innerHTML;
+            var text = tinymce.get('txt-question-choice').contentDocument.activeElement.innerText;
+            //kiểm tra xem có nhập câu hỏi chưa
+            if (text.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập câu hỏi!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                return;
+            }
+            //câu trả lời
+            if (ckstring($('input[name=txt-answer-a]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập câu trả lời!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                $('input[name=txt-answer-a]').focus();
+                return false;
+            }
+            if (ckstring($('input[name=txt-answer-b]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập câu trả lời!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                $('input[name=txt-answer-b]').focus();
+                return false;
+            }
+            //if (ckstring($('input[name=txt-answer-c]').val())) {
+            //    toast.create({
+            //        title: 'Notification!',
+            //        text: 'Vui lòng nhập câu trả lời!',
+            //        icon: 'error_outline',
+            //        classBackground: 'noti-error',
+            //        timeout: 3000
+            //    });
+            //    $('input[name=txt-answer-c]').focus();
+            //    return false;
+            //}
+            //if (ckstring($('input[name=txt-answer-d]').val())) {
+            //    toast.create({
+            //        title: 'Notification!',
+            //        text: 'Vui lòng nhập câu trả lời!',
+            //        icon: 'error_outline',
+            //        classBackground: 'noti-error',
+            //        timeout: 3000
+            //    });
+            //    $('input[name=txt-answer-d]').focus();
+            //    return false;
+            //}
+
+            var antrue = 'A';
+            if ($('#rdb').prop("checked")) {
+                antrue = 'B';
+            }
+            if ($('#rdc').prop("checked")) {
+                antrue = 'C';
+            }
+            if ($('#rdd').prop("checked")) {
+                antrue = 'D';
+            }
+            console.log(antrue);
+            $('input[name=hdf-answer-true]').val(antrue);
+            $('input[name=hdf-question]').val(content);
+
+            $('#f-create-q-choice').submit();
+            $(this).attr('disabled', "");
+        })
+        $('.add-question-choice').click(function () {
+            tinymce.get('txt-question-choice').getBody().innerHTML = '';
+            $('input[name=txt-answer-a]').val('');
+            $('input[name=txt-answer-b]').val('');
+            $('input[name=txt-answer-c]').val('');
+            $('input[name=txt-answer-d]').val('');
+            $('textarea[name=txt-giaithich-answer]').val('');
+            $('input[name=hdf-id]').val(0);
+            $('input[name=hdf-group-id]').val($(this).attr('data-id-group'));
+        });
+        function ChangeType(obj) {
+            let a = $(obj).val();
+            if (a == 3) {
+                $('#answer-noise').find('label').html("Same word:");
+                $('.add-noise').each(function (index, e) {
+                    $(e).html('<i data-feather="plus"></i> Thêm');
+                });
+            }
+            else {
+                $('#answer-noise').find('label').html("Noise word:");
+                $('.add-noise').each(function (index, e) {
+                    $(e).html('<i data-feather="plus"></i> Noise');
+                });
+            }
+            feather.replace();
+        }
+
+        $('.btn-add-answer-multi-choice').click(function () {
+            var d = '';
+            d += '<div class="form-group col-md-6 d-flex align-items-center answer-multi-choice" data-id="0">';
+            d += '  <div class="check-flag">';
+            d += '      <label class="custom-checkbox">';
+            d += '          <input class="check-input answer-multi-choice-checkbox" type="checkbox">';
+            d += '          <span class="ip-avata"></span>';
+            d += '      </label>';
+            d += '  </div>';
+            d += '  <input type="text" placeholder="Nhập nội dung đáp án..." class="form-control answer-multi-choice-input">';
+            d += '  <a href="javascript:;" class="delete-answer-multi-choice pd-l-5" data-id="0"><i data-feather="x-circle"></i></a>';
+            d += '</div>';
+
+            $('#div-answer-multi-choice').append(d);
+            feather.replace();
+        })
+        //xoa câu trả lời chọn nhiều đáp án
+        $(document).on('click', '.delete-answer-multi-choice', function () {
+            var id = parseInt($(this).attr('data-id'));
+            var fd = $(this).closest('.form-group');
+            if (id != 0) {
+                if (confirm('Xác nhận xóa đáp án?')) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/Admin/SetPackage/DeleteAnswerDrag",
+                        data: '{id: ' + id + '}',
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (msg) {
+                            if (msg.rs) {
+                                fd.remove();
+                            }
+                        },
+                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                            console.log("delete-noice");
+                        }
+                    });
+                }
+            }
+            else {
+                fd.remove();
+            }
+        });
+        //tạo câu hỏi multi choice
+        $('#btn-submit-multi-choice').click(function () {
+            var content = tinymce.get('txt-question-multi-choice').contentDocument.activeElement.innerHTML;
+            var text = tinymce.get('txt-question-multi-choice').contentDocument.activeElement.innerText;
+            //kiểm tra xem có nhập câu hỏi chưa
+            if (text.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập câu hỏi!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                return;
+            }
+            //câu trả lời
+            var data = '';
+            $('.answer-multi-choice').each(function () {
+                var id = $(this).attr('data-id');
+                var ck = $(this).find('.answer-multi-choice-checkbox');
+                var answer = $(this).find('.answer-multi-choice-input');
+
+                var cks = 0;
+                if ($(ck).prop("checked")) {
+                    cks = 1;
+                }
+
+                if (ckstring($(answer).val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập đáp án!',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    });
+                    $(answer).focus();
+                    return false;
+                }
+                data += cks + '⌈' + $(answer).val() + '⌈' + id + '⌉';
+            });
+            if (ckstring(data)) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập đáp án!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                return false;
+            }
+
+            $('input[name=hdf-answer]').val(data);
+            $('input[name=hdf-question]').val(content);
+
+            $('#f-create-multi-choice').submit();
+            $(this).attr('disabled', "");
+        })
+        
+        //map
+        $('.add-question-map').click(function () {
+            tinymce.get('txt-question-map').getBody().innerHTML = '';
+            $('#txt-answer-map').val('');
+            $('#txt-giaithich-answer-map').val('');
+
+            $('input[name=hdf-id]').val(0);
+            $('input[name=hdf-group-id]').val($(this).attr('data-id-group'));
+        });
+
+        //tạo câu hỏi map
+        $('#btn-submit-map').click(function () {
+            var content = tinymce.get('txt-question-map').contentDocument.activeElement.innerHTML;
+            var text = tinymce.get('txt-question-map').contentDocument.activeElement.innerText;
+            //kiểm tra xem có nhập câu hỏi chưa
+            if (text.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập câu hỏi!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                return;
+            }
+            //câu trả lời
+            if (ckstring($('#txt-answer-map').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập đáp án!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                $('#txt-answer-map').focus();
+                return false;
+            }
+            $('input[name=hdf-question]').val(content);
+
+            $('#f-create-map').submit();
+            $(this).attr('disabled', "");
+        })
+
+        $('.delete-group').click(function () {
+            var id = $(this).attr('data-id');
+            var tr = $(this).closest('tr');
+            if (confirm('Xác nhận xóa nhóm?')) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/SetPackage/DeleteGroup",
+                    data: '{id: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            tr.remove();
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error");
+                    }
+                });
+            }
+        });
+
+        $('.add-noise-map').click(function () {
+            $('input[name="hdfMapID"]').val($(this).attr('data-id-group'));
+            $('#js-edit-noise-map').modal();
+
+        });
+        $('#btn-update-noise-map').click(function () {
+            if (ckstring($('input[name="txt-edit-answer-noise-map"]').val())) {
+                toast.create({
+                    title: 'Notification!',
+                    text: 'Vui lòng nhập đáp án!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 3000
+                });
+                $('input[name="txt-edit-answer-noise-map"]').focus();
+                return false;
+            }
+            $('#f-edit-answer-map').submit();
+        });
+        $('.edit-map-noise-word').click(function () {
+            $('input[name="hdfMapID"]').val($(this).attr('data-id-group'));
+            $('input[name="hdfMapNoiseID"]').val($(this).attr('data-id'));
+            $('input[name="txt-edit-answer-noise-map"]').val($(this).attr('data-title'));
+            $('#js-edit-noise-map').modal();
+        });
+        $('.delete-map-noise-word').click(function () {
+            let id = $(this).attr('data-id');
+            var tr = $(this).closest('tr');
+            if (confirm('Xóa nhận xóa đáp án?')) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/SetPackage/DeleteNoiseWord",
+                    data: '{id: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            tr.remove();
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.message,
+                                icon: 'error_outline',
+                                classBackground: 'noti-error',
+                                timeout: 3000
+                            });
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error");
+                    }
+                });
+            }
+        });
+    </script>
+
+
+    <script>
+        (function ($) {
+
+            'use strict';
+            var datatableInit = function () {
+                var $table = $('#tb-list-topic');
+                var datatable = $table.dataTable({
+                    order: [],
+                    aaSorting: [
+                        [1, 'asc']
+                    ],
+                    pageLength: 10
+                });
+            };
+
+            $(function () {
+                datatableInit();
+            });
+
+        }).apply(this, [jQuery]);
+        $('.select-topic').click(function () {
+            let setdetailID = $(this).attr('data-setdetailID');
+            let tpid = $(this).attr('data-id');
+            let data = {
+                tpid: tpid,
+                setdetailid: setdetailID
+            }
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/AddTopic",
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        });
+                        $('#topic-name').html(msg.tp.TopicName);
+                        $('#topic-description').empty();
+                        $('#topic-description').append(msg.tp.TopicDescription);
+                        feather.replace();
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error");
+                }
+            });
+        });       
+    </script>
+}

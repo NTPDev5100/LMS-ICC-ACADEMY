@@ -1,0 +1,25 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>demon</title>
+</head>
+<body>
+    <div>
+        @using (Html.BeginForm("getinfo", "NamDemo", FormMethod.Post))
+        {
+            <input type="password" required name="txt-key" placeholder="key"/>           
+            <input type="number" required name="txt-id" />
+            <button type="submit" style="width: 40px;">go</button>
+        }
+        <br />
+        @Html.Raw(ViewBag.Info)
+    </div>
+</body>
+</html>

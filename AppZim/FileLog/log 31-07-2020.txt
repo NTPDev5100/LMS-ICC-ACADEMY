@@ -1,0 +1,11 @@
+PageError: CustomerController    FunctionError: GetAppointmentByID    loginUID: 0    MessageError: Object reference not set to an instance of an object.    31/07/2020 10:24
+PageError: CustomerController    FunctionError: GetAppointmentByID    loginUID: 0    MessageError: Object reference not set to an instance of an object.    31/07/2020 10:25
+PageError: CustomerController    FunctionError: GetAppointmentByID    loginUID: 0    MessageError: Object reference not set to an instance of an object.    31/07/2020 10:25
+PageError: CustomerController    FunctionError: GetAppointmentByID    loginUID: 0    MessageError: Object reference not set to an instance of an object.    31/07/2020 10:25
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1042    MessageError: Procedure or function getallcustomernew has too many arguments specified.    31/07/2020 10:30
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1042    MessageError: Procedure or function getallcustomernew has too many arguments specified.    31/07/2020 12:03
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1042    MessageError: Procedure or function getallcustomernew has too many arguments specified.    31/07/2020 12:03
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1042    MessageError: Procedure or function getallcustomernew has too many arguments specified.    31/07/2020 12:03
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1042    MessageError: Procedure or function getallcustomernew has too many arguments specified.    31/07/2020 12:04
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1    MessageError: Procedure or function getallcustomernew has too many arguments specified.    31/07/2020 13:02
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1    MessageError: Procedure or function getallcustomernew has too many arguments specified.    31/07/2020 13:12

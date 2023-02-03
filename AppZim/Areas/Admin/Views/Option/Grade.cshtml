@@ -1,0 +1,249 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_Grade>
+@{
+    ViewBag.Title = "RoomCenter";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var lLanguage = Language.GetAll();
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Chuyên môn</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div><a href="#div-add-room" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a></div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("Grade", "Option", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Mã Chuyên môn</th>
+                    <th>Chuyên môn</th>
+                    <th>Mô tả</th>
+                    <th>Ngôn ngữ</th>
+                    <th class="text-center">Tạm ẩn</th>
+                    <th>Thời gian sửa</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.GradeCode</td>
+                        <td>@item.GradeName</td>
+                        <td class="no-wrap"><span class="shorter-text" data-toggle="tooltip" data-placement="left" title="@item.Description">@item.Description</span></td>
+                        <td>
+                            @if (item.Language != null)
+                            {
+                                var lan = Language.GetByID(item.Language.Value);
+                                <span>@lan.Name</span>
+                            }
+                    </td>
+                    <td class="text-center">
+                        @{
+                            if (item.IsHidden.Value)
+                            {
+                                <i data-feather="check-circle"></i>
+                            }
+                        }
+                    </td>
+                    <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="text-center">
+                        <a href="#edit-roomcenter" data-toggle="modal" data-language="@item.Language" data-id="@item.ID" data-grade="@item.GradeName" data-des="@item.Description" data-ishide="@item.IsHidden" data-code="@item.GradeCode" class="btn btn-primary edit-scource">
+                            <i data-feather="rotate-ccw"></i> Cập nhật
+                        </a>
+                        <a href="javascript:;" data-id="@item.ID" class="btn btn-warning delete-grade">
+                            <i class="fas fa-times"></i> Xóa
+                        </a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @Html.PagedListPager(Model, page => Url.Action("Grade", new
+    {
+        page,
+        search = ViewBag.Search,
+    }),
+    new PagedListRenderOptions
+    {
+        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+    })
+</nav>
+
+<div class="modal fade" id="div-add-room" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddGrade", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo mới</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-grade">Mã Chuyên môn:</label>
+                                    <input id="txt-grade" name="txt-code" type="text" required class="validate form-control" placeholder="TA,TD,TP,...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-grade">Chuyên môn:</label>
+                                    <input id="txt-grade" name="txt-grade" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="dll-language">Ngôn ngữ:</label>
+                                    <select name="dll-language" id="dll-language" required class="form-control select2">
+                                        <option value="">---</option>
+                                        @{
+                                            foreach (var item in lLanguage)
+                                            {
+                                                <option value="@item.ID">@item.Name</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-grade-des">Mô tả:</label>
+                                    <textarea id="txt-grade-des" rows="1" name="txt-grade-des" type="text" required class="validate form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="edit-roomcenter" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditGrade", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Cập nhật</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-grade">Mã Chuyên môn:</label>
+                                    <input name="txt-edit-code" type="text" class="validate form-control" placeholder="TA,TD,TP,...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-grade">Chuyên môn:</label>
+                                    <input id="txt-edit-grade" name="txt-edit-grade" type="text" placeholder="..." required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="edit-dll-language">Ngôn ngữ:</label>
+                                    <select name="edit-dll-language" id="edit-dll-language" required class="form-control select2">
+                                        <option value="">---</option>
+                                        @{
+                                            foreach (var item in lLanguage)
+                                            {
+                                                <option value="@item.ID">@item.Name</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-room-des">Mô tả:</label>
+                                    <textarea id="txt-edit-grade-des" name="txt-edit-grade-des" rows="1" type="text" placeholder="..." class="validate form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="chk-hide" name="chk-hide">
+                                        <label class="custom-control-label" for="chk-hide">Tạm ẩn</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        $(document).on("click", ".edit-scource", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=txt-edit-grade]').val($(this).attr('data-grade'));
+            $('textarea[name=txt-edit-grade-des]').val($(this).attr('data-des'));
+            $('input[name=txt-edit-code]').val($(this).attr('data-code'));
+            $('#edit-dll-language').val($(this).attr('data-language'));
+            $('#edit-dll-language').trigger('change');
+            $('input[name=txt-edit-grade]').focus();
+            if ($(this).attr('data-ishide') == 'True') {
+                $('#chk-hide').prop("checked", true);
+            }
+            else {
+                $('#chk-hide').prop("checked", false);
+            }
+        });
+        $(document).on("click", ".delete-grade", function () {
+            var id = $(this).attr("data-id");
+            if (confirm("Bạn chắc muốn xóa?")) {
+                window.location.href = "/Admin/Option/DeleteGrade?id=" + id;
+            }
+        });
+    </script>
+}

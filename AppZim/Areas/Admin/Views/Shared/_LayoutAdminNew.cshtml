@@ -1,0 +1,2065 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    string avatar = "~/app-assets/images/avatar/avatar-13.png";
+    tbl_Account aclog = new tbl_Account();
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    else
+    {
+        aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+        if (!string.IsNullOrEmpty(aclog.AvatarThumbnail))
+        {
+            avatar = aclog.AvatarThumbnail;
+        }
+    }
+    var periods = CampaignSaleTable.GetCampaignsInYear().ToList();
+}
+<!DOCTYPE html>
+<html class="loading" lang="en" data-textdirection="ltr">
+<!-- BEGIN: Head-->
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta name="description" content="ICC ACADEMY">
+    <meta name="keywords" content="ICC ACADEMY">
+    <meta name="author" content="ICC ACADEMY">
+    <title>ICC ACADEMY || Web Admin</title>
+    <link rel="apple-touch-icon" href="~/app-assets/images/favicon/apple-touch-icon-152x152.png">
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap" rel="stylesheet">
+    <!-- vendor css -->
+    <link href="~/app-assets/zimv2/lib/@("@fortawesome")/fontawesome-free/css/all.min.css" rel="stylesheet">
+    <link href="~/app-assets/zimv2/lib/ionicons/css/ionicons.min.css" rel="stylesheet">
+    <link href="~/app-assets/zimv2/lib/datetimepicker-2.5.20/jquery.datetimepicker.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/app-assets/vendors/dropify/css/dropify.min.css">
+    <link href="~/app-assets/zimv2/assets/select2/css/select2.min.css" rel="stylesheet" />
+    <!-- DashForge CSS -->
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/dashforge.css?v=1.0">
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/custom.css?v=1.2">
+    <link href="~/app-assets/zimv2/assets/dev/csscustom.css" rel="stylesheet" />
+    <link href="~/app-assets/zimv2/assets/dev/responsivestyle.css" rel="stylesheet" />
+    <link href="~/app-assets/zimv2/assets/dev/asidemenu.css" rel="stylesheet" />
+    <!-- IEC Custom CSS -->
+    <link href="~/app-assets/css/custom/iec.css" rel="stylesheet" />
+    @*//datatable*@
+    <link href="~/app-assets/js/datatables/dataTables.bootstrap4.min.css" rel="stylesheet" />
+    <script src="~/app-assets/zimv2/lib/jquery/jquery.min.js"></script>
+    @if (IsSectionDefined("myStyles"))
+    {
+        @RenderSection("myStyles", required: false);
+    }
+</head>
+<!-- END: Head-->
+
+<body class="">
+
+    <div class="loader" id="AjaxLoader" style="display:none;">
+        <div class="strip-holder">
+            <img src="~/app-assets/loading.gif" style="width:unset;" />
+        </div>
+    </div>
+    <aside class="aside aside-fixed">
+
+        <div class="aside-header">
+            <a href="~/Admin/Home/Dashboard" class="aside-logo">
+                <img src="~/app-assets/images/favicon.png" style="height:60px;width:auto" />
+            </a>
+            <a href="" class="aside-menu-link">
+                <i data-feather="menu"></i>
+                <i data-feather="x"></i>
+            </a>
+        </div>
+        <div class="aside-body">
+            <div class="aside-loggedin">
+                <div class="aside-loggedin-user tx-center">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <a href="javascript:;" data-toggle="modal" data-target="#editProfile" class="avatar-xl">
+                            <img src="@avatar" class="rounded-circle" alt="" id="user-online" onerror="this.onerror = null; this.src = '/app-assets/images/avatar/avatardefault.png';">
+                        </a>
+                    </div>
+                    <a href="javascript:;" data-toggle="modal" data-target="#editProfile" class="d-flex align-items-center justify-content-center mg-t-10">
+                        <h6 class="tx-semibold mg-b-5 tx-black">@aclog.FullName</h6>
+                    </a>
+                    <p class="tx-12 mg-b-0" style="color:red">@aclog.RoleName</p>
+                </div>
+            </div><!-- aside-loggedin haha-->
+            <ul class="nav nav-aside">
+                @if (aclog.RoleID == 1 || aclog.RoleID == 2)// admin, truong phong
+                {
+                    @*<li class="nav-item profileuser">
+                            <a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link ProfileUser">
+                                <i data-feather="cast" class=""></i>
+                                <span>Tin tức</span>
+                            </a>
+                        </li>*@
+                    <li class="nav-item dashboard">
+                        <a href="@Url.Action("Dashboard", "Home", new { area = "Admin" })" class="nav-link Dashboard">
+                            <i data-feather="trending-up" class=""></i>
+                            <span>Thống kê</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item ScheduleSchool">
+                        <a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })" class="nav-link ScheduleSchool">
+                            <i data-feather="calendar" class="bar-chart"></i>
+                            <span>Lịch dạy trung tâm</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-label mg-t-25">Khóa học</li>
+                    <li class="nav-item RegisterCourse">
+                        <a href="@Url.Action("RegisterCourseCustom", "Cashier", new { area = "Admin" })" class="nav-link RegisterCourse">
+                            <i data-feather="edit" class=""></i>
+                            <span> Đăng ký học</span>
+                        </a>
+                    </li>
+                    if (aclog.RoleID != 2)
+                    {
+                        <li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="archive" class="book"></i> <span>Quản lý khóa học</span></a>
+                            <ul>
+                                @*<li class="CreateCourse"><a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })">Tạo khoá thủ công</a></li>*@
+                                <li class="CreateCourseNew"><a href="@Url.Action("CreateCourseNew", "Course", new { area = "Admin" })">Tạo khoá học</a></li>
+                                <li class="CourseList"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })"> Danh sách khóa học</a></li>
+                                @*<li class="CourseListOnline"><a href="@Url.Action("CourseListOnline", "Course", new { area = "Admin" })"> Khóa học Online</a></li>*@
+                            </ul>
+                        </li>
+                    }
+
+                    @*<li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="video" class=""></i> <span>Quản lý Zoom</span></a>
+                            <ul>
+                                <li class="TeacherConfigZoom"><a href="@Url.Action("TeacherConfigZoom", "ZoomMeeting", new { area = "Admin" })"> Cấu hình</a></li>
+                                <li class="ManageListMeeting"><a href="@Url.Action("ManageListMeeting", "ZoomMeeting", new { area = "Admin" })"> Danh sách phòng học</a></li>
+                                <li class="MeetingInternal"><a href="@Url.Action("MeetingInternal", "ZoomMeeting", new { area = "Admin" })"> Phòng họp nội bộ</a></li>
+                            </ul>
+                        </li>*@
+
+                    //Khóa học online/bán khóa học online
+                    @*<li class="nav-label mg-t-25">Khóa học online</li>
+                        <li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="archive" class="book"></i> <span>Quản lý khóa học</span></a>
+                            <ul>
+                                <li class="CourseOnline"><a href="@Url.Action("CourseOnline", "CourseOnline", new { area = "Admin" })"> Danh sách khoá học</a></li>
+                                <li class="DiscountCode"><a href="@Url.Action("DiscountCode", "CourseOnline", new { area = "Admin" })"> Mã giảm giá</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Order", "CourseOnline", new { area = "Admin" })" class="nav-link Order">
+                                <i data-feather="shopping-cart" class=""></i>
+                                <span>Quản lý đơn hàng</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-label mg-t-25">Khách hàng</li>
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i data-feather="users" class="user"></i> <span>Học viên</span></a>
+                        <ul>
+                            <li class="CustomerList"><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })"> Dữ liệu học viên</a></li>
+                            <li class="CustomerReserve"><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })"> Học viên bảo lưu</a></li>
+                            <li class="CourseStudent"><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })"> Học viên trong khóa</a></li>
+                            <li class="ChangeCourse"><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })"> Học viên chuyển khóa</a></li>
+                            <li class="Appointment"><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })"> HV chờ xếp lớp</a></li>
+                            <li class="CustomerAboutToExpire"><a href="@Url.Action("CustomerAboutToExpire", "Customer", new { area = "Admin" })"> HV còn 3 buổi học</a></li>
+                            <li class="SupportOffList"><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })"> Chưa có tư vấn viên</a></li>
+                            @*<li class="ServiceCustomer"><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })"> Dịch vụ đã mua</a></li>
+                                <li class="Customer"><a href="@Url.Action("Customer", "SetPackage", new { area = "Admin" })"> Danh sách mua gói</a></li>*@
+                        </ul>
+                    </li>
+
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i data-feather="calendar" class="user"></i> <span>Hẹn test</span></a>
+                        <ul>
+                            <li class="SaveinfoStudent"><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })"> Thêm lịch hẹn test</a></li>
+                            <li class="ListAppointmentTest"><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })"> Danh sách hẹn test</a></li>
+                            <li class="ListAppointmentTestRefuse"><a href="@Url.Action("ListAppointmentTestRefuse", "Cashier", new { area = "Admin" })"> Danh sách HV không học</a></li>
+                        </ul>
+                    </li>
+
+                    @*<li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="alert-triangle" class="user"></i> <span>Báo cáo học viên</span></a>
+                            <ul>
+                                <li class="ReadyToTest"><a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })"> Học viên sắp thi</a></li>
+                                <li class="TestResult"><a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })"> Kết quả thi thực tế</a></li>
+                            </ul>
+                        </li>*@
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i data-feather="layers" class="user"></i> <span>Tài chính</span></a>
+                        <ul>
+                            <li class="CustomerDebts"><a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })"> Học viên nợ học phí</a></li>
+                            <li class="MoneyReceiver"><a href="@Url.Action("MoneyReceiverList", "Staff", new { area = "Admin" })"> Cấu hình thu hộ</a></li>
+                            @*<li class="CollectToDelivery"><a href="@Url.Action("CollectToDelivery", "Report", new { area = "Admin" })"> Danh sách thu hộ</a></li>*@
+                            <li class="RefundList"><a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })"> Yêu cầu hoàn tiền</a></li>
+                            <li class="InvoiceList"><a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })"> Phiếu thu</a></li>
+                            @*<li class="PaymentVoucherList"><a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })"> Phiếu chi</a></li>*@
+                        </ul>
+                    </li>
+
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i data-feather="file-text" class="user"></i> <span>Hợp đồng</span></a>
+                        <ul>
+                            <li class="CustomerContractList"><a href="@Url.Action("CustomerContractList", "Contract", new { area = "Admin" })"> Hợp đồng học viên</a></li>
+                            <li class="CensorshipContract"><a href="@Url.Action("CensorshipContract", "Contract", new { area = "Admin" })"> Duyệt hợp đồng</a></li>
+                            @if (aclog.RoleID == 1)
+                            {
+                                <li class="Contract"><a href="@Url.Action("Contract", "Contract", new { area = "Admin" })"> Mẫu hợp đồng cam kết chất lượng</a></li>
+                            }
+                            @*<li class="CensorshipCertificatce"><a href="@Url.Action("CensorshipCertificatce", "Certificatce", new { area = "Admin" })"> Danh sách chứng chỉ</a></li>*@
+                        </ul>
+                    </li>
+
+                    <li class="nav-label mg-t-25">Nhân viên</li>
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i data-feather="user" class="user"></i> <span>Giáo viên</span></a>
+                        <ul>
+                            <li class="TeacherList"><a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })"> Dữ liệu giáo viên</a></li>
+
+                            <li class="ScheduleTeacher"><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })"> Lịch dạy giáo viên</a></li>
+                            <li class="ScheduleTeacherAll"><a href="@Url.Action("ScheduleTeacherAll", "Course", new { area = "Admin" })"> Xem lịch nhiều giáo viên</a></li>
+                            @*<li class="TeachHours"><a href="@Url.Action("TeachHours", "Staff", new { area = "Admin" })"> Giờ dạy giáo viên</a></li>*@
+                            <li class="SalaryReviewTeacher"><a href="@Url.Action("SalaryReviewTeacher", "SalaryStaff", new { area = "Admin" })"> Lương giáo viên</a></li>
+                            <li class="SalatyReviewTeacherDetail"><a href="@Url.Action("TeacherListOnlyName", "SalaryStaff", new { area = "Admin" })"> Lịch sử giảng dạy</a></li>
+                            <li class="TeacherContract"><a href="@Url.Action("TeacherContract", "Contract", new { area = "Admin" })"> Hợp đồng giáo viên</a></li>
+                            <li class="SampleTeacherContract"><a href="@Url.Action("SampleTeacherContract", "Contract", new { area = "Admin" })"> Mẫu hợp đồng giáo viên</a></li>
+                            <li class="TeacherSalaryDetailList"><a href="@Url.Action("TeacherSalaryDetailList", "Staff", new { area = "Admin" })"> Buổi dạy cần kiểm tra lương</a></li>
+                            @*<li class="SalaryReviewTeacherOnline"><a href="@Url.Action("SalaryReviewTeacherOnline", "SalaryStaff", new { area = "Admin" })"> Lương dạy Online</a></li>
+                                <li class="TeacherExerciseFix"><a href="@Url.Action("TeacherExerciseFix", "TeacherExercise", new { area = "Admin" })"> Bài đã chấm</a></li>
+                                <li class="ExerciseCheckFix"><a href="@Url.Action("ExerciseCheckFix", "TeacherExercise", new { area = "Admin" })"> Duyệt bài</a></li>*@
+                        </ul>
+                    </li>
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i data-feather="user-check" class="user"></i> <span>Kinh doanh</span></a>
+                        <ul>
+                            <li class="SellerList"><a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })"> Nhân viên kinh doanh</a></li>
+                            <li class=""><a href="@Url.Action("RevenueDetail", "Customer", new { area = "Admin" })"> Doanh thu tư vấn viên</a></li>
+                            @*<li class="CampaignSale"><a href="@Url.Action("CampaignSale", "Staff", new { area = "Admin" })"> Chiến dịch kinh doanh</a></li>*@
+                            <li class="SalaryReview"><a href="@Url.Action("SalaryReview", "SalaryStaff", new { area = "Admin" })"> Duyệt lương</a></li>
+                            <li><a href="@Url.Action("TempSalary", "CampaignSale", new { area = "Admin" })">  Lương dự kiến</a></li>
+                            @*<li class="SalaryStaff"><a href="@Url.Action("SalaryStaff", "SalaryStaff", new { area = "Admin" })"> Lịch sử duyệt</a></li>*@
+                            <li class="ApprovalToLevelUp"><a href="@Url.Action("ApprovalToLevelUp", "SalaryStaff", new { area = "Admin" })"> Duyệt lên cấp bậc</a></li>
+                            <li class="ApprovalToLevelDown"><a href="@Url.Action("ApprovalToLevelDown", "SalaryStaff", new { area = "Admin" })"> Duyệt xuống cấp bậc</a></li>
+                            <li class="SettingSalary"><a href="@Url.Action("SettingSalary", "Option", new { area = "Admin" })"> Cấu hình lương doanh thu</a></li>
+                            <li class="TargetBonus"><a href="@Url.Action("TargetBonus", "CampaignSale", new { area = "Admin" })"> Cấu hình thưởng</a></li>
+                            @*<li class="SettingRoseSeller"><a href="@Url.Action("SettingRoseSeller", "SalaryStaff", new { area = "Admin" })"> Cấu hình hoa hồng</a></li>*@
+                            @*<li class="RevenueOfSaler"><a href="@Url.Action("RevenueOfSaler", "Report", new { area = "Admin" })"> Doanh thu tư vấn viên</a></li>*@
+                        </ul>
+                    </li>
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i data-feather="users" class="user"></i> <span>Nhân viên</span></a>
+                        <ul>
+                            <li class="StaffList"><a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })"> Danh sách nhân viên</a></li>
+                            <li class="StaffSalary"><a href="@Url.Action("StaffSalary", "SalaryStaff", new { area = "Admin" })"> Cấu hình lương cơ bản</a></li>
+                            <li class="FeedbackCheckSolution"><a href="@Url.Action("FeedbackCheckSolution", "Feedback", new { area = "Admin" })"> Duyệt feedback</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i class="fas fa-dot-circle"></i> <span>Chiến dịch</span></a>
+                        <ul style="padding-left:0;">
+                            <li><a href="#div-period" data-toggle="modal" class="btn" style="padding-left:0; text-align:left;"><i class="fas fa-plus"></i>Tạo chiến dịch</a></li>
+                            @{
+                                foreach (var i in periods)
+                                {
+                                    <li>
+                                        @*<a href="#" class="btn btn-success dropdown-toggle" role="button" data-toggle="dropdown " aria-haspopup="true" aria-expanded="false"><i class="fas fa-calendar-times"></i> <span>@i.Year</span></a>*@
+                                        <div class="btn-group dropright">
+                                            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fas fa-calendar" style="padding-right:2px"></i>@i.Year
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <ul style="padding-left:0;">
+                                                    @{
+                                                        var campaigns = Json.Decode<List<CampaignSaleTable.CampaignSaleModel>>(i.CampaignsByYear);
+                                                        foreach (var j in campaigns)
+                                                        {
+                                                            <li>
+                                                                <a class="dropdown-item" href="@Url.Action("PeriodDetail","CampaignSale", new { area = "Admin", id = j.CampaignId})"><span> @j.CampaignName</span></a>
+                                                            </li>
+                                                        }
+
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </li>
+
+                    <li class="nav-label mg-t-25">Thiết lập chung</li>
+                    @*<li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="map-pin" class=""></i> <span>Địa chỉ</span></a>
+                            <ul>
+                                <li class="Location"><a href="@Url.Action("Location", "Option", new { area = "Admin" })"> Tỉnh/Thành phố</a></li>
+                                <li class="District"><a href="@Url.Action("District", "Option", new { area = "Admin" })"> Quận huyện</a></li>
+                            </ul>
+                        </li>*@
+                    @*<li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="archive" class=""></i> <span>Bài tập Test</span></a>
+                            <ul>
+                                <li class="ListTopic"><a href="@Url.Action("ListTopic", "Topic", new { area = "Admin" })"> Chủ đề</a></li>
+                                <li class="ListExaminer"><a href="@Url.Action("ListExaminer", "SetPackage", new { area = "Admin" })"> Danh sách chấm Bài tập Test</a></li>
+                            </ul>
+                        </li>*@
+
+                    @*<li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="grid" class=""></i> <span>Dịch vụ</span></a>
+                            <ul>
+                                <li class="SupplierList"><a href="@Url.Action("SupplierList", "Option", new { area = "Admin" })"> Nhà cung cấp</a></li>
+                                <li class="Services"><a href="@Url.Action("Services", "Option", new { area = "Admin" })"> Danh sách dịch vụ</a></li>
+                                <li class="Exams"><a href="@Url.Action("Exams", "Option", new { area = "Admin" })"> Đợt thi</a></li>
+                                <li class="ListSetPackage"><a href="@Url.Action("ListSetPackage", "SetPackage", new { area = "Admin" })"> Bài tập Test</a></li>
+                            </ul>
+                        </li>*@
+                    if (aclog.RoleID == 1 || aclog.RoleID == 2)
+                    {
+                        <li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="mail" class=""></i> <span>Email</span></a>
+                            <ul>
+                                <li class="MailList"><a href="@Url.Action("MailList", "Email", new { area = "Admin" })"> Mẫu mail</a></li>
+                                @*<li class="Services"><a href="@Url.Action("SendMail", "Email", new { area = "Admin" })"> Gửi mail</a></li>*@
+                                @*<li class="Exams"><a href="@Url.Action("HistoryPushMail", "Email", new { area = "Admin" })"> Lịch sử gửi mail</a></li>*@
+                            </ul>
+                        </li>
+                        <li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="bookmark" class=""></i> <span>Khác</span></a>
+                            <ul>
+                                <li class="Center"><a href="@Url.Action("Center", "Option", new { area = "Admin" })"> Trung tâm</a></li>
+                                <li class="Shift"><a href="@Url.Action("Shift", "Option", new { area = "Admin" })"> Ca học</a></li>
+                                <li class="Grade"><a href="@Url.Action("Grade", "Option", new { area = "Admin" })"> Chuyên môn</a></li>
+                                <li class="CommitmentPackage"><a href="@Url.Action("CommitmentPackage", "Option", new { area = "Admin" })"> Gói cam kết</a></li>
+                                <li class="ClassList"><a href="@Url.Action("ClassList", "Class", new { area = "Admin" })"> Chương trình</a></li>
+                                <li class="DetailClass"><a href="@Url.Action("DetailClass", "ClassDetail", new { area = "Admin" })"> Giáo trình</a></li>
+                                <li class="Discount"><a href="@Url.Action("Discount", "Option", new { area = "Admin" })"> Mã khuyến mãi</a></li>
+                                @*<li><a href="@Url.Action("Prize", "Option", new { area = "Admin" })"> Giải thưởng</a></li>*@
+                                <li class="SourceOfCustomer"><a href="@Url.Action("SourceOfCustomer", "Option", new { area = "Admin" })"> Kênh lấy data</a></li>
+                                <li class="Jobs"><a href="@Url.Action("Jobs", "Option", new { area = "Admin" })"> Công việc</a></li>
+                                <li class="DayOff"><a href="@Url.Action("DayOff", "Option", new { area = "Admin" })"> Ngày nghỉ</a></li>
+                                <li class="CreateNotification"><a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })"> Tạo thông báo</a></li>
+                                <li class="CategoryFeedback"><a href="@Url.Action("CategoryFeedback", "Option", new { area = "Admin" })"> Loại phản hồi</a></li>
+                                <li class="PostList"><a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })"> Kiểm duyệt bài viết</a></li>
+                                <li class="AcademicPurposesList"><a href="@Url.Action("AcademicPurposesList", "Option", new { area = "Admin" })"> Mục đích học</a></li>
+                                <li class="IdiomsList"><a href="@Url.Action("IdiomsList", "Option", new { area = "Admin" })"> Thành ngữ lịch</a></li>
+                                <li class="TermOfService"><a href="@Url.Action("TermOfService", "Contract", new { area = "Admin" })"> Điều khoản</a></li>
+                                <li class="Reason"><a href="@Url.Action("Reason", "Reason", new { area = "Admin" })"> Lý do học/không học</a></li>
+                                <li class="Language"><a href="@Url.Action("Language", "Language", new { area = "Admin" })"> Ngôn ngữ</a></li>
+                                <li class="MoneyExchangeRate"><a href="@Url.Action("MoneyExchangeRate", "MoneyExchangeRate", new { area = "Admin" })"> Tỷ giá tiền tệ</a></li>
+                                <li class="AcademicLevel"><a href="@Url.Action("AcademicLevel", "Option", new { area = "Admin" })"> Trình độ</a></li>
+                                <li class="GMT"><a href="@Url.Action("GMT", "Option", new { area = "Admin" })"> GMT</a></li>
+                                <li class="HistoryAttendance"><a href="@Url.Action("HistoryAttendance", "Option", new { area = "Admin" })"> Lịch sử thao tác điểm danh</a></li>
+                                <li class="HistoryUploadVideo"><a href="@Url.Action("HistoryUploadVideo", "Option", new { area = "Admin" })"> Lịch sử thao tác upload video</a></li>
+                            </ul>
+                        </li>
+                    }
+                    <li class="nav-item ListSetPackage">
+                        <a href="@Url.Action("ListSetPackage", "SetPackage", new { area = "Admin" })" class="nav-link ListSetPackage"><i data-feather="book-open" class=""></i> Bộ bài tập</a>
+                    </li>
+
+                    <li class="nav-item FeedBackList">
+                        <a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })" class="nav-link FeedBackList">
+                            <i data-feather="rss" class=""></i>
+                            <span>Phản hồi</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item DocumentList">
+                        <a href="@Url.Action("DocumentList", "Library", new { area = "Admin" })" class="nav-link DocumentList">
+                            <i data-feather="book-open" class=""></i>
+                            <span>Thư viện online</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item FAQ">
+                        <a href="@Url.Action("FAQ", "Customer", new { area = "Admin" })" class="nav-link FAQ">
+                            <i data-feather="award" class=""></i>
+                            <span>Câu hỏi thường gặp</span>
+                        </a>
+                    </li>
+                }
+                else if (aclog.RoleID == 4)// giáo viên
+                {
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="cast" class="bookmark"></i>
+                                <span>News</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("Schedule", "TeacherCourse", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="calendar" class="bar-chart"></i>
+                            <span>Lịch dạy</span>
+                        </a>
+                    </li>
+
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("DayOffTeacher", "TeacherCourse", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="power" class="bookmark"></i>
+                                <span>Ngày nghỉ</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("CourseList", "TeacherCourse", new { area = "Admin" })" class="nav-link">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <span>Lớp đang phụ trách</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("SalaryReviewTeacher", "SalaryStaff", new { area = "Admin" })" class="nav-link">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Lương giáo viên</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("TotalLesson", "TeacherCourse", new { area = "Admin" })" class="nav-link">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Lịch sử giảng dạy</span>
+                        </a>
+                    </li>
+                    @*<li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="video" class=""></i> <span>Quản lý Zoom</span></a>
+                            <ul>
+                                <li><a href="@Url.Action("TeacherConfigZoom", "ZoomMeeting", new { area = "Admin" })"> Cấu hình</a></li>
+                                <li><a href="@Url.Action("ManageListMeeting", "ZoomMeeting", new { area = "Admin" })"> Danh sách phòng học</a></li>
+                            </ul>
+                        </li>*@
+
+                    @*<li class="nav-label mg-t-25">Bài tập</li>
+                        <li class="nav-item with-sub">
+                            <a href="" class="nav-link"><i data-feather="bookmark" class="book"></i> <span> Dữ liệu bài tập</span></a>
+                            <ul>
+                                <li><a href="@Url.Action("ExerciseList", "TeacherExercise", new { area = "Admin" })"> Mới</a></li>
+                                <li><a href="@Url.Action("ExerciseProcess", "TeacherExercise", new { area = "Admin" })"> Chờ xử lý</a></li>
+                                <li><a href="@Url.Action("ExerciseRedoFix", "TeacherExercise", new { area = "Admin" })"> Làm lại</a></li>
+                                <li><a href="@Url.Action("ExerciseDone", "TeacherExercise", new { area = "Admin" })"> Đã chấm</a></li>
+                            </ul>
+                        </li>*@
+                    @*<li class="nav-label mg-t-25">Báo cáo học viên</li>
+                        <li class="nav-item with-sub">
+                            <a href="" class="nav-link"><i data-feather="alert-triangle" class=""></i> <span> Báo cáo học viên</span></a>
+                            <ul>
+                                <li><a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })"> Cảnh báo học viên</a></li>
+                                <li><a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })">  HV sắp thi</a></li>
+                                <li><a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })"> Kết quả thi thực tế</a></li>
+                            </ul>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="file" class="bookmark"></i>
+                            <span>Danh sách hẹn test</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("FeedBack", "FeedBack", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="chrome" class="bookmark"></i>
+                            <span>Phản hồi</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("FeedbackList", "TeacherCourse", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="star" class="bookmark"></i>
+                            <span>Đánh giá buổi học</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="edit" class="bookmark"></i>
+                            <span>Bài viết</span>
+                        </a>
+                    </li>
+                    <li class="nav-item FAQ">
+                        <a href="@Url.Action("FAQ", "Customer", new { area = "Admin" })" class="nav-link FAQ">
+                            <i data-feather="award" class=""></i>
+                            <span>Câu hỏi thường gặp</span>
+                        </a>
+                    </li>
+                }
+                else if (aclog.RoleID == 5)//học viên
+                {
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="cast" class="bookmark"></i>
+                                <span>Tin tức</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("Dashboard", "Home", new { area = "" })" class="nav-link">
+                            <i data-feather="calendar" class="bar-chart"></i>
+                            <span>Lịch học</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("CourseList", "StudentCourse", new { area = "" })" class="nav-link">
+                            <i data-feather="credit-card" class="bar-chart"></i>
+                            <span>Khóa học</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("FeedbackSchedule", "CourseDetail", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="edit-2" class="bar-chart"></i>
+                            <span>Các buổi học chưa đánh giá</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("FeedbackedList", "CourseDetail", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="book" class="bar-chart"></i>
+                            <span>Các buổi học đã đánh giá</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("Exercise", "StudentExrcise", new { area = "" })" class="nav-link">
+                            <i data-feather="archive" class="bookmark"></i>
+                            <span>Bài tập</span>
+                        </a>
+                    </li>
+
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("MySet", "StudentSet", new { area = "" })" class="nav-link">
+                                <i data-feather="shopping-bag" class="bar-chart"></i>
+                                <span>Bài tập Test</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="@Url.Action("Store", "SetPackage", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="shopping-cart" class="bookmark"></i>
+                                <span>Cửa hàng</span>
+                            </a>
+                        </li>*@
+                    <li class="nav-item">
+                        <a href="@Url.Action("AppointmentTest", "Home", new { area = "" })" class="nav-link">
+                            <i data-feather="file" class="bookmark"></i>
+                            <span>Lịch test</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("SignContract", "StudentCourse", new { area = "" })" class="nav-link">
+                            <i data-feather="file-text" class="file"></i>
+                            <span>Hợp đồng</span>
+                        </a>
+                    </li>
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("ServiceByStudent", "Customer", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="hard-drive" class="bar-chart"></i>
+                                <span>Dịch vụ đã mua</span>
+                            </a>
+                        </li>*@
+                    <li class="nav-item">
+                        <a href="@Url.Action("HistoryPaidCustomer", "Customer", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="tablet" class=""></i>
+                            <span>Lịch sử thanh toán</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("FeedBack", "FeedBack", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="edit" class="bar-chart"></i>
+                            <span>Phản hồi</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("FAQ", "Customer", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="award" class=""></i>
+                            <span>Câu hỏi thường gặp</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("DocumentList", "Library", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="book-open" class=""></i>
+                            <span>Thư viện online</span>
+                        </a>
+                    </li>
+
+
+                }
+                else if (aclog.RoleID == 6 || aclog.RoleID == 3)// nhân viên + trưởng nhóm
+                {
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="cast" class="bookmark"></i>
+                                <span>News</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item dashboard">
+                        <a href="@Url.Action("Dashboard", "Home", new { area = "Admin" })" class="nav-link Dashboard">
+                            <i data-feather="trending-up" class=""></i>
+                            <span>Thống kê</span>
+                        </a>
+                    </li>
+
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("DashboardSaler", "Home", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="bar-chart-2" class="bar-chart"></i>
+                                <span>Chiến dịch</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("RegisterCourseCustom", "Cashier", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="edit" class="bookmark"></i>
+                            <span>Đăng ký học</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="calendar" class="calendar"></i> <span>Hẹn test</span></a>
+                        <ul>
+                            @*<li><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })"> Khách mua dịch vụ</a></li>*@
+                            @*<li><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })"> Danh sách đăng ký thi</a></li>*@
+                            @*<li><a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })"> Phiếu chi</a></li>*@
+                            <li><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })">Hẹn test</a></li>
+                            <li><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })"> Danh sách khách hẹn test</a></li>
+                            @*<li><a href="@Url.Action("Customer", "SetPackage", new { area = "Admin" })"> Danh sách khách mua gói</a></li>*@
+                            @*<li><a href="@Url.Action("CustomerAdvisory", "Customer", new { area = "Admin" })"> HV cần tư vấn</a></li>*@
+                            @*<li><a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })"> Danh sách hoàn tiền</a></li>*@
+                        </ul>
+                    </li>
+
+
+
+                    <li class="nav-item" @(aclog.RoleID == 3 ? "" : "hidden")>
+                        <a href="@Url.Action("ListMember", "Staff", new { area = "Admin", LeaderID = aclog.ID })" class="nav-link">
+                            <i data-feather="users" class="bar-chart"></i>
+                            <span>Thành viên trong nhóm</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i data-feather="user-check" class="user"></i> <span>Kinh doanh</span></a>
+                        <ul>
+                            <li class="SellerList"><a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })"> Nhân viên kinh doanh</a></li>
+                            <li class=""><a href="@Url.Action("RevenueDetail", "Customer", new { area = "Admin" })"> Doanh thu tư vấn viên</a></li>
+                            @*<li class="SalaryReview"><a href="@Url.Action("SalaryReview", "SalaryStaff", new { area = "Admin" })"> Duyệt lương</a></li>
+                                <li><a href="@Url.Action("TempSalary", "CampaignSale", new { area = "Admin" })">  Lương dự kiến</a></li>
+                                <li class="SettingSalary"><a href="@Url.Action("SettingSalary", "Option", new { area = "Admin" })"> Cấu hình lương doanh thu</a></li>
+                                <li class="TargetBonus"><a href="@Url.Action("TargetBonus", "CampaignSale", new { area = "Admin" })"> Cấu hình thưởng</a></li>*@
+                            @*<li class="RevenueOfSaler"><a href="@Url.Action("RevenueOfSaler", "Report", new { area = "Admin" })"> Doanh thu tư vấn viên</a></li>*@
+                        </ul>
+                    </li>
+
+                    <li class="nav-item with-sub">
+                        <a href="javascript:;" class="nav-link"><i class="fas fa-dot-circle"></i> <span>Chiến dịch</span></a>
+                        <ul style="padding-left:0;">                           
+                            @{
+                                foreach (var i in periods)
+                                {
+                                    <li>
+                                        @*<a href="#" class="btn btn-success dropdown-toggle" role="button" data-toggle="dropdown " aria-haspopup="true" aria-expanded="false"><i class="fas fa-calendar-times"></i> <span>@i.Year</span></a>*@
+                                        <div class="btn-group dropright">
+                                            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fas fa-calendar" style="padding-right:2px"></i>@i.Year
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <ul style="padding-left:0;">
+                                                    @{
+                                                        var campaigns = Json.Decode<List<CampaignSaleTable.CampaignSaleModel>>(i.CampaignsByYear);
+                                                        foreach (var j in campaigns)
+                                                        {
+                                                            <li>
+                                                                <a class="dropdown-item" href="@Url.Action("PeriodDetail","CampaignSale", new { area = "Admin", id = j.CampaignId})"><span> @j.CampaignName</span></a>
+                                                            </li>
+                                                        }
+
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </li>
+
+                    <!--<li class="nav-label mg-t-25">Khóa học</li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="book" class="book"></i> <span> Khóa học</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })"> Danh sách Khoá học</a></li>-->
+                    @*<li><a href="@Url.Action("CourseListOnline", "Course", new { area = "Admin" })"> Khoá học Online</a></li>*@
+                    <!--<li><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })"> Lịch dạy giáo viên</a></li>-->
+                    @*<li><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })"> Kiểm tra phòng</a></li>*@
+                    <!--</ul>
+                    </li>-->
+                    <li class="nav-label mg-t-25">Quản lý khách hàng</li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i class="fas fa-user-friends"></i> <span>Học viên</span></a>
+                        <ul>
+                            @*<li><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })"> Dữ liệu học viên</a></li>*@
+                            <li><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })"> HV trong khoá</a></li>
+                            <li><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })"> HV chuyển khoá</a></li>
+                            @*<li><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })"> HV hẹn đăng ký</a></li>*@
+                            <li><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })"> HV bảo lưu</a></li>
+                            <li><a href="@Url.Action("CustomerAboutToExpire", "Customer", new { area = "Admin" })"> HV còn 3 buổi học</a></li>
+                            <li><a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })"> Nợ học phí</a></li>
+                            <li><a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })"> Phiếu thu</a></li>
+                            @if (aclog.RoleID == 3)
+                            {
+                                <li class="SupportOffList"><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })"> Chưa có tư vấn viên</a></li>
+                            }
+                            @*<li><a href="@Url.Action("AccountAdvisory", "Customer", new { area = "Admin" })"> Cần tư vấn</a></li>*@
+                        </ul>
+                    </li>
+                    @*<li class="nav-item with-sub">
+                            <a href="" class="nav-link"><i data-feather="alert-triangle" class=""></i> <span> Báo cáo học viên</span></a>
+                            <ul>
+                                <li><a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })"> Cảnh báo học viên</a></li>
+                                <li><a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })">  HV sắp thi</a></li>
+                                <li><a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })"> Kết quả thi thực tế</a></li>
+                            </ul>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("FeedBack", "FeedBack", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="edit" class="bookmark"></i>
+                            <span>Tạo phản hồi</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("FeedBackList", "FeedBack", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="message-square" class="bookmark"></i>
+                            <span>Danh sách phản hồi</span>
+                        </a>
+                    </li>
+                    if (aclog.RoleID == 3)
+                    {
+                        <li class="nav-item with-sub">
+                            <a href="javascript:;" class="nav-link"><i data-feather="file-text" class="user"></i> <span>Hợp đồng</span></a>
+                            <ul>
+
+                                <li class="CustomerContractList"><a href="@Url.Action("CustomerContractList", "Contract", new { area = "Admin" })"> Hợp đồng học viên</a></li>
+                                <li class="CensorshipContract"><a href="@Url.Action("CensorshipContract", "Contract", new { area = "Admin" })"> Duyệt hợp đồng</a></li>
+
+                            </ul>
+                        </li>
+                    }
+                    <li class="nav-item FAQ">
+                        <a href="@Url.Action("FAQ", "Customer", new { area = "Admin" })" class="nav-link FAQ">
+                            <i data-feather="award" class=""></i>
+                            <span>Câu hỏi thường gặp</span>
+                        </a>
+                    </li>
+                    @*if (aclog.RoleID == 3)
+                        {
+                            <li class="nav-item with-sub">
+                                <a href="javascript:;" class="nav-link"><i data-feather="bookmark" class=""></i> <span>Khác</span></a>
+                                <ul>
+                                    <li class="Center"><a href="@Url.Action("Center", "Option", new { area = "Admin" })"> Trung tâm</a></li>
+                                    <li class="Shift"><a href="@Url.Action("Shift", "Option", new { area = "Admin" })"> Ca học</a></li>
+                                    <li class="Grade"><a href="@Url.Action("Grade", "Option", new { area = "Admin" })"> Chuyên môn</a></li>
+                                    <li class="CommitmentPackage"><a href="@Url.Action("CommitmentPackage", "Option", new { area = "Admin" })"> Gói cam kết</a></li>
+                                    <li class="ClassList"><a href="@Url.Action("ClassList", "Class", new { area = "Admin" })"> Chương trình</a></li>
+                                    <li class="SourceOfCustomer"><a href="@Url.Action("SourceOfCustomer", "Option", new { area = "Admin" })"> Kênh lấy data</a></li>
+                                    <li class="Jobs"><a href="@Url.Action("Jobs", "Option", new { area = "Admin" })"> Công việc</a></li>
+                                    <li class="DayOff"><a href="@Url.Action("DayOff", "Option", new { area = "Admin" })"> Ngày nghỉ</a></li>
+                                    <li class="CreateNotification"><a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })"> Tạo thông báo</a></li>
+                                    <li class="CategoryFeedback"><a href="@Url.Action("CategoryFeedback", "Option", new { area = "Admin" })"> Loại phản hồi</a></li>
+                                    <li class="PostList"><a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })"> Kiểm duyệt bài viết</a></li>
+                                    <li class="AcademicPurposesList"><a href="@Url.Action("AcademicPurposesList", "Option", new { area = "Admin" })"> Mục đích học</a></li>
+                                    <li class="IdiomsList"><a href="@Url.Action("IdiomsList", "Option", new { area = "Admin" })"> Thành ngữ lịch</a></li>
+                                    <li class="TermOfService"><a href="@Url.Action("TermOfService", "Contract", new { area = "Admin" })"> Điều khoản</a></li>
+                                    <li class="Reason"><a href="@Url.Action("Reason", "Reason", new { area = "Admin" })"> Lý do học/không học</a></li>
+                                    <li class="Language"><a href="@Url.Action("Language", "Language", new { area = "Admin" })"> Ngôn ngữ</a></li>
+                                    <li class="MoneyExchangeRate"><a href="@Url.Action("MoneyExchangeRate", "MoneyExchangeRate", new { area = "Admin" })"> Tỷ giá tiền tệ</a></li>
+                                    <li class="AcademicLevel"><a href="@Url.Action("AcademicLevel", "Option", new { area = "Admin" })"> Trình độ</a></li>
+                                    <li class="GMT"><a href="@Url.Action("GMT", "Option", new { area = "Admin" })"> GMT</a></li>
+                                    <li class="StudyPath"><a href="@Url.Action("StudyPath", "Option", new { area = "Admin" })"> Lộ trình học</a></li>
+                                </ul>
+                            </li>
+                        }*@
+                }
+                else if (aclog.RoleID == 7)//manager academic học vụ
+                {
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="cast" class="bookmark"></i>
+                                <span>News</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("ScheduleSchool", "Cashier", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="calendar" class="bar-chart"></i>
+                            <span>Lịch dạy trung tâm</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-label mg-t-25">Khóa học</li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="book" class="book"></i> <span> Khóa học</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("CreateCourse", "Course", new { area = "Admin" })"> Tạo khoá học</a></li>
+                            @*<li><a href="@Url.Action("CreatecourseSelfStudy", "Course", new { area = "Admin" })">Tạo khoá tự học</a></li>*@
+                            <li><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })"> Danh sách khóa học</a></li>
+                            @*<li><a href="@Url.Action("CourseListOnline", "Course", new { area = "Admin" })"> Khóa học Online</a></li>
+                                <li><a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })"> DS khoá tự học</a></li>*@
+                            <li><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })"> Lịch dạy giáo viên</a></li>
+                            <li><a href="@Url.Action("ScheduleTeacherAll", "Course", new { area = "Admin" })"> Xem lịch trống giáo viên</a></li>
+                            @*<li><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })"> Kiểm tra phòng</a></li>*@
+                        </ul>
+                    </li>
+                    <li class="nav-label mg-t-25">Quản lý khách hàng</li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i class="fas fa-user-friends"></i> <span>Học viên</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })"> Dữ liệu học viên</a></li>
+                            <li><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })"> Học viên (TVV nghỉ)</a></li>
+                            <li><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })"> HV trong khoá</a></li>
+                            <li><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })"> HV chuyển khoá</a></li>
+                            @*<li><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })"> HV hẹn đăng ký</a></li>*@
+                            <li><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })"> HV bảo lưu</a></li>
+                            @*<li><a href="@Url.Action("AccountAdvisory", "Customer", new { area = "Admin" })"> Cần tư vấn</a></li>*@
+                        </ul>
+                    </li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="calendar" class="calendar"></i> <span>Hẹn test</span></a>
+                        <ul>
+                            @*<li><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })"> Khách mua dịch vụ</a></li>*@
+                            @*<li><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })"> Danh sách đăng ký thi</a></li>*@
+                            <li><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })"> Thêm lịch hẹn test</a></li>
+                            <li><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })"> Danh sách khách hẹn test</a></li>
+                            @*<li><a href="@Url.Action("Customer", "SetPackage", new { area = "Admin" })"> Danh sách khách mua gói</a></li>*@
+                        </ul>
+                    </li>
+
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="alert-triangle" class="bookmark"></i>
+                                <span>Cảnh báo học viên</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="user" class="bookmark"></i>
+                            <span>Giáo viên</span>
+                        </a>
+                    </li>
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("RankUser", "Account", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="bar-chart-2" class="bookmark"></i>
+                                <span>Xếp hạng</span>
+                            </a>
+                        </li>*@
+                    <li class="nav-item">
+                        <a href="@Url.Action("ClassList", "Class", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="trello" class="bookmark"></i>
+                            <span>Chương trình</span>
+                        </a>
+                    </li>
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("ListSetPackage", "SetPackage", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="inbox" class="bookmark"></i>
+                                <span>Bài tập Test</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="message-square" class="bookmark"></i>
+                            <span>Tạo thông báo</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("PostList", "PostNewFeed", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="edit" class="bookmark"></i>
+                            <span>Viết bài</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("FAQ", "Customer", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="award" class=""></i>
+                            <span>Câu hỏi thường gặp</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@Url.Action("DocumentList", "Library", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="book-open" class=""></i>
+                            <span>Thư viện online</span>
+                        </a>
+                    </li>
+                }
+                else if (aclog.RoleID == 9) // kế toán
+                {
+                    @*<li class="nav-item">
+                            <a href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })" class="nav-link">
+                                <i data-feather="cast" class="bookmark"></i>
+                                <span>News</span>
+                            </a>
+                        </li>*@
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("Dashboard", "Home", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="bar-chart-2" class="bar-chart"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-label mg-t-25">Khóa học</li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="book" class="book"></i> <span> Khóa học</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })"> DS khoá học</a></li>
+                            <li><a href="@Url.Action("ScheduleTeacher", "Course", new { area = "Admin" })"> Lịch trống giáo viên</a></li>
+                            <li><a href="@Url.Action("ScheduleTeacherAll", "Course", new { area = "Admin" })"> Kiểm tra nhiều lịch giáo viên</a></li>
+                            @*<li><a href="@Url.Action("ScheduleZoom", "Course", new { area = "Admin" })"> Kiểm tra phòng</a></li>*@
+                        </ul>
+                    </li>
+                    <li class="nav-label mg-t-25">Quản lý khách hàng</li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i class="fas fa-user-friends"></i> <span>Học viên</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("CustomerList", "Customer", new { area = "Admin" })"> Dữ liệu học viên</a></li>
+                            <li><a href="@Url.Action("SupportOffList", "Customer", new { area = "Admin" })"> Học viên (TVV nghỉ)</a></li>
+                            <li><a href="@Url.Action("CourseStudent", "Customer", new { area = "Admin" })"> HV trong khoá</a></li>
+                            <li><a href="@Url.Action("ChangeCourse", "Customer", new { area = "Admin" })"> HV chuyển khoá</a></li>
+                            @*<li><a href="@Url.Action("Appointment", "Customer", new { area = "Admin" })"> HV hẹn đăng ký</a></li>*@
+                            <li><a href="@Url.Action("CustomerReserve", "Customer", new { area = "Admin" })"> HV bảo lưu</a></li>
+                            @*<li><a href="@Url.Action("CustomerAdvisory", "Customer", new { area = "Admin" })"> HV cần tư vấn</a></li>*@
+                        </ul>
+                    </li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="calendar" class="calendar"></i> <span>Hẹn test</span></a>
+                        <ul>
+                            @*<li><a href="@Url.Action("ServiceCustomer", "Customer", new { area = "Admin" })"> Khách mua dịch vụ</a></li>*@
+                            @*<li><a href="@Url.Action("ServiceCustomerExam", "Customer", new { area = "Admin" })"> Danh sách đăng ký thi</a></li>*@
+                            <li><a href="@Url.Action("SaveinfoStudent", "Cashier", new { area = "Admin" })"> Thêm lịch hẹn test</a></li>
+                            <li><a href="@Url.Action("ListAppointmentTest", "Cashier", new { area = "Admin" })"> Danh sách khách hẹn test</a></li>
+                            @*<li><a href="@Url.Action("Customer", "SetPackage", new { area = "Admin" })"> Danh sách khách mua gói</a></li>*@
+                        </ul>
+                    </li>
+                    @*<li class="nav-item with-sub">
+                            <a href="" class="nav-link"><i data-feather="alert-triangle" class=""></i> <span> Báo cáo học viên</span></a>
+                            <ul>
+                                <li><a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })"> Cảnh báo học viên</a></li>
+                                <li><a href="@Url.Action("ReadyToTest", "Customer", new { area = "Admin" })">  HV sắp thi</a></li>
+                                <li><a href="@Url.Action("TestResult", "Customer", new { area = "Admin" })"> Kết quả thi thực tế</a></li>
+                            </ul>
+                        </li>*@
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="dollar-sign" class=""></i> <span> Tài chính</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("CustomerDebts", "Customer", new { area = "Admin" })"> Nợ học phí</a></li>
+                            @*<li><a href="@Url.Action("RefundList", "Cashier", new { area = "Admin" })"> Yêu cầu hoàn tiền</a></li>*@
+                            <li><a href="@Url.Action("InvoiceList", "Cashier", new { area = "Admin" })"> Phiếu thu</a></li>
+                            @*<li><a href="@Url.Action("PaymentVoucherList", "Cashier", new { area = "Admin" })"> Phiếu chi</a></li>*@
+                        </ul>
+                    </li>
+
+                    <li class="nav-label mg-t-25">Quản lý nhân viên</li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="users" class=""></i> <span>Nhân viên</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("StaffList", "Staff", new { area = "Admin" })"> Danh sách nhân viên</a></li>
+                            <li><a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })"> Dánh sách saler</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="user" class="book"></i> <span>Giáo viên</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("TeacherList", "Staff", new { area = "Admin" })"> Giáo viên</a></li>
+                            @*<li><a href="@Url.Action("TeachHours", "Staff", new { area = "Admin" })"> Giờ dạy giáo viên</a></li>*@
+                        </ul>
+                    </li>
+                    <li class="nav-item with-sub">
+                        <a href="" class="nav-link"><i data-feather="dollar-sign" class="book"></i> <span> Lương saler</span></a>
+                        <ul>
+                            <li><a href="@Url.Action("CampaignSale", "Staff", new { area = "Admin" })"> Chiến dịch sale</a></li>
+                            <li><a href="@Url.Action("SalaryReview", "SalaryStaff", new { area = "Admin" })">  Duyệt lương</a></li>
+                            <li><a href="@Url.Action("TempSalary", "CampaignSale", new { area = "Admin" })">  Lương dự kiến</a></li>
+                            @*<li><a href="@Url.Action("SalaryStaff", "SalaryStaff", new { area = "Admin" })"> Lịch sử duyệt</a></li>*@
+                        </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="@Url.Action("CreateNotification", "Notification", new { area = "Admin" })" class="nav-link">
+                            <i data-feather="message-square" class="bookmark"></i>
+                            <span>Tạo thông báo</span>
+                        </a>
+                    </li>
+                    <li class="nav-item FAQ">
+                        <a href="@Url.Action("FAQ", "Customer", new { area = "Admin" })" class="nav-link FAQ">
+                            <i data-feather="award" class=""></i>
+                            <span>Câu hỏi thường gặp</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </aside>
+    <div class="content pd-0-f">
+        <div class="content-header">
+            <div class="navbar-left">
+                <div class="d-sm-flex align-items-center justify-content-between ">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            @*<ol class="breadcrumb breadcrumb-style1 mg-b-10">
+                                    <li class="breadcrumb-item"><a href="#">Trang chủ</a></li>
+                                    <li class="breadcrumb-item"><a href="#">Link 1</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">Link 2</li>
+                                </ol>*@
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            @{
+                if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 3 || aclog.RoleID == 6 || aclog.RoleID == 7)
+                {
+                    <div class="d-flex">
+                        <a href="@Url.Action("Appointment","Customer", new { area = "Admin" })" class="btn btn-white color-green warningList" data-toggle="tooltip" data-placement="bottom" title="Học viên chờ xếp lớp"></a>
+                        <a href="@Url.Action("FeedBackList","FeedBack", new { area = "Admin", cate = 16 })" class="btn btn-white color-yellow redList" data-toggle="tooltip" data-placement="bottom" title="Học viên yêu cầu chuyển ca"></a>
+                        <a href="@Url.Action("FeedBackList","FeedBack", new { area = "Admin", cate = 17 })" class="btn btn-white color-orange orangeList" data-toggle="tooltip" data-placement="bottom" title="Học viên yêu cầu học bù"></a>
+                        <a href="@Url.Action("TeacherSalaryDetailList","Staff", new { area = "Admin" })" class="btn btn-white color-white tx-black rejects" data-toggle="tooltip" data-placement="bottom" title="Buổi dạy cần kiểm tra lương"></a>
+                    </div>
+                }
+            }
+
+            <div class="navbar-right">
+                <div class="dropdown dropdown-notification">
+                    <a href="" class="dropdown-link new-indicator" data-toggle="dropdown">
+                        <i data-feather="bell"></i>
+                        <span id="lnoti"></span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <div class="dropdown-header" id="noti-list">Thông báo</div>
+
+
+                        <!--<a href="@Url.Action("Notification", "Notification", new { area = "Admin" })" class="dropdown-item">
+                            <div class="media">
+                                <div class=""><i data-feather="bell"></i></div>
+                                <div class="media-body mg-l-15">
+                                    <p>item.NotificationTitle</p>
+                                    <span>item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>-->
+                        <!-- media-body -->
+                        <!--</div>--><!-- media -->
+                        <!--</a>-->
+
+
+                        <div class="dropdown-footer"><a href="@Url.Action("Notification", "Notification", new { area = "Admin" })">Xem tất cả</a></div>
+                    </div><!-- dropdown-menu -->
+                </div><!-- dropdown -->
+                <a href="@Url.Action("Signout", "Login", new { area = "" })" class="dropdown-item signout" style="border-radius: 50%; padding: 6px 8px 4px 10px; "><i class="fas fa-sign-out-alt"></i></a>
+            </div><!-- navbar-right -->
+        </div><!-- navbar -->
+
+        <div class="content-body">
+            @RenderBody()
+
+            <div class="modal fade" id="editProfile" tabindex="-1" role="dialog" aria-labelledby="editTitle" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editTitle">Chỉnh sửa</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        @using (Html.BeginForm("UpdateProfile", "Account", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                        {
+                            <div class="modal-body">
+                                <fieldset class="form-fieldset">
+                                    <legend>Thông tin chi tiết</legend>
+                                    <div class="form-group row">
+                                        <label for="full_name" class="col-sm-2 col-form-label">Tài khoản</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" class="form-control" disabled value="@aclog.UserName">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="full_name" class="col-sm-2 col-form-label">Họ và tên</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" class="form-control" name="txt-full-name" value="@aclog.FullName">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="phone_number" class="col-sm-2 col-form-label">Số điện thoại</label>
+                                        <div class="col-sm-10">
+                                            <input type="number" class="form-control" name="txt-phone" value="@aclog.Phone">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="email" class="col-sm-2 col-form-label">Email</label>
+                                        <div class="col-sm-10">
+                                            <input type="email" class="form-control" name="txt-email" value="@aclog.Email">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="address" class="col-sm-2 col-form-label">Địa chỉ</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" class="form-control" name="txt-address" value="@aclog.Address">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="address" class="col-sm-2 col-form-label">Mật khẩu</label>
+                                        <div class="col-sm-10">
+                                            <input type="password" class="form-control" name="txt-password" placeholder="******" autocomplete="new-password" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="address" class="col-sm-2 col-form-label">Ảnh đại diện</label>
+                                        <div class="col-sm-10">
+                                            <input type="file" id="fileupload" name="fileupload" accept="image/*" class="dropify">
+                                        </div>
+                                    </div>
+
+                                </fieldset>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Lưu lại</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @using (Html.BeginForm("AddCampaignSale", "CampaignSale", FormMethod.Post, new { id = "f-submit" }))
+    {
+        <div class="modal fade show" id="div-period" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                        <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </a>
+                        <div class="media align-items-center">
+                            <div class="media-body">
+                                <h4 class="tx-18 tx-sm-20 mg-b-2">Tạo mới chiến dịch</h4>
+                            </div>
+                        </div><!-- media -->
+                    </div><!-- modal-header -->
+                    <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                        <div class="personal-info">
+                            <div class="form-row">
+                                <div class="col-sm-12 form-group">
+                                    <label class="required" for="txt-period">Tên chiến dịch:</label>
+                                    <input type="text" name="txt-period" id="txt-period" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-sm-6 form-group">
+                                    <label class="">Quản lý chiến dịch:</label>
+                                    <select class="select2 custom-select" name="slManager">
+                                        @*<option value="0">---</option>
+                                            @{
+                                                foreach (var i in managers)
+                                                {
+                                                    <option value="@i.ID">@i.FullName - @i.RoleName</option>
+                                                }
+                                            }*@
+                                    </select>
+                                </div>
+                                <div class="col-sm-6 form-group">
+                                    <label class="required">Loại chiến dịch:</label>
+                                    <select class="select2 custom-select" name="slPeriodType">
+                                        <option value="1">Năm</option>
+                                        @*<option value="2">Quý</option>*@
+                                        <option value="3">Tháng</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <label class="wd-100p required">Thời gian:</label>
+                                <div class="col-sm-6 form-group" id="div-time" style="display:none;">
+                                    <select class="select2 custom-select" name="slTime">
+                                    </select>
+                                </div>
+                                <div class="col-sm-12 form-group">
+                                    <select class="select2 custom-select" name="slYear">
+                                        @{
+                                            for (var i = 2021; i < 2041; i++)
+                                            {
+                                                <option value="@i">@i</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-sm-12 form-group">
+                                    <label class="">Mô tả:</label>
+                                    <textarea id="txt-description" name="txt-description" class="form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- modal-body -->
+                    <div class="modal-footer pd-x-20 pd-y-15">
+                        <button type="submit" class="btn btn-primary">Xác nhận</button>
+                        <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div><!-- modal-content -->
+            </div><!-- modal-dialog -->
+        </div><!-- modal -->
+    }
+
+    <!-- Messenger Plugin chat Code -->
+    <!--<div id="fb-root"></div>-->
+    <!-- Your Plugin chat code -->
+    <!--<div id="fb-customer-chat" class="fb-customerchat">
+    </div>
+
+    <script>
+        var chatbox = document.getElementById('fb-customer-chat');
+        chatbox.setAttribute("page_id", "104740691418752");
+        chatbox.setAttribute("attribution", "biz_inbox");
+
+        window.fbAsyncInit = function () {
+            FB.init({
+                xfbml: true,
+                version: 'v12.0'
+            });
+        };
+
+        (function (d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = 'https://connect.facebook.net/vi_VN/sdk/xfbml.customerchat.js';
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    </script>-->
+    <footer class="footer">
+        <div style="margin:auto;">
+            <span style="display: inline-block;margin-bottom: 10px;vertical-align: middle; margin-right:10px;">COPYRIGHT &copy; @DateTime.Now.Year, ICC ACADEMY</span>
+            <a href="https://www.facebook.com/ieclanguage/" target="_blank"><i style="font-size: 23px;color: #17a8fc; margin-right:5px;" class="fab fa-facebook"></i></a>
+            <a href="https://www.youtube.com/channel/UCI8GZkjQqRL4eg70BewXa1A" target="_blank"><i class="fab fa-youtube" style="font-size: 25px;color:red;"></i></a>
+            <a href="@("https://www.tiktok.com/@iec_deutsch?_d=secCgYIASAHKAESPgo8OK34mFt7HaY%2F43JiwC8jcFaUgLTOQz2XQekQbNSDeZ6CRWm4MiWFLSIKWUn2Vsm%2FnJs8jNEfzucbxwD1GgA%3D&language=en&sec_uid=MS4wLjABAAAAdlbgBFlAwt-aPqecqkY-83FN1cFBPwd1QVe_281_GQxyEIp_7ZcGn3e2bwr779fB&sec_user_id=MS4wLjABAAAAdlbgBFlAwt-aPqecqkY-83FN1cFBPwd1QVe_281_GQxyEIp_7ZcGn3e2bwr779fB&share_app_id=1180&share_author_id=6997815347126928411&share_link_id=69bb8b54-6285-40ca-af79-3b55058afab1&timestamp=1630145880&u_code=dk7945eh8hb9i1&user_id=6997815347126928411&utm_campaign=client_share&utm_medium=android&utm_source=messenger&source=h5_t&_r=1")" target="_blank"><img src="~/app-assets/images/tiktok-brands.svg" style="height: 20px; position: relative; margin-bottom: 12px;width:unset;" /></a>
+            <a href="http://iccacademy.edu.vn/" target="_blank"><i class="fas fa-globe" style="font-size: 25px; color: #01a42f;"></i></a>
+        </div>
+    </footer>
+    @{
+        //send notification realtime
+        if (aclog.RoleID == 1)
+        {
+            <div class="modal fade" id="modal-noti-realtime" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered mx-wd-sm-650" role="document">
+                    <div class="modal-content bd-0 bg-transparent">
+                        <div class="modal-body pd-0">
+                            <a href="" role="button" class="close pos-absolute t-15 r-15 z-index-10" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </a>
+                            <div class="row no-gutters" style="min-height:350px">
+                                <div class="col-3 col-sm-5 col-md-6 col-lg-5 bg-primary rounded-left">
+                                    <div class="wd-100p ht-100p">
+                                        <img src="/app-assets/zimv2/images/system-update.jpg" class="wd-100p img-fit-cover img-object-top rounded-left" alt="">
+                                    </div>
+                                </div><!-- col -->
+                                <div class="col-9 col-sm-7 col-md-6 col-lg-7 bg-white rounded-right">
+                                    <div class="ht-100p d-flex flex-column pd-20 pd-sm-30 pd-md-40">
+                                        <span class="tx-color-04"><i data-feather="bar-chart-2" class="wd-40 ht-40 stroke-wd-3 mg-b-20"></i></span>
+                                        <h3 class="tx-16 tx-sm-20 tx-md-24 mg-b-15 mg-md-b-20">Realtime Notification</h3>
+                                        <textarea class="form-control mg-b-20" id="txt-realtime-noti" placeholder="..." rows="4"></textarea>
+                                        <a href="javascript:;" class="btn btn-primary btn-block btn-uppercase btn-push-noti-realtime" data-uid="@aclog.ID">Push</a>
+                                    </div>
+                                </div><!-- col -->
+                            </div><!-- row -->
+                        </div><!-- modal-body -->
+                    </div><!-- modal-content -->
+                </div><!-- modal-dialog -->
+            </div><!-- modal -->
+        }
+    }
+    <div class="modal fade" id="modal-noti-realtime-everyone" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered mx-wd-sm-650" role="document">
+            <div class="modal-content bd-0 bg-transparent">
+                <div class="modal-body pd-0">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15 z-index-10" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="row no-gutters" style="min-height:350px">
+                        <div class="col-3 col-sm-5 col-md-6 col-lg-5 bg-primary rounded-left">
+                            <div class="wd-100p ht-100p">
+                                <img src="/app-assets/zimv2/images/system-update.jpg" class="wd-100p img-fit-cover img-object-top rounded-left" alt="">
+                            </div>
+                        </div><!-- col -->
+                        <div class="col-9 col-sm-7 col-md-6 col-lg-7 bg-white rounded-right">
+                            <div class="ht-100p d-flex flex-column pd-20 pd-sm-30 pd-md-40">
+                                <span class="tx-color-04"><i data-feather="bar-chart-2" class="wd-40 ht-40 stroke-wd-3 mg-b-20"></i></span>
+                                <h3 class="tx-16 tx-sm-20 tx-md-24 mg-b-15 mg-md-b-20">Thông báo!</h3>
+                                <p class="tx-14 tx-md-16 tx-color-02 message-noti" style="white-space: pre-line;"></p>
+                            </div>
+                        </div><!-- col -->
+                    </div><!-- row -->
+                </div><!-- modal-body -->
+            </div><!-- modal-content -->
+        </div><!-- modal-dialog -->
+    </div><!-- modal -->
+    <!-- side chat -->
+    @if (aclog.RoleID != 5)
+    {
+        <aside id="quick-chat-wrap">
+            <div id="chat-people-list" class="sidenav off-canvas">
+                <div class="header-nav">
+                    <a href="" class="chat-action close-sidenav"><i data-feather="x"></i></a>
+                    <h6 class="title">Messenger</h6>
+                </div>
+                <div class="content-nav">
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <ul class="list-people"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="chat-content-detail" class="sidenav off-canvas">
+                <div class="header-nav">
+                    <a href="javascript:;" class="chat-action close-sidenav close"><i data-feather="arrow-left"></i></a>
+                    <h6 class="title" id="sp-name-chat"></h6>
+                </div>
+                <div class="content-nav">
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="d-flex flex-column">
+                                <ul class="list-people" id="ul-content-chat"></ul>
+                                <div class="chat-type">
+                                    <input type="text" id="icon_prefix" class="form-control align-self-center bd-0" placeholder="Message">
+                                    <a href="javascript:;" id="btn-send" data-toggle="tooltip" class="btn-icon btn-send"> <i data-feather="send"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    }
+    <script src="~/app-assets/zimv2/lib/jqueryui/jquery-ui.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/moment/moment.js"></script>
+
+    <script src="~/app-assets/zimv2/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/feather-icons/feather.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/dashforge.js"></script>
+    <script src="~/app-assets/zimv2/assets/select2/js/select2.full.min.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/dashforge.aside.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/custom.js"></script>
+    <!-- append theme customizer -->
+    <script src="~/app-assets/zimv2/lib/js-cookie/js.cookie.js"></script>
+    <script src="~/app-assets/zimv2/lib/datetimepicker-2.5.20/jquery.datetimepicker.full.min.js"></script>
+    <script src="~/app-assets/vendors/dropify/js/dropify.min.js"></script>
+    <script src="~/app-assets/zimv2/assets/dev/jscustom.js"></script>
+    <script src="~/app-assets/pushdesktop/CreateDevice.js"></script>
+    <script src="~/Scripts/jquery.signalR-2.4.1.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script src="~/app-assets/js/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/app-assets/js/datatables/dataTables.bootstrap4.min.js"></script>
+    @if (IsSectionDefined("myScripts"))
+    {
+        @RenderSection("myScripts", required: false);
+        <script>
+            var greenList = 0;
+            var orangeList = 0;
+            var redList = 0;
+            var blackList = 0;
+
+            $(document).ready(function () {
+                if('@TempData["OnePayURL"]' != '') {
+                    window.open("@TempData["OnePayURL"]");
+                }
+               if ('@TempData["AlertMessage"]' != '') {
+                    toast.create({
+                        title: 'Notification!',
+                        text: '@TempData["AlertMessage"]',
+                        icon: '@TempData["Icon"]',
+                        classBackground: '@TempData["Class"]',
+                        timeout: 2500
+                    })
+                }
+
+                // lấy 4 số trên header
+                $.ajax({
+                    type: "GET",
+                    url: "/Admin/Account/LoadDataHeader",
+                    //data: '{id: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            $('.warningList').text(msg.warningList);
+                            $('.redList').text(msg.redList);
+                            $('.orangeList').text(msg.orangeList);
+                            $('.rejects').text(msg.rejects);
+                            $('#lnoti').text(msg.lnoti);
+                            let urlString = window.location.origin;
+
+                            let htmlString = '';
+                            for (var i = 0; i < msg.notiList.length; i++) {
+                                switch (msg.notiList[i].NotiType) {
+                                    case 1: urlString = urlString + '/Admin/CourseDetail/NotificationCourse/' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 2: urlString = urlString + '/Admin/Customer/CustomerWarning';
+                                        break;
+                                    case 3: urlString = urlString + '/Admin/CourseDetail/ScheduleCourse/' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 4: urlString = urlString + '/Admin/CourseDetail/ExerciseCourse/' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 5: urlString = urlString + '/news-feed?group=' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 6: urlString = urlString + '/Admin/TeacherExercise/ExerciseProcess?search=' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 7: urlString = urlString + '/StudentExrcise/ExrciseDetailEssayFix/' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 8: urlString = urlString + '/Admin/FeedBack/FeedBackDetail/' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 9: urlString = urlString + '/invoice/?code=' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 10: urlString = urlString + '/Admin/Cashier/RefundList';
+                                        break;
+                                    case 11: urlString = urlString + '/Admin/Notification/Notification';
+                                        break;
+                                    case 12: urlString = urlString + '/Admin/TeacherExercise/ExerciseDetail/' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 13: urlString = urlString + '/Admin/Customer/CustomerDetai/' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 14: urlString = urlString + '/Admin/Customer/CourseStudent';
+                                        break;
+                                    case 15: urlString = urlString + '/Admin/Customer/WarningDetail/' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 16: urlString = urlString + '/Admin/Course/CourseList?search=' + msg.notiList[i].IDValue;
+                                        break;
+                                    case 17: urlString = urlString + '/StudentCourse/SignContract';
+                                        break;
+                                    case 18: urlString = urlString + '/Admin/CourseDetail/FeedbackSchedule';
+                                        break;
+                                    case 19: urlString = urlString + '/Admin/TeacherCourse/FeedbackList';
+                                        break;
+                                    default: urlString = urlString + '/Admin/Notification/Notification';
+                                        break;
+                                }
+
+                                htmlString += `<a href="${urlString}" class="dropdown-item">
+                                                    <div class="media">
+                                                        <div class=""><i data-feather="bell"></i></div>
+                                                        <div class="media-body mg-l-15">
+                                                            <p>${msg.notiList[i].NotificationTitle}</p>
+                                                            <span>${moment(msg.notiList[i].CreatedDate).format('DD/MM/YYYY HH:mm')}</span>
+                                                        </div>
+                                                    </div>
+                                                </a>`
+                            }
+                            $('#noti-list').html(htmlString);
+
+                            //var htmlString_periods = '';
+                            //for (var i = 0; i < msg.periods.length; i++) {
+                            //    htmlString_periods += `<li>
+                            //                                <a href="${window.location.origin}/Admin/CampaignSale/PeriodDetail/${msg.periods[i].ID}"><i class="far fa-dot-circle"></i><span> ${msg.periods[i].CampaignName}</span></a>
+                            //                            </li>`
+                            //}
+                            //$('.periods').html(htmlString_periods);
+
+                            var htmlString_manager = '<option value="0">---</option>';
+                            for (var i = 0; i < msg.manager.length; i++) {
+                                htmlString_manager += `<option value="${msg.manager[i].ID}">${msg.manager[i].FullName} - ${msg.manager[i].RoleName}</option>`
+                            }
+                            $('select[name=slManager]').html(htmlString_manager);
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(xmlhttprequest);
+                    }
+                });
+
+                $('[data-toggle="popover"]').popover();
+                $('.dropify').dropify();
+
+                $('[data-toggle="tooltip"]').tooltip({
+                    container: 'body',
+                    placement: 'right'
+                })
+                $('input[name=hdf-url]').val(document.URL);
+                $('form').submit(function () {
+                    $(this).find('button[type=submit]').prop('disabled', true);
+                });
+            });
+            function ckstring(str) { //check null empty
+                return (!str || /^\s*$/.test(str));
+            }
+            function moneyfm(e) {
+                var cus = $(e).val().replace(/,/g, '');
+
+                var regex = /^[0-9]+$/;
+
+                if (!cus.match(regex)) {
+                    return $(e).val(0);
+                }
+                cus = cus.replace(/,/g, "");
+                $(e).val(dinhdangtien(cus, ','));
+            }
+            var dinhdangtien = function (n, dp) {// format money
+                var s = '' + (Math.floor(n)), d = n % 1, i = s.length, r = '';
+                while ((i -= 3) > 0) { r = ',' + s.substr(i, 3) + r; }
+                return s.substr(0, i + 3) + r +
+                    (d ? '.' + Math.round(d * Math.pow(10, dp || 2)) : '');
+            };
+
+             //laod history chat
+        var idchat = 0;
+        function loadmess(id) {
+            idchat = id;
+            $('#ul-content-chat').empty();
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/SearchID",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#sp-name-chat').text(msg.acc.FullName);
+                        console.log(msg.sms.length);
+                        var ms = '';
+                        for (var i = 0; i < msg.sms.length; i++) {
+                            var item = msg.sms[i];
+                            console.log(item);
+                            if (item.FromUID == @aclog.ID) {
+                                ms += '<li class="people-item">';
+                                ms += ' <div class="d-flex align-items-center justify-content-end">';
+                                ms += '     <div class="user-content bubble-right">';
+                                ms += '         <p class="txt">' + item.MessageContent + '</p>';
+                                ms += '         <hr/>';
+                                ms += '         <p class="time">' + moment(item.CreatedDate).format('DD/MM/YYYY HH:mm') + '</p>';
+                                ms += '      </div>';
+                                ms += '  </div>';
+                                ms += '</li>';
+                            }
+                            else {
+                                ms += '<li class="people-item">';
+                                ms += ' <div class="d-flex align-items-center">';
+                                ms += '     <div class="avatar-people">';
+                                ms += '         <img src="/app-assets/favicon-zim.jpg" alt="" class="people-img">';
+                                ms += '     </div>';
+                                ms += '     <div class="user-content bubble">';
+                                ms += '         <p class="txt">' + item.MessageContent + '</p>';
+                                ms += '         <hr />';
+                                ms += '         <p class="time">' + moment(item.CreatedDate).format('DD/MM/YYYY HH:mm') + '</p>';
+                                ms += '     </div>';
+                                ms += ' </div>';
+                                ms += '</li>';
+                            }
+                        }
+                        $('#ul-content-chat').append(ms);
+                        var charScroll = $("#ul-content-chat");
+                        if (charScroll.length > 0) {
+                            charScroll[0].scrollTop = charScroll[0].scrollHeight;
+                        }
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: load chat");
+                }
+            });
+        }
+
+        //readtime chat
+        $(function () {
+            // Reference the auto-generated proxy for the hub.
+            var process = $.connection.zimRealTime;
+
+            //báo online, hay offline cho user khác
+            process.client.getstatusonline = function (id, classs) {
+                var st = $('#onoff-' + id + '');
+                st.removeClass('active');
+                st.addClass(classs);
+            }
+            //show số lượng thông báo hoặc tin nhắn đang chờ
+            process.client.showcountsmsvsnoti = function (id, count) {
+                console.log(count);
+                $('#count-sms-' + id+'').Show();
+            }
+
+            //nhận tin nhắn
+            process.client.addNewMessageToPage = function (m) {
+                // Add the message to the page.
+                //tin nhắn được đẩy xuống, gọi ajax để lấy thông tin khách
+
+                var ms = '';
+                if (m.FromUID == @aclog.ID) {
+                    ms += '<li class="people-item">';
+                    ms += ' <div class="d-flex align-items-center justify-content-end">';
+                    ms += '     <div class="user-content bubble-right">';
+                    ms += '         <p class="txt">' + m.MessageContent + '</p>';
+                    ms += '         <hr/>';
+                    ms += '         <p class="time">' + moment(m.CreatedDate).format('DD/MM/YYYY HH:mm') + '</p>';
+                    ms += '      </div>';
+                    ms += '  </div>';
+                    ms += '</li>';
+                }
+                else {
+                    ms += '<li class="people-item">';
+                    ms += ' <div class="d-flex align-items-center">';
+                    ms += '     <div class="avatar-people">';
+                    ms += '         <img src="/app-assets/favicon-zim.jpg" alt="" class="people-img">';
+                    ms += '     </div>';
+                    ms += '     <div class="user-content bubble">';
+                    ms += '         <p class="txt">' + m.MessageContent + '</p>';
+                    ms += '         <hr />';
+                    ms += '         <p class="time">' + moment(m.CreatedDate).format('DD/MM/YYYY HH:mm') + '</p>';
+                    ms += '     </div>';
+                    ms += ' </div>';
+                    ms += '</li>';
+                }
+                $('#ul-content-chat').append(ms);
+                var charScroll = $("#ul-content-chat");
+                if (charScroll.length > 0) {
+                    charScroll[0].scrollTop = charScroll[0].scrollHeight;
+                }
+            };
+
+            //Nhận notification realtime
+            process.client.shownotification = (uid, message) => {
+                if (uid !=@aclog.ID) {
+                    $(".message-noti").text(message);
+                    $("#modal-noti-realtime-everyone").modal('toggle');
+                }
+            };
+
+            // Start the connection.
+            //gui tin nhan
+            $.connection.hub.start().done(function () {
+                $('#btn-send').click(function () {
+                    var UID = $(this).attr('data-uid');
+                    if (!ckstring($('#icon_prefix').val())) {
+                        // Call the Send method on the hub.
+                        process.server.sendMess(@aclog.ID, idchat, $('#icon_prefix').val());
+                        // Clear text box and reset focus for next comment.
+                        $('#icon_prefix').val('').focus();
+                        var charScroll = $("#ul-content-chat");
+                        if (charScroll.length > 0) {
+                            charScroll[0].scrollTop = charScroll[0].scrollHeight;
+                        }
+                    }
+                });
+                $(".btn-push-noti-realtime").click(function () {
+                    var UID = $(this).attr('data-uid');
+                    var message = $("#txt-realtime-noti").val();
+                    if (!ckstring(message)) {
+                        process.server.pushNoti(UID, message);
+                        $("#modal-noti-realtime").modal('toggle');
+                        toast.create({
+                            title: 'Notification!',
+                            text: 'Success',
+                            icon: 'check',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        });
+                    }
+                });
+                $('#icon_prefix').keyup(function () {
+                    if (event.keyCode === 13) {
+                        if (!ckstring($('#icon_prefix').val())) {
+                            $('#btn-send').click();
+                        }
+                    }
+                });
+
+            });
+        });
+
+            function loaddistrict(e) {
+                var id = $(e).attr('data-id');
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Customer/GetDistrict",
+                    data: '{cityid: ' + $(e).val() + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (id > 0) {
+                            $('#ddl-district-' + id + '').empty();
+                            $('#ddl-district-' + id + '').append(msg.d).trigger('change');
+                            $('#ddl-district-' + id + '').attr('data-id', id);
+                            loadwardstreet($('#ddl-district-' + id + ''));
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error load-district");
+                    }
+                });
+            }
+            function loadwardstreet(e) {
+                var id = $(e).attr('data-id');
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Customer/GetWardStreet",
+                    data: '{districtid: ' + $(e).val() + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (id > 0) {
+                            $('#ddl-ward-' + id + '').empty();
+                            $('#ddl-street-' + id + '').empty();
+
+                            $('#ddl-ward-' + id + '').append(msg.w).trigger('change');
+                            $('#ddl-street-' + id + '').append(msg.s).trigger('change');
+                        }
+                        //$('#ddl-district-' + id + '').trigger("change");
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error load-district");
+                    }
+                });
+            }
+
+            //Tùy chỉnh xuất excel
+            function fnExcelReport(data, filename) {
+                var ua = window.navigator.userAgent;
+                var msie = ua.indexOf("MSIE ");
+                if (msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) // If Internet Explorer
+                {
+
+                    txtArea1.document.open("txt/html", "replace");
+                    txtArea1.document.write(data);
+                    txtArea1.document.close();
+                    txtArea1.focus();
+                    sa = txtArea1.document.execCommand("SaveAs", true, filename + ".xls");
+
+                    document.open("txt/html", "replace");
+                    document.write(data);
+                    document.close();
+
+                    sa = document.execCommand("SaveAs", true, filename + ".xls");
+                }
+                else {//other browser
+                    var a = document.createElement('a');
+                    var data_type = 'data:application/vnd.ms-excel';
+                    var table_div = data;    //Your tab_text
+                    var table_html = table_div.replace(/ /g, '%20');
+                    a.href = data_type + ', ' + table_html;
+                    //setting the file name
+                    a.download = filename + '.xls';
+                    //triggering the function
+                    a.click();
+
+                }
+                return (sa);
+            }
+            $(document).ready(function () {
+                setActiveMenu(window.location.pathname);
+            });
+            //active menu
+            function setActiveMenu(path) {
+                console.log(path);
+                if (path.toLowerCase().indexOf('/news-feed') != -1) {
+                    $('.nav-item.profileuser').addClass("active");
+                }
+                else if (path.toLowerCase().indexOf('/home/dashboard') != -1) {
+                    $('.nav-item.dashboard').addClass("active");
+                }
+                else if (path.toLowerCase().indexOf('/admin/cashier/scheduleschool') != -1) {
+                    $('.nav-item.ScheduleSchool').addClass("active");
+                }
+                else if (path.toLowerCase().indexOf('/admin/cashier/registercourse') != -1) {
+                    $('.nav-item.RegisterCourse').addClass("active");
+                }
+                else if (path.toLowerCase().indexOf('/admin/feedback/feedbacklist') != -1) {
+                    $('.nav-item.FeedBackList').addClass("active");
+                }
+                else if (path.toLowerCase().indexOf('/admin/library/documentlist') != -1) {
+                    $('.nav-item.DocumentList').addClass("active");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/faq') != -1) {
+                    $('.nav-item.FAQ').addClass("active");
+                }
+                else if (path.toLowerCase().indexOf('/admin/course/createcoursenew') != -1) {
+                    $('.with-sub .CreateCourseNew').addClass("active");
+                    $('.with-sub .CreateCourseNew').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/course/courselist') != -1) {
+                    $('.with-sub .CourseList').addClass("active");
+                    $('.with-sub .CourseList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/zoommeeting/teacherconfigzoom') != -1) {
+                    $('.with-sub .TeacherConfigZoom').addClass("active");
+                    $('.with-sub .TeacherConfigZoom').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/zoommeeting/managelistmeeting') != -1) {
+                    $('.with-sub .ManageListMeeting').addClass("active");
+                    $('.with-sub .ManageListMeeting').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/zoommeeting/meetinginternal') != -1) {
+                    $('.with-sub .MeetingInternal').addClass("active");
+                    $('.with-sub .MeetingInternal').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/customerlist') != -1) {
+                    $('.with-sub .CustomerList').addClass("active");
+                    $('.with-sub .CustomerList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/customerreserve') != -1) {
+                    $('.with-sub .CustomerReserve').addClass("active");
+                    $('.with-sub .CustomerReserve').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/coursestudent') != -1) {
+                    $('.with-sub .CourseStudent').addClass("active");
+                    $('.with-sub .CourseStudent').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/changecourse') != -1) {
+                    $('.with-sub .ChangeCourse').addClass("active");
+                    $('.with-sub .ChangeCourse').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/appointment') != -1) {
+                    $('.with-sub .Appointment').addClass("active");
+                    $('.with-sub .Appointment').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/customerabouttoexpire') != -1) {
+                    $('.with-sub .CustomerAboutToExpire').addClass("active");
+                    $('.with-sub .CustomerAboutToExpire').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/supportofflist') != -1) {
+                    $('.with-sub .SupportOffList').addClass("active");
+                    $('.with-sub .SupportOffList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/servicecustomer') != -1) {
+                    $('.with-sub .ServiceCustomer').addClass("active");
+                    $('.with-sub .ServiceCustomer').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/setpackage/customer') != -1) {
+                    $('.with-sub .Customer').addClass("active");
+                    $('.with-sub .Customer').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/cashier/saveinfostudent') != -1) {
+                    $('.with-sub .SaveinfoStudent').addClass("active");
+                    $('.with-sub .SaveinfoStudent').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase()==='/admin/cashier/listappointmenttest') {
+                    $('.with-sub .ListAppointmentTest').addClass("active");
+                    $('.with-sub .ListAppointmentTest').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase()==='/admin/cashier/listappointmenttestrefuse') {
+                    $('.with-sub .ListAppointmentTestRefuse').addClass("active");
+                    $('.with-sub .ListAppointmentTestRefuse').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/readytotest') != -1) {
+                    $('.with-sub .ReadyToTest').addClass("active");
+                    $('.with-sub .ReadyToTest').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/testresult') != -1) {
+                    $('.with-sub .TestResult').addClass("active");
+                    $('.with-sub .TestResult').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/customer/customerdebts') != -1) {
+                    $('.with-sub .CustomerDebts').addClass("active");
+                    $('.with-sub .CustomerDebts').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/staff/MoneyReceiverList') != -1) {
+                    $('.with-sub .MoneyReceiver').addClass("active");
+                    $('.with-sub .MoneyReceiver').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/cashier/refundlist') != -1) {
+                    $('.with-sub .RefundList').addClass("active");
+                    $('.with-sub .RefundList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/cashier/invoicelist') != -1) {
+                    $('.with-sub .InvoiceList').addClass("active");
+                    $('.with-sub .InvoiceList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/cashier/paymentvoucherlist') != -1) {
+                    $('.with-sub .PaymentVoucherList').addClass("active");
+                    $('.with-sub .PaymentVoucherList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/contract/customercontractlist') != -1) {
+                    $('.with-sub .CustomerContractList').addClass("active");
+                    $('.with-sub .CustomerContractList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/contract/censorshipcontract') != -1) {
+                    $('.with-sub .CensorshipContract').addClass("active");
+                    $('.with-sub .CensorshipContract').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/contract/contract') != -1) {
+                    $('.with-sub .Contract').addClass("active");
+                    $('.with-sub .Contract').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/staff/teacherlist') != -1) {
+                    $('.with-sub .TeacherList').addClass("active");
+                    $('.with-sub .TeacherList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase() === '/admin/course/scheduleteacher') {
+                    $('.with-sub .ScheduleTeacher').addClass("active");
+                    $('.with-sub .ScheduleTeacher').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase() === '/admin/course/scheduleteacherall') {
+                    $('.with-sub .ScheduleTeacherAll').addClass("active");
+                    $('.with-sub .ScheduleTeacherAll').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase() === '/admin/salarystaff/salaryreviewteacher') {
+                    $('.with-sub .SalaryReviewTeacher').addClass("active");
+                    $('.with-sub .SalaryReviewTeacher').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase() === '/admin/salarystaff/salatyreviewteacherdetail') {
+                    $('.with-sub .SalatyReviewTeacherDetail').addClass("active");
+                    $('.with-sub .SalatyReviewTeacherDetail').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/staff/campaignsale') != -1) {
+                    $('.with-sub .CampaignSale').addClass("active");
+                    $('.with-sub .CampaignSale').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/salarystaff/salaryreview') != -1) {
+                    $('.with-sub .SalaryReview').addClass("active");
+                    $('.with-sub .SalaryReview').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/salarystaff/salarystaff') != -1) {
+                    $('.with-sub .SalaryStaff').addClass("active");
+                    $('.with-sub .SalaryStaff').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/staff/sellerlist') != -1) {
+                    $('.with-sub .SellerList').addClass("active");
+                    $('.with-sub .SellerList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/settingsalary') != -1) {
+                    $('.with-sub .SettingSalary').addClass("active");
+                    $('.with-sub .SettingSalary').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/targetbonus') != -1) {
+                    $('.with-sub .TargetBonus').addClass("active");
+                    $('.with-sub .TargetBonus').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/salarystaff/settingroseseller') != -1) {
+                    $('.with-sub .SettingRoseSeller').addClass("active");
+                    $('.with-sub .SettingRoseSeller').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/staff/stafflist') != -1) {
+                    $('.with-sub .StaffList').addClass("active");
+                    $('.with-sub .StaffList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/feedback/feedbackchecksolution') != -1) {
+                    $('.with-sub .FeedbackCheckSolution').addClass("active");
+                    $('.with-sub .FeedbackCheckSolution').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/CampaignSale/PeriodDetail') != -1) {
+                    $('.with-sub .PeriodDetail').addClass("active");
+                    $('.with-sub .PeriodDetail').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/staff/teachersalarydetaillist') != -1) {
+                    $('.with-sub .TeacherSalaryDetailList').addClass("active");
+                    $('.with-sub .TeacherSalaryDetailList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/supplierlist') != -1) {
+                    $('.with-sub .SupplierList').addClass("active");
+                    $('.with-sub .SupplierList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/services') != -1) {
+                    $('.with-sub .Services').addClass("active");
+                    $('.with-sub .Services').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/exams') != -1) {
+                    $('.with-sub .Exams').addClass("active");
+                    $('.with-sub .Exams').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/email/maillist') != -1) {
+                    $('.with-sub .MailList').addClass("active");
+                    $('.with-sub .MailList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/center') != -1) {
+                    $('.with-sub .Center').addClass("active");
+                    $('.with-sub .Center').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/shift') != -1) {
+                    $('.with-sub .Shift').addClass("active");
+                    $('.with-sub .Shift').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/grade') != -1) {
+                    $('.with-sub .Grade').addClass("active");
+                    $('.with-sub .Grade').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/commitmentpackage') != -1) {
+                    $('.with-sub .CommitmentPackage').addClass("active");
+                    $('.with-sub .CommitmentPackage').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/class/classlist') != -1) {
+                    $('.with-sub .ClassList').addClass("active");
+                    $('.with-sub .ClassList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/sourceofcustomer') != -1) {
+                    $('.with-sub .SourceOfCustomer').addClass("active");
+                    $('.with-sub .SourceOfCustomer').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/jobs') != -1) {
+                    $('.with-sub .Jobs').addClass("active");
+                    $('.with-sub .Jobs').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/dayoff') != -1) {
+                    $('.with-sub .DayOff').addClass("active");
+                    $('.with-sub .DayOff').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/notification/createnotification') != -1) {
+                    $('.with-sub .CreateNotification').addClass("active");
+                    $('.with-sub .CreateNotification').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/categoryfeedback') != -1) {
+                    $('.with-sub .CategoryFeedback').addClass("active");
+                    $('.with-sub .CategoryFeedback').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/postnewfeed/postlist') != -1) {
+                    $('.with-sub .PostList').addClass("active");
+                    $('.with-sub .PostList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/academicpurposeslist') != -1) {
+                    $('.with-sub .AcademicPurposesList').addClass("active");
+                    $('.with-sub .AcademicPurposesList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/option/idiomslist') != -1) {
+                    $('.with-sub .IdiomsList').addClass("active");
+                    $('.with-sub .IdiomsList').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/contract/termofservice') != -1) {
+                    $('.with-sub .TermOfService').addClass("active");
+                    $('.with-sub .TermOfService').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/reason/reason') != -1) {
+                    console.log(111);
+                    $('.with-sub .Reason').addClass("active");
+                    $('.with-sub .Reason').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/language/language') != -1) {
+                    $('.with-sub .Language').addClass("active");
+                    $('.with-sub .Language').parent().parent().addClass("show");
+                }
+                else if (path.toLowerCase().indexOf('/admin/moneyexchangerate/moneyexchangerate') != -1) {
+                    $('.with-sub .MoneyExchangeRate').addClass("active");
+                    $('.with-sub .MoneyExchangeRate').parent().parent().addClass("show");
+                }
+            }
+            $('select[name=slPeriodType]').on('change', function () {
+                var check = $('select[name=slPeriodType]').val();
+                if (check == '1') {
+                    $('#div-time').css('display', 'none');
+                    $('select[name=slYear]').parent().removeClass('col-sm-6');
+                    $('select[name=slYear]').parent().addClass('col-sm-12');
+                } else if (check == '2') {
+                    $('#div-time').css('display', 'block');
+                    $('select[name=slTime]').html('<option value="13">Quý 1</option><option value="14">Quý 2</option><option value="15">Quý 3</option><option value="16">Quý 4</option>');
+                    $('select[name=slYear]').parent().removeClass('col-sm-12');
+                    $('select[name=slYear]').parent().addClass('col-sm-6');
+                } else {
+                    $('#div-time').css('display', 'block');
+                    $('select[name=slTime]').html('<option value="01">Tháng 1</option><option value="02">Tháng 2</option><option value="03">Tháng 3</option><option value="04">Tháng 4</option><option value="05">Tháng 5</option><option value="06">Tháng 6</option><option value="07">Tháng 7</option><option value="08">Tháng 8</option><option value="09">Tháng 9</option><option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>');
+                    $('select[name=slYear]').parent().removeClass('col-sm-12');
+                    $('select[name=slYear]').parent().addClass('col-sm-6');
+                }
+            });
+        </script>
+    }
+
+</body>
+</html>

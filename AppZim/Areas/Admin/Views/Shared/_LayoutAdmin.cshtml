@@ -1,0 +1,809 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using AppZim.Areas.Admin.Controllers;
+@{
+    var aclog = new tbl_Account();
+    var luser = new List<tbl_Account>();
+    var lsms = new List<tbl_Message>();
+    var lnoti = new List<tbl_NotificationSingle>();
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    else
+    {
+        aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+        luser = AccountTable.getall().Where(n => n.Status == 2 && n.RoleID != 5).OrderBy(n => n.FullName).ToList();
+
+        lsms = MessageTable.getbyreceiveID(aclog.ID).Where(n => n.MessageNew == true).ToList();
+        lnoti = NotificationTable.GetByUID(aclog.ID).Where(n => n.Status == 1).OrderByDescending(n => n.CreatedDate).ToList();
+    }
+    var projectname = BaseController.ProjectName;
+}
+<!DOCTYPE html>
+<html class="loading" lang="en" data-textdirection="ltr">
+<!-- BEGIN: Head-->
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta name="description" content="@projectname">
+    <meta name="keywords" content="@projectname">
+    <meta name="author" content="ThemeSelect">
+    <title>@projectname || Web Admin</title>
+    <link rel="apple-touch-icon" href="~/app-assets/images/favicon/apple-touch-icon-152x152.png">
+    <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+    <!-- BEGIN: VENDOR CSS-->
+    @*@Styles.Render("~/Content/bundle")*@
+    @*  <script src="~/app-assets/js/jquery-3.4.1.min.js"></script>*@
+    <script src="~/app-assets/js/vendors.min.js" type="text/javascript"></script>
+    <script src="~/app-assets/mycalendar/js/jquery-ui.min.js"></script>
+    @Styles.Render("~/Content/DevExtremeBundle")
+
+    <link rel="stylesheet" type="text/css" href="~/app-assets/vendors/vendors.min.css">
+    <link rel="stylesheet" type="text/css" href="~/app-assets/vendors/jquery-jvectormap/jquery-jvectormap.css">
+    <link rel="stylesheet" type="text/css" href="~/app-assets/vendors/dropify/css/dropify.min.css">
+    <!-- END: VENDOR CSS-->
+    <!-- BEGIN: Page Level CSS-->
+    <link rel="stylesheet" type="text/css" href="~/app-assets/css/themes/horizontal-menu-template/materialize.css">
+    <link rel="stylesheet" type="text/css" href="~/app-assets/css/themes/horizontal-menu-template/style.css">
+    <link rel="stylesheet" type="text/css" href="~/app-assets/css/layouts/style-horizontal.css">
+    <link rel="stylesheet" type="text/css" href="~/app-assets/css/pages/dashboard.css">
+    <link href="~/app-assets/js/select2/css/select2.min.css" rel="stylesheet" />
+    <!-- END: Page Level CSS-->
+    <!-- BEGIN: Custom CSS-->
+    <link href="~/app-assets/css/pages/Chart.min.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="~/app-assets/css/custom/custom.css">
+    <!-- END: Custom CSS-->
+    <style>
+        .noti-success {
+            background-color: #51b451 !important;
+        }
+
+        .noti-warning {
+            background-color: #efa740 !important;
+        }
+
+        .noti-error {
+            background-color: #bd2d29 !important;
+        }
+
+        .cooltoast-text {
+            color: #fff;
+        }
+
+        .cooltoast-icon {
+            color: #fff;
+        }
+
+        .navbar #notifications-dropdown li > a {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 280px;
+            overflow: hidden;
+        }
+
+            .navbar #notifications-dropdown li > a > span {
+                top: 0px;
+            }
+
+        .dx-datagrid-table tbody .dx-column-lines td.dx-cell-focus-disabled.dx-datagrid-drag-action {
+            background: #333;
+        }
+
+        .avatar-status.avatar-50 i {
+            right: 2px;
+            bottom: 8px;
+            width: 12px !important;
+            height: 12px !important;
+        }
+
+        .avatar-status.avatar-50 {
+            height: 50px;
+            overflow: hidden;
+        }
+
+        td {
+            white-space: initial !important;
+            vertical-align: middle !important;
+        }
+
+        .dx-datagrid-table tbody .dx-column-lines td {
+            padding: 5px 10px;
+        }
+
+        .dx-datagrid-table tr:nth-child(even) {
+            background: #FFF;
+        }
+
+        .dx-datagrid-table tr:nth-child(odd) {
+            background: #f5f5f5;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            font-size: 14px;
+            font-family: 'Roboto',Helvetica Neue, Helvetica, Arial, sans-serif;
+        }
+
+        h1, h2, h3, h4, h5, h6, p, span, td, th {
+            font-family: 'Roboto',Helvetica Neue, Helvetica, Arial, sans-serif;
+        }
+
+        header .brand-logo img {
+            height: 28px;
+        }
+
+        header .brand-logo {
+            padding: 17px 12px;
+        }
+
+        .avatar-home {
+            width: 30px;
+            height: 30px;
+        }
+
+        .fc-scroller {
+            height: auto !important;
+        }
+
+        #ul-horizontal-nav > li > a {
+            padding: 0px 15px;
+        }
+        /*!
+        // 3. Loader
+        // --------------------------------------------------*/
+        .loader {
+            top: 0;
+            left: 0;
+            position: fixed;
+            opacity: 0.8;
+            z-index: 10000000;
+            background: Black;
+            height: 100%;
+            width: 100%;
+            margin: auto;
+        }
+
+        .strip-holder {
+            text-align: center;
+        }
+
+        .select2-container .select2-selection--single {
+            height: 45px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 45px;
+        }
+
+        .select2-container--default .select2-selection--single {
+            background-color: #fafafa;
+            border: none;
+            border-radius: 0px;
+            border-bottom: 1px solid #aaa;
+        }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow b {
+                top: 75%;
+            }
+
+        @@-webkit-keyframes stripMove {
+            0% {
+                transform: translate3d(0px, 0px, 0px);
+                -webkit-transform: translate3d(0px, 0px, 0px);
+                -moz-transform: translate3d(0px, 0px, 0px);
+            }
+
+            50% {
+                transform: translate3d(0px, 0px, 0px);
+                -webkit-transform: translate3d(0px, 0px, 0px);
+                -moz-transform: translate3d(0px, 0px, 0px);
+                transform: scale(4, 1);
+                -webkit-transform: scale(4, 1);
+                -moz-transform: scale(4, 1);
+            }
+
+            100% {
+                transform: translate3d(-50px, 0px, 0px);
+                -webkit-transform: translate3d(-50px, 0px, 0px);
+                -moz-transform: translate3d(-50px, 0px, 0px);
+            }
+        }
+
+        @@-moz-keyframes stripMove {
+            0% {
+                transform: translate3d(-50px, 0px, 0px);
+                -webkit-transform: translate3d(-50px, 0px, 0px);
+                -moz-transform: translate3d(-50px, 0px, 0px);
+            }
+
+            50% {
+                transform: translate3d(0px, 0px, 0px);
+                -webkit-transform: translate3d(0px, 0px, 0px);
+                -moz-transform: translate3d(0px, 0px, 0px);
+                transform: scale(4, 1);
+                -webkit-transform: scale(4, 1);
+                -moz-transform: scale(4, 1);
+            }
+
+            100% {
+                transform: translate3d(50px, 0px, 0px);
+                -webkit-transform: translate3d(50px, 0px, 0px);
+                -moz-transform: translate3d(50px, 0px, 0px);
+            }
+        }
+
+        @@keyframes stripMove {
+            0% {
+                transform: translate3d(-50px, 0px, 0px);
+                -webkit-transform: translate3d(-50px, 0px, 0px);
+                -moz-transform: translate3d(-50px, 0px, 0px);
+            }
+
+            50% {
+                transform: translate3d(0px, 0px, 0px);
+                -webkit-transform: translate3d(0px, 0px, 0px);
+                -moz-transform: translate3d(0px, 0px, 0px);
+                transform: scale(4, 1);
+                -webkit-transform: scale(4, 1);
+                -moz-transform: scale(4, 1);
+            }
+
+            100% {
+                transform: translate3d(50px, 0px, 0px);
+                -webkit-transform: translate3d(50px, 0px, 0px);
+                -moz-transform: translate3d(50px, 0px, 0px);
+            }
+        }
+    </style>
+</head>
+<!-- END: Head-->
+<body class="horizontal-layout page-header-light horizontal-menu 2-columns  " data-open="click" data-menu="horizontal-menu" data-col="2-columns">
+    <div class="loader" id="AjaxLoader" style="display:none;">
+        <div class="strip-holder">
+            <img src="~/app-assets/loading.gif" />
+        </div>
+    </div>
+    <!-- BEGIN: Header-->
+    <header class="page-topbar" id="header">
+        <div class="navbar navbar-fixed">
+            <nav class="navbar-main navbar-color nav-collapsible sideNav-lock navbar-dark" style="background:#333;">
+                <div class="nav-wrapper">
+                    <ul class="left">
+                        <li>
+                            <h1 class="logo-wrapper"><a class="brand-logo darken-1" href="@Url.Action("Signin", "Login", new { area = "" })"><img src="~/app-assets/Logo-ZIM.jpg" alt="zim logo"><span class="logo-text hide-on-med-and-down"></span></a></h1>
+                        </li>
+                    </ul>
+                    <ul class="navbar-list right">
+                        <li class="hide-on-med-and-down"><a class="waves-block waves-light toggle-fullscreen" href="javascript:void(0);"><i class="material-icons">settings_overscan</i></a></li>
+                        <li>
+                            <a class="waves-block waves-light notification-button" href="javascript:void(0);" data-target="notifications-dropdown">
+                                @{
+                                    if (lnoti.Count() > 0)
+                                    {
+                                        <i class="material-icons">notifications_none<small id="count-noti-@aclog.ID" class="notification-badge orange accent-3">@lnoti.Count()</small></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="material-icons">notifications_none<small id="count-noti-@aclog.ID" style="display:none" class="notification-badge orange accent-3">@lnoti.Count()</small></i>
+                                    }
+                                }
+                            </a>
+                        </li>
+                        @{
+                            if (aclog.RoleID != 5)
+                            {
+                                <li>
+                                    <a class="waves-block waves-light sidenav-trigger" href="#" data-target="slide-out-right">
+                                        @{
+                                            if (lsms.Select(n => n.FromUID).Distinct().Count() > 0)
+                                            {
+                                                <i class="material-icons">sms<small id="count-sms-@aclog.ID" class="notification-badge orange accent-3">@lsms.Select(n => n.FromUID).Distinct().Count()</small></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="material-icons">sms<small id="count-sms-@aclog.ID" style="display:none" class="notification-badge orange accent-3">0</small></i>
+                                            }
+                                        }
+                                    </a>
+                                </li>
+                            }
+                        }
+                        <li>
+                            <a class="waves-block waves-light profile-button" href="javascript:void(0);" data-target="profile-dropdown">
+                                <span class="avatar-status avatar-online">
+                                    @{
+                                        if (!string.IsNullOrEmpty(aclog.Avatar))
+                                        {
+                                            <img src="@aclog.Avatar" alt="avatar"><i></i>
+                                        }
+                                        else
+                                        {
+                                            <img src="/app-assets/favicon-zim.jpg" class="avatar-home" alt="avatar"><i></i>
+                                        }
+                                    }
+                                </span>
+                            </a>
+                        </li>
+                        <li><a class="waves-block waves-light sidenav-trigger" href="javascript:;" style="cursor:auto">@aclog.FullName</a></li>
+                    </ul>
+                    <!-- notifications-dropdown-->
+                    <ul class="dropdown-content" id="notifications-dropdown" style="max-height:320px;">
+                        <li>
+                            <a href="@Url.Action("Notification", "Notification", new { area = "Admin" })"><h6>Thông báo<span class="new badge">@lnoti.Count()</span></h6></a>
+                        </li>
+                        <li class="divider"></li>
+                        @{
+                            lnoti = lnoti.OrderByDescending(n => n.ID).Skip(0).Take(20).ToList();
+                            foreach (var item in lnoti)
+                            {
+                                <li>
+                                    <a class="grey-text text-darken-2" href="@Url.Action("Notification", "Notification", new { area = "Admin" })" title="@item.NotificationTitle"><span class="material-icons icon-bg-circle cyan small">notifications_none</span>@item.NotificationTitle</a>
+                                    <time class="media-meta">@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</time>
+                                </li>
+                            }
+                        }
+                    </ul>
+                    <!-- profile-dropdown-->
+                    <ul class="dropdown-content" id="profile-dropdown">
+                        <li><a class="grey-text text-darken-1" href="@Url.Action("ProfileUser", "Account", new { area = "Admin" })"><i class="material-icons">person_outline</i> Profile</a></li>
+                        <li class="divider"></li>
+                        <li><a class="grey-text text-darken-1" href="@Url.Action("Signout", "Login", new { area = "" })"><i class="material-icons">keyboard_tab</i> Logout</a></li>
+                    </ul>
+                </div>
+                <nav class="display-none search-sm">
+                    <div class="nav-wrapper">
+                        <form>
+                            <div class="input-field">
+                                <input class="search-box-sm" type="search" required="">
+                                <label class="label-icon" for="search"><i class="material-icons search-sm-icon">search</i></label><i class="material-icons search-sm-close">close</i>
+                            </div>
+                        </form>
+                    </div>
+                </nav>
+            </nav>
+            <!-- BEGIN: Horizontal nav start-->
+            <nav class="white hide-on-med-and-down" id="horizontal-nav">
+                @{ Html.RenderAction("PartialMenu", "Home", new { area = "Admin" });}
+            </nav>
+        </div>
+    </header>
+    <!-- END: Header-->
+    <!-- BEGIN: SideNav-->
+    <aside class="sidenav-main nav-expanded nav-lock nav-collapsible sidenav-fixed hide-on-large-only">
+        <div class="brand-sidebar sidenav-light"></div>
+        <ul class="sidenav sidenav-collapsible leftside-navigation collapsible sidenav-fixed hide-on-large-only menu-shadow" id="slide-out" data-menu="menu-navigation" data-collapsible="menu-accordion">
+            @{ Html.RenderAction("PartialMobileMenu", "Home", new { area = "Admin" });}
+        </ul>
+        <div class="navigation-background"></div><a class="sidenav-trigger btn-floating btn-medium waves-light hide-on-large-only" href="#" data-target="slide-out"><i class="material-icons">menu</i></a>
+    </aside>
+    <!-- END: SideNav-->
+    <!-- BEGIN: Page Main-->
+    <div id="main">
+        <div class="row">
+            <div class="col s12">
+                <div class="container">
+                    @RenderBody()
+
+                    <aside id="right-sidebar-nav">
+                        <div id="slide-out-right" class="slide-out-right-sidenav sidenav rightside-navigation">
+                            <div class="row">
+                                <div class="slide-out-right-title">
+                                    <div class="col s12 border-bottom-1 pb-0 pt-1">
+                                        <div class="row">
+                                            <div class="col s2 pr-0 center">
+                                                <i class="material-icons vertical-text-middle"><a href="#" class="sidenav-close">clear</a></i>
+                                            </div>
+                                            <div class="col s10 pl-0">
+                                                <ul class="tabs">
+                                                    <li class="tab col s6 p-0">
+                                                        <a href="#activity" class="active">
+                                                            <span>Tin nhắn mới</span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="tab col s6 p-0">
+                                                        <a href="#messages">
+                                                            <span>Mọi người</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slide-out-right-body">
+                                    <div id="messages" class="col s12">
+                                        <div class="collection border-none">
+                                            @*<input class="header-search-input mt-4 mb-2" type="text" name="Search" placeholder="Search Messages" />*@
+                                            <ul class="collection p-0">
+                                                @{
+                                                    if (aclog.RoleID != 5)// học viên ko chat
+                                                    {
+                                                        foreach (var item in luser)
+                                                        {
+                                                            if (aclog.ID == item.ID)
+                                                            {
+                                                                continue;
+                                                            }
+                                                            string stonline = "avatar-online";
+                                                            if (item.StatusOnline != true)
+                                                            {
+                                                                stonline = "avatar-off";
+                                                            }
+                                                            string av = "/app-assets/favicon-zim.jpg";
+                                                            if (!string.IsNullOrEmpty(item.Avatar))
+                                                            {
+                                                                av = item.Avatar;
+                                                            }
+                                                            <li class="collection-item sidenav-trigger display-flex avatar pl-5 pb-0" data-target="slide-out-chat" onclick="loadmess(@item.ID)">
+                                                                <span id="onoff-@item.ID" class="avatar-status @stonline avatar-50">
+                                                                    <img src="@av" alt="avatar" />
+                                                                    <i></i>
+                                                                </span>
+                                                                <div class="user-content">
+                                                                    <h6 class="line-height-0">@item.FullName</h6>
+                                                                    <p class="medium-small blue-grey-text text-lighten-3 pt-3">@AccountTable.getrolehtml(item.RoleID.Value)</p>
+                                                                </div>
+                                                            </li>
+                                                        }
+                                                    }
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div id="activity" class="col s12">
+                                        <div class="activity">
+                                            <ul class="collection with-header">
+                                                @{
+                                                    //show tin nhắn đang chờ
+                                                    if (lsms.Select(n => n.FromUID).Distinct().Count() > 0)
+                                                    {
+                                                        foreach (var item in lsms.Select(n => n.FromUID).Distinct())
+                                                        {
+                                                            var acf = AccountTable.getbyID(item.Value);
+                                                            if (acf != null)
+                                                            {
+                                                                var m = MessageTable.getbyfIDvstID(aclog.ID, acf.ID);
+                                                                var sms = m.Where(n => n.FromUID == acf.ID && n.MessageNew == true).OrderByDescending(n => n.CreatedDate).FirstOrDefault();
+                                                                if (sms != null)
+                                                                {
+                                                                    <li class="collection-item sidenav-trigger" style="cursor:pointer;" data-target="slide-out-chat" onclick="loadmess(@acf.ID)">
+                                                                        <div class="font-weight-900">
+                                                                            @acf.FullName <span class="secondary-content">@sms.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                                                        </div>
+                                                                        <p class="mt-0 mb-2">@sms.MessageContent</p>
+                                                                    </li>
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Slide Out Chat -->
+                        <ul id="slide-out-chat" class="sidenav slide-out-right-sidenav-chat">
+                            <li class="center-align pt-2 pb-2 sidenav-close chat-head">
+                                <a href="javascript:;"><i class="material-icons mr-0">chevron_left</i><span id="sp-name-chat">FullName</span></a>
+                            </li>
+                            <li class="chat-body">
+                                <ul class="collection" id="ul-content-chat"></ul>
+                            </li>
+                            <li class="center-align chat-footer">
+                                <div class="col s12">
+                                    <div class="input-field">
+                                        <input id="icon_prefix" type="text" class="search" style="border-radius:0px;" />
+                                        <label for="icon_prefix">Type here..</label>
+                                        <a id="btn-send"><i class="material-icons prefix">send</i></a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </aside>
+                    <!-- END RIGHT SIDEBAR NAV -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END: Page Main-->
+    <!-- BEGIN: Footer-->
+    <footer class="page-footer footer footer-static cyan navbar-border navbar-shadow">
+        <div class="page-footer pt-0 footer-dark gradient-shadow" style="background:#333;">
+            <div class="footer-copyright">
+                <div class="container">© Copyright 2019 Eduvator Joint Stock Company</div>
+            </div>
+        </div>
+    </footer>
+    <!-- END: Footer-->
+
+    <script src="~/app-assets/js/materialize.min.js"></script>
+    <script src="~/app-assets/js/plugins.js" type="text/javascript"></script>
+    @*chat===================>>>>>>>>>>>>>>>>*@
+    <script src="~/app-assets/vendors/dropify/js/dropify.min.js"></script>
+    <script src="~/app-assets/js/custom/custom-script.js"></script>
+    <script src="~/app-assets/js/moment.min.js"></script>
+    <script src="~/app-assets/js/select2/js/select2.full.min.js"></script>
+    <!--push noti-->
+    <script src="~/app-assets/pushdesktop/CreateDevice.js"></script>
+    <!--real time-->
+    <script src="~/Scripts/jquery.signalR-2.4.1.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+
+    <script>
+
+        //$(document)
+        //    .ajaxStart(function () {
+        //        $('#AjaxLoader').show();
+        //    })
+        //    .ajaxStop(function () {
+        //        $('#AjaxLoader').hide();
+        //    });
+        $(document).ready(function () {
+            ////chan submit khi enter
+            //$(window).keydown(function (event) {
+            //    if (event.keyCode == 13) {
+            //        event.preventDefault();
+            //        return false;
+            //    }
+            //});
+
+            if ('@TempData["AlertMessage"]' != '') {// thong bao
+                toast.create({
+                    title: 'Thông báo!',
+                    text: '@TempData["AlertMessage"]',
+                    icon: '@TempData["Icon"]',
+                    classBackground: '@TempData["Class"]',
+                    timeout: 3000
+                })
+            }
+            //setActiveMenu();
+            $('.dropify').dropify();
+        });
+        function ckstring(str) //check null empty
+        {
+            return (!str || /^\s*$/.test(str));
+        }
+
+        function moneyfm(e) {
+            var cus = $(e).val().replace(/,/g, '');
+
+            var regex = /^[0-9]+$/;
+
+            if (!cus.match(regex)) {
+                return $(e).val(0);
+
+            }
+            cus = cus.replace(/,/g, "");
+            $(e).val(dinhdangtien(cus, ','));
+        }
+        var dinhdangtien = function (n, dp) {// format money
+            var s = '' + (Math.floor(n)), d = n % 1, i = s.length, r = '';
+            while ((i -= 3) > 0) { r = ',' + s.substr(i, 3) + r; }
+            return s.substr(0, i + 3) + r +
+                (d ? '.' + Math.round(d * Math.pow(10, dp || 2)) : '');
+        };
+
+        //laod history chat
+        var idchat = 0;
+        function loadmess(id) {
+            idchat = id;
+            $('#ul-content-chat').empty();
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/SearchID",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#sp-name-chat').text(msg.acc.FullName);
+                        console.log(msg.sms.length);
+                        var ms = '';
+                        for (var i = 0; i < msg.sms.length; i++) {
+                            var item = msg.sms[i];
+                            console.log(item);
+                            if (item.FromUID == @aclog.ID) {
+                                ms += '<li class="collection-item display-flex avatar justify-content-end pl-5 pb-0" data-target="slide-out-chat">';
+                                ms += ' <div class="user-content speech-bubble-right">';
+                                ms += '     <p class="medium-small">' + item.MessageContent + '</p>';
+                                ms += '     <hr/>';
+                                ms += '     <p>' + moment(item.CreatedDate).format('DD/MM/YYYY HH:mm') + '</p>';
+                                ms += ' </div>';
+                                ms += '</li>';
+                            }
+                            else {
+                                ms += '<li class="collection-item display-flex avatar pl-5 pb-0" data-target="slide-out-chat">';
+                                ms += ' <span class="avatar-status avatar-online avatar-50">';
+                                ms += '     <img src="/app-assets/images/avatar/avatar-7.png" alt="avatar" />';
+                                ms += ' </span>';
+                                ms += ' <div class="user-content speech-bubble">';
+                                ms += '     <p class="medium-small">' + item.MessageContent + '</p>';
+                                ms += '     <hr/>';
+                                ms += '     <p>' + moment(item.CreatedDate).format('DD/MM/YYYY HH:mm') + '</p>';
+                                ms += ' </div>';
+                                ms += '</li>';
+                            }
+                        }
+                        $('#ul-content-chat').append(ms);
+                        var charScroll = $("#right-sidebar-nav #slide-out-chat .chat-body .collection");
+                        if (charScroll.length > 0) {
+                            charScroll[0].scrollTop = charScroll[0].scrollHeight;
+                        }
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: load chat");
+                }
+            });
+        }
+
+        //readtime chat
+        $(function () {
+            // Reference the auto-generated proxy for the hub.
+            var process = $.connection.zimRealTime;
+
+            //báo online, hay offline cho user khác
+            process.client.getstatusonline = function (id, classs) {
+                var st = $('#onoff-' + id + '');
+                st.removeClass('avatar-online');
+                st.removeClass('avatar-off');
+                st.addClass(classs);
+            }
+            //show số lượng thông báo hoặc tin nhắn đang chờ
+            process.client.showcountsmsvsnoti = function (id, count) {
+                console.log(count);
+                $('#count-sms-' + id+'').Show();
+            }
+
+            //nhận tin nhắn
+            process.client.addNewMessageToPage = function (m) {
+                // Add the message to the page.
+                //tin nhắn được đẩy xuống, gọi ajax để lấy thông tin khách
+
+                var ms = '';
+                if (m.FromUID == @aclog.ID) {
+                    ms += '<li class="collection-item display-flex avatar justify-content-end pl-5 pb-0" data-target="slide-out-chat">';
+                    ms += ' <div class="user-content speech-bubble-right">';
+                    ms += '     <p class="medium-small">' + m.MessageContent + '</p>';
+                    ms += '     <hr/>';
+                    ms += '     <p>' + moment(m.CreatedDate).format('DD/MM/YYYY HH:mm') + '</p>';
+                    ms += ' </div>';
+                    ms += '</li>';
+                }
+                else {
+                    ms += '<li class="collection-item display-flex avatar pl-5 pb-0" data-target="slide-out-chat">';
+                    ms += ' <span class="avatar-status avatar-online avatar-50">';
+                    ms += '     <img src="/app-assets/images/avatar/avatar-7.png" alt="avatar" />';
+                    ms += ' </span>';
+                    ms += ' <div class="user-content speech-bubble">';
+                    ms += '     <p class="medium-small">' + m.MessageContent + '</p>';
+                    ms += '     <hr/>';
+                    ms += '     <p>' + moment(m.CreatedDate).format('DD/MM/YYYY HH:mm') + '</p>';
+                    ms += ' </div>';
+                    ms += '</li>';
+                }
+                $('#ul-content-chat').append(ms);
+                var charScroll = $("#right-sidebar-nav #slide-out-chat .chat-body .collection");
+                if (charScroll.length > 0) {
+                    charScroll[0].scrollTop = charScroll[0].scrollHeight;
+                }
+            };
+
+            // Start the connection.
+            //gui tin nhan
+            $.connection.hub.start().done(function () {
+                $(document).on('click', '#btn-send', function () {
+                    var UID = $(this).attr('data-uid');
+                    if (!ckstring($('#icon_prefix').val())) {
+                        // Call the Send method on the hub.
+                        process.server.sendMess(@aclog.ID, idchat, $('#icon_prefix').val());
+                        // Clear text box and reset focus for next comment.
+                        $('#icon_prefix').val('').focus();
+                        var charScroll = $("#right-sidebar-nav #slide-out-chat .chat-body .collection");
+                        if (charScroll.length > 0) {
+                            charScroll[0].scrollTop = charScroll[0].scrollHeight;
+                        }
+                    }
+                })
+                $(document).on('keyup', '#icon_prefix', function () {
+                    if (event.keyCode === 13) {
+                        if (!ckstring($('#icon_prefix').val())) {
+                            $('#btn-send').click();
+                        }
+                    }
+                });
+            });
+        });
+
+        window.addEventListener('DOMContentLoaded', function () {
+            /*format dateofbirth*/
+            var date = document.querySelectorAll('.date-input');
+
+            function checkValue(str, max) {
+                if (str.charAt(0) !== '0' || str == '00') {
+                    var num = parseInt(str);
+                    if (isNaN(num) || num <= 0 || num > max) num = 1;
+                    str = num > parseInt(max.toString().charAt(0)) && num.toString().length == 1 ? '0' + num : num.toString();
+                };
+                return str;
+            };
+            function checkValueYear(str) {
+                var num = parseInt(str);
+                if (1000 < num && num < 1900)
+                    num = 1900;
+                return num;
+            };
+
+            function splitInput() {
+                this.type = 'text';
+                var input = this.value;
+                if (/\D\/$/.test(input)) input = input.substr(0, input.length - 3);
+                var values = input.split('/').map(function (v) {
+                    return v.replace(/\D/g, '')
+                });
+                if (values[0]) values[0] = checkValue(values[0], 31);
+                if (values[1]) values[1] = checkValue(values[1], 12);
+                if (values[2]) values[2] = checkValueYear(values[2]);
+                var output = values.map(function (v, i) {
+                    return v.length == 2 && i < 2 ? v + ' / ' : v;
+                });
+                this.value = output.join('').substr(0, 14);
+            }
+            function splitBlur() {
+                this.type = 'text';
+                var input = this.value;
+                var values = input.split('/').map(function (v, i) {
+                    return v.replace(/\D/g, '')
+                });
+                var output = '';
+
+                if (values.length == 3) {
+                    var year = values[2].length !== 4 ? parseInt(values[2]) + 2000 : parseInt(values[2]);
+                    var month = parseInt(values[1]) - 1;
+                    var day = parseInt(values[0]);
+                    var d = new Date(year, month, day);
+                    if (!isNaN(d)) {
+
+                        var dates = [d.getDate(), d.getMonth() + 1, d.getFullYear()];
+                        output = dates.map(function (v) {
+                            v = v.toString();
+                            return v.length == 1 ? '0' + v : v;
+                        }).join(' / ');
+                    };
+                };
+                this.value = output;
+            }
+            date.forEach(function (e) {
+                e.addEventListener('input', splitInput);
+                e.addEventListener('blur', splitBlur);
+            })
+
+            ///*auto calculate money*/
+            //function fomartCurrency(str) {
+            //    return str.replace(/[^0-9]+/g, "");
+            //}
+            //var payedMoney = document.getElementById('payedmoney');
+            //var totalMoney = document.getElementById('totalcourse');
+            //payedMoney.addEventListener('change', function () {
+
+            //    var fTotal = fomartCurrency(totalMoney.value);
+
+            //    var fPayed = fomartCurrency(payedMoney.value);
+            //    document.getElementById('remainmoney').value = (fTotal - fPayed).toString().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1.");
+            //});
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@model List<Admin_RevenueRank_GetList_Result>
+@{
+    ViewBag.Title = "RevenueRank";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    List<Admin_RevenueRank_GetList_Result> data = new List<Admin_RevenueRank_GetList_Result>();
+    tbl_CampaignSale campaign = ViewBag.Campaign;
+    using (var db = new ZimEntities())
+    {
+        data = db.Admin_RevenueRank_GetList(campaign.ID, 0, 0, 3).ToList();
+    }
+}
+
+<div class="targetpage">
+    <div class="row mt-15">
+        <div class="tag-list">
+            <ul>
+                <li> <a href="@Url.Action("PeriodDetail","CampaignSale",new { area = "Admin", id = ViewBag.Campaign.ID })"> Tổng Quan </a> </li>
+                <li class="active"> <a href="@Url.Action("RevenueRank","CampaignSale",new { area = "Admin", id = ViewBag.Campaign.ID })"> Xếp hạng </a> </li>
+            </ul>
+        </div>
+    </div>
+    @using (Html.BeginForm("RevenueRank", "CampaignSale", FormMethod.Get, new { id = "form-search" }))
+    {
+        <div class="row mt-15 mg-l-0">
+            <div class="body-rv mt-20 row right">
+                <div class="mg-r-5">
+                    <select class="custom-select" name="slRankType">
+                        <option value="0">Xem theo tiến độ</option>
+                        <option value="1">Xem theo doanh thu</option>
+                    </select>
+                    <script>$('select[name=slRankType]').val(@ViewBag.RankType)</script>
+                </div>
+
+                <div class="mg-r-5">
+                    <select class="custom-select" name="slTargetType">
+                        <option value="4">Mục tiêu cá nhân</option>
+                        <option value="3">Mục tiêu nhóm</option>
+                        <option value="2">Mục tiêu phòng ban</option>
+                    </select>
+                    <script>$('select[name=slTargetType]').val(@ViewBag.targetType)</script>
+                </div>
+
+                <div class="mg-r-5">
+                    <select class="custom-select" name="slTeam">
+                        <option value="0">--Chọn nhóm--</option>
+                        @{
+                            foreach (var i in data)
+                            {
+                                <option value="@i.ID">@i.FullName</option>
+                            }
+                        }
+                    </select>
+                    <script>$('select[name=slTeam]').val(@ViewBag.Team)</script>
+                </div>
+
+                <div>
+                    <button class="btn btn-primary" type="submit">Lọc</button>
+                </div>
+            </div>
+        </div>
+    }
+    <div class="row mt-30">
+        <div class="review-target-detail">
+
+            @foreach (var j in Model)
+            {
+                <div class="body-rv mt-20">
+                    <div class="div-content">
+                        <div class="preview-name">
+                            <div class="row d-flex">
+                                <div class="wd-5p">
+                                    <div class="name">
+                                        <p class="mg-b-0"> @j.RevenueRank </p>
+                                    </div>
+                                </div>
+                                <div class="wd-50p row d-flex">
+                                    <div class="name mg-r-15">
+                                        <img style="width:30px;height:30px;border-radius:50%" src="@j.Avatar" data-toggle="tooltip" data-placement="left" title="@j.RoleName" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                    </div>
+                                    <div class="name">
+                                        <p class="mg-b-0" data-toggle="tooltip" data-placement="right" title="@j.RoleName"> @j.FullName </p>
+                                    </div>
+                                </div>
+                                <div class="wd-20p row d-flex">
+                                    <div class="name">
+                                        <p>@String.Format("{0:0,0}", j.CurrentValue) / @String.Format("{0:0,0}", j.TargetValue)</p>
+                                    </div>
+                                </div>
+                                <div class="w-25-cer">
+                                    <div class="progess">
+                                        <div class="number-progess mg-r-25">
+                                            <p class="mg-b-0"> @((j.CurrentValue / j.TargetValue) * 100)% </p>
+                                        </div>
+                                        <div class="progess-bar-bg">
+                                            <div class="progess-bar @(j.Status == 1 ? "bg-blue" : j.Status == 2 ? "bg-main" : j.Status == 3 ? "bg-yellow" : "bg-red")" style="width: @(((j.CurrentValue / j.TargetValue) * 100) > 100 ? 100:((j.CurrentValue / j.TargetValue) * 100))%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

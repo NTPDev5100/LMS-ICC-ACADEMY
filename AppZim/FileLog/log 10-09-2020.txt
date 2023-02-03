@@ -1,0 +1,3 @@
+PageError: StudentSetController    FunctionError: CheckTimeUp    loginUID: 2318    MessageError: An error occurred while executing the command definition. See the inner exception for details.    10/09/2020 09:24
+PageError: StudentSetController    FunctionError: CheckTimeUp    loginUID: 2318    MessageError: An error occurred while executing the command definition. See the inner exception for details.    10/09/2020 09:26
+PageError: StudentSetController    FunctionError: CheckTimeUp    loginUID: 2318    MessageError: An error occurred while executing the command definition. See the inner exception for details.    10/09/2020 09:47

@@ -1,0 +1,267 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@model List<get_list_of_AppointmentTestForStudent_Result>
+@{
+    ViewBag.Title = "ListAppointmentTest";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_School> schools = SchoolTable.getall();
+    List<tbl_Account> lsale = AccountTable.getbyrole(6).Where(n => n.Status == 2).OrderBy(n => n.FullName).ToList();
+    List<tbl_Account> staff = AccountTable.getall().Where(n => n.RoleID != 5 && n.Status == 2).OrderBy(n => n.FullName).ToList();
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+}
+@section myStyles{
+    <style>
+        .pd-sm-b-40 {
+            padding-bottom: 5px;
+        }
+    </style>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    @*<th>Học viên</th>*@
+                    <th class="no-wrap">Ngôn ngữ</th>
+                    <th class="no-wrap">Người hẹn</th>
+                    <th class="no-wrap">Giáo viên</th>
+                    <th class="no-wrap">Ngày hẹn</th>
+                    <th class="no-wrap">Giờ hẹn</th>
+                    <th class="no-wrap">GMT+</th>
+                    <th class="no-wrap">Quốc gia</th>
+                    @*<th class="no-wrap text-center">@ViewBag.Total</th>*@
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        string DateTest = "";
+                        if (item.DateTest != null)
+                        {
+                            DateTest = item.DateTest.Value.ToString("dd/MM/yyyy");
+                        }
+
+                        <tr class="tr-row">
+                            <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                            @*<td class="no-wrap">@item.StudentName</td>*@
+                            <td>@item.LanguageName</td>
+                            <td class="no-wrap">@item.CreateTestName</td>
+                            <td class="no-wrap">@item.GvTestName</td>
+                            <td class="no-wrap">@DateTest</td>
+                            <td class="no-wrap">@item.TimeTest</td>
+                            <td class="no-wrap">@item.NationTime</td>
+                            <td class="no-wrap">@item.Nation</td>
+                            @*<td class="no-wrap text-center">
+                                <a class="pd-5 view-info" href="#div-info-appoment" data-toggle="modal" data-id="@item.ID" data-uid="@item.StudentUID" data-name="@item.StudentName" data-phone="@item.Phone"><i data-toggle="tooltip" data-placement="left" title="Thông tin khách" data-feather="eye"></i></a>
+                            </td>*@
+                        </tr>
+                        <tr class="collapse-row">
+                            <td colspan="8">
+                                <div class="collapse-content">
+                                    <table class="table table-bordered">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Số điện thoại</th>
+                                                <th>Ngày tạo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>@item.Phone</td>
+                                                <td>@item.CreatedDate.Value.ToString("dd/MM/yyyy")</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @{
+                                    if (item.TvName != null)
+                                    {
+                                        <div class="collapse-content">
+                                            <h4 class="text-center">KẾT QUẢ TEST</h4>
+                                            <table class="table table-bordered">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>Người TV</th>
+                                                        <th>Listening</th>
+                                                        <th>Reading</th>
+                                                        <th>Writting</th>
+                                                        <th>Speaking</th>
+                                                        <th>Giáo viên test:</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>@item.TvName</td>
+                                                        <td>@item.Listening</td>
+                                                        <td>@item.Reading</td>
+                                                        <td>@item.Writing</td>
+                                                        <td>@item.Speaking</td>
+                                                        <td>@item.GvTestName</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="6">@item.NoteTest</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                }
+                            </td>
+                        </tr>
+
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+            <div class="pagination-container">
+                @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+            </div>
+        </ul>
+    </nav>
+</div>
+
+<div class="modal fade" id="div-info-appoment" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+                <input type="hidden" name="hdfUID" id="hdfUID" required />
+                <input type="hidden" name="hdfTestID" id="hdfTestID" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Thông tin hẹn test</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-5 form-group">
+                                <label for="txt-info-full" class="">Học viên:</label>
+                                <input type="text" class="form-control" id="txt-info-full" disabled>
+                            </div>
+                            <div class="col-sm-2 form-group">
+                                <label for="txt-info-phone" class="">Số điện thoại:</label>
+                                <input type="number" class="form-control" style="padding:5px;" id="txt-info-phone" disabled>
+                            </div>
+                            <div class="col-sm-5 form-group">
+                                <label for="txt-bao-luu-name" class="">Người hẹn:</label>
+                                <select name="ddl-accsale" id="ddl-accsale" required class="form-control select2">
+                                    <option value="@aclog.ID">@aclog.FullName</option>
+                                    @{
+                                        foreach (var item in lsale)
+                                        {
+                                            <option value="@item.ID">@item.FullName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-bao-luu-name" class="">Trung tâm:</label>
+                                <select name="ddl-school" id="ddl-school" class="form-control select2">
+                                    <option value="0">Trung tâm</option>
+                                    @{
+                                        foreach (var item in schools)
+                                        {
+                                            <option value="@item.ID"> @item.SchoolName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-course-change" class="">Ngày hẹn:</label>
+                                <input type="text" id="txt-date-test" name="txt-date-test" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY" value="">
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-bao-luu-name" class="">Giờ hẹn:</label>
+                                <select name="txt-time-test" id="txt-time-test" class="form-control select2">
+                                    @for (int i = 6; i <= 23; i++)
+                                    {
+                                        var h = i < 10 ? "0" + i.ToString() : i.ToString();
+                                        for (int j = 0; j <= 55; j += 5)
+                                        {
+                                            var m = j < 10 ? "0" + j.ToString() : j.ToString();
+                                            <option value="@h:@m">@h:@m</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        @*<div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="role" class="">Ghi chú:</label>
+                                <textarea id="txt-note-test" name="txt-note-test" class="form-control" rows="1"></textarea>
+                            </div>
+                        </div>*@
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $(document).on("click", ".view-info", function () {
+            var uid = $(this).attr('data-uid');
+            var idtest = $(this).attr('data-id');
+            $('#hdfUID').val(uid);
+            $('#hdfTestID').val(idtest);
+
+            $('#txt-info-full').val($(this).attr('data-name'));
+            $('#txt-info-phone').val($(this).attr('data-phone'));
+
+            // thông tinh đăng ký
+            $('#ddl-accsale').val('');
+            $('#ddl-school').val('');
+            $('#txt-date-test').val('');
+            $('#txt-time-test').val('');
+            $('#txt-note-test').val('');
+
+            //load schedule appoment
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Cashier/GetAppointmentTestByID",
+                data: '{ID: ' + idtest + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#ddl-accsale').val(msg.app.UIDCreateTest);
+                        $('#ddl-school').val(msg.app.SchoolID);
+                        $('#txt-date-test').val(msg.date);
+                        $('#txt-time-test').val(msg.app.TimeTest);
+                        $('#txt-note-test').val(msg.app.Note);
+
+                        $('#ddl-accsale').trigger("change");
+                        $('#ddl-school').trigger("change");
+                        $('#txt-time-test').trigger("change");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error view-info");
+                }
+            });
+        });
+    </script>
+}

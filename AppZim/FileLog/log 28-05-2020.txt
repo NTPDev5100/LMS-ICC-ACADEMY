@@ -1,0 +1,2 @@
+PageError: AccountController    FunctionError: SearchCodeDiscout    loginUID: 0    MessageError: Object reference not set to an instance of an object.    28/05/2020 13:32
+PageError: AccountController    FunctionError: SearchCodeDiscout    loginUID: 0    MessageError: Object reference not set to an instance of an object.    28/05/2020 13:32

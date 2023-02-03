@@ -1,0 +1,218 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@model List<Admin_SalaryReview_GetList_Result>
+@{
+    ViewBag.Title = "SalaryReview";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var campaigns = CampaignSaleTable.getall().OrderByDescending(x => x.sTime).ThenBy(x => x.eTime).ToList();
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1">
+        <li class="breadcrumb-item active" aria-current="page">Duyệt lương</li>
+    </ol>
+</nav>
+@using (Html.BeginForm("SalaryReview", "SalaryStaff", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <span class="text-info">Ghi chú: Dữ liệu duyệt lương được tạo tự động khi chiến dịch kết thúc</span>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="mg-l-5 mg-r-5">
+                    <select name="slCampaign" class="custom-select select2" onchange="pagesearch()">
+                        <option value="0">---</option>
+                        @{
+                            foreach (var i in campaigns)
+                            {
+                                <option value="@i.ID">@i.CampaignName</option>
+                            }
+                        }
+                    </select>
+                    <script>$('select[name=slCampaign]').val(@ViewBag.Campaign)</script>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<!-- End breadcrumb -->
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Họ tên</th>
+                    <th>Lương chức danh <i class="far fa-question-circle" data-placement="left" data-toggle="tooltip" title="Lương cơ bản"></i></th>
+                    <th>Doanh thu <i class="far fa-question-circle" data-placement="left" data-toggle="tooltip" title="Đã bao gồm doanh thu của gói cam kết"></i></th>
+                    <th>% Doanh thu</th>
+                    <th>Thưởng cấp 2 <i class="far fa-question-circle" data-placement="left" data-toggle="tooltip" title="Tiền thưởng còn lại của gói cam kết"></i></th>
+                    <th>Thưởng thêm</th>
+                    <th>Trừ đi</th>
+                    <th>Tổng lương nhận</th>
+                    <th>Thông tin ngân hàng</th>
+                    <th>Ghi chú</th>
+                    <th>Trạng thái</th>
+                    <th>@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var cap in Model)
+                    {
+                        <tr>
+                            <td class="no-wrap"><a href="@Url.Action("SalaryReviewDetail","SalaryStaff", new { area = "Admin", id = cap.UID, campaignId = cap.CampaignID })" class="btn" style="cursor:pointer;color:Highlight;">@cap.FullName</a></td>
+                            <td>@String.Format("{0:0,0}", cap.BasicSalary)</td>
+                            <td>@String.Format("{0:0,0}", cap.Revenue)</td>
+                            <td>@cap.RevenuePercent</td>
+                            <td>@String.Format("{0:0,0}", (((cap.CareQuantity.Value * cap.CarePrice.Value) + (cap.CarePlusPrice.Value * cap.CarePlusQuantity.Value)) * ((25 - cap.RevenuePercent.Value) / 100)))</td>
+                            <td>@String.Format("{0:0,0}", cap.BonusSalary)</td>
+                            <td>@String.Format("{0:0,0}", cap.DeductedSalary)</td>
+                            <td>
+                                @{
+                                    double salary = 0;
+                                    salary = cap.BasicSalary.Value + cap.BonusSalary.Value + (cap.Revenue.Value * (cap.RevenuePercent.Value / 100)) + (((cap.CareQuantity.Value * cap.CarePrice.Value) + (cap.CarePlusPrice.Value * cap.CarePlusQuantity.Value)) * ((25 - cap.RevenuePercent.Value) / 100)) - cap.DeductedSalary.Value;
+                                    <span>@String.Format("{0:0,0}", salary)</span>
+                                }
+                            </td>
+                            <td class="center-align">@cap.BankInformation</td>
+                            <td class="center-align">@cap.Note</td>
+                            <td class="center-align">
+                                @{
+                                    if (cap.IsDone == true)
+                                    {
+                                        <span class="badge-success">Đã duyệt</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-warning">Chưa duyệt</span>
+                                    }
+                                }
+                            </td>
+                            <td>
+                                @if (aclog.RoleID == 1 && cap.IsDone == false)
+                                {
+                                    <a href="javascript:;" data-id="@cap.ID" data-bonus="@String.Format("{0:0,0}", cap.BonusSalary)" data-deducted="@String.Format("{0:0,0}", cap.DeductedSalary)" data-note="@cap.Note" class="btn btn-warning btn-edit" data-toggle="tooltip" data-placement="left" title="Chỉnh sửa"><i class="fas fa-edit"></i></a>
+                                    <a href="javascript:;" data-id="@cap.ID" class="btn btn-primary btn-paid" data-toggle="tooltip" data-placement="left" title="Duyệt"><i class="fas fa-check"></i></a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+            <div class="pagination-container">
+                @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+            </div>
+        </ul>
+    </nav>
+</div>
+<div class="modal fade" id="div-edit" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-500" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditTempPayroll", "SalaryStaff", FormMethod.Post))
+            {
+                <input type="hidden" name="hdid" id="hdid" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Chỉnh sửa</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="bonus" class="required">Thưởng thêm:</label>
+                                <input data-type="currency" placeholder="10,000,000" id="bonus" name="bonus" class="form-control" value="0" required autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="deducted" class="required">Trừ đi:</label>
+                                <input data-type="currency" placeholder="10,000,000" id="deducted" name="deducted" class="form-control" value="0" required autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label>Ghi chú:</label>
+                                <textarea class="form-control" name="txt-note" id="txt-note" placeholder="ghi chú"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $('.btn-edit').on('click', function () {
+            $('#hdid').val($(this).attr('data-id'));
+            $('#bonus').val($(this).attr('data-bonus'));
+            $('#deducted').val($(this).attr('data-deducted'));
+            $('#txt-note').val($(this).attr('data-note'));
+            $('#div-edit').modal('toggle');
+        });
+
+        $(document).on("click", ".btn-paid", function () {
+            if (confirm('Xác nhận duyệt lương ?')) {
+                var id = $(this).attr('data-id');
+                var e = $(this);
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/SalaryStaff/AcceptSalary",
+                    data: '{id: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Không thành công',
+                                icon: 'error_outline',
+                                classBackground: 'noti-error',
+                                timeout: 2000
+                            })
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Thành công',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-success',
+                                timeout: 2000
+                            })
+                            window.location.reload();
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(xmlhttprequest);
+                    }
+                });
+            }
+        });
+    </script>
+}

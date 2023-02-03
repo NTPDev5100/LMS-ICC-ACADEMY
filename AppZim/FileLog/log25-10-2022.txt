@@ -1,0 +1,3 @@
+PageError: ContractController    FunctionError: StudentSignContract    loginUID: 0    MessageError: Validation failed for one or more entities. See 'EntityValidationErrors' property for more details.    25/10/2022 13:36
+PageError: ContractController    FunctionError: StudentSignContract    loginUID: 0    MessageError: Validation failed for one or more entities. See 'EntityValidationErrors' property for more details.    25/10/2022 13:41
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 850    MessageError: An error occurred while executing the command definition. See the inner exception for details.    25/10/2022 16:36

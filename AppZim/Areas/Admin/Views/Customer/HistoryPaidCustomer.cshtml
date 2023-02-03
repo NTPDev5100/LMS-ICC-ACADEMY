@@ -1,0 +1,127 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "HistoryPaidCustomer";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    tbl_Account jtem = AccountTable.getbyID(Model.ID);
+}
+
+@section myStyles{
+    <link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+    <style>
+        .list-student-course .table tr td:first-child {
+            background: transparent;
+        }
+
+        .config-teacher .table-responsive:last-child {
+            margin-bottom: 0px;
+        }
+
+        .d-flex .align-items-center:last-child {
+            margin-left: 10px;
+        }
+
+        @@media only screen and (max-width: 500px) {
+            .d-flex .align-items-center:last-child {
+                margin-left: 0px;
+                margin-top: 10px;
+            }
+
+            .d-flex {
+                display: block !important;
+            }
+
+                .d-flex .align-items-center input {
+                    width: 100%;
+                    margin-left: 0px;
+                }
+        }
+    </style>
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1">
+        <li class="breadcrumb-item active" aria-current="page">Lịch sử thanh toán</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="media d-block d-lg-flex">
+    <div class="card" style="width:100%">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <p class="mg-b-0">
+                    <span class="wd-100">Học phí còn nợ:</span> <strong class="text-danger">@String.Format("{0:0,0}", CoursesStudentTable.getall().Where(n => n.PriceLeft > 0 && n.StudentUID == jtem.ID).Sum(i => Convert.ToDouble(i.PriceLeft.Value)))</strong>
+                </p>
+            </div>
+            <div class="table-history">
+                <div class="table-responsive">
+                    <table class="table table-bordered ">
+                        <caption class="title">Lịch sử thanh toán</caption>
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="nowrap">Ngày tạo</th>
+                                <th class="nowrap">Số tiền</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var pays = InvoicesTable.getbystudentid(jtem.ID);
+                                foreach (var p in pays)
+                                {
+                                    if (p.Refund != true)
+                                    {
+                                        <tr>
+                                            <td class="nowrap">@p.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td class="nowrap">@String.Format("{0:0,0}", p.Price)</td>
+                                            <td class="no-wrap text-center"><a href="/invoice/?code=@p.Code" class="" target="_blank"><i data-feather="award"></i> Xem</a></td>
+                                        </tr>
+                                    }
+
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-history">
+                <div class="table-responsive">
+                    <table class="table table-bordered ">
+                        <caption class="title">Lịch sử hoàn tiền</caption>
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="nowrap">Ngày tạo</th>
+                                <th class="nowrap">Số tiền</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var payss = InvoicesTable.getbystudentid(jtem.ID);
+                                foreach (var p in payss)
+                                {
+                                    if (p.Refund == true)
+                                    {
+                                        <tr>
+                                            <td class="nowrap">@p.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td class="nowrap">@String.Format("{0:0,0}", p.Price)</td>
+                                            <td class="no-wrap text-center"><a href="/vouchers/?code=@p.Code" class="" target="_blank"><i data-feather="award"></i> Xem</a></td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- media -->
+@section myScripts{
+    <script>
+       
+    </script>
+}
+

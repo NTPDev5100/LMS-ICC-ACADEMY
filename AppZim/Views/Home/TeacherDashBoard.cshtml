@@ -1,0 +1,85 @@
+﻿@using AppZim.Models;
+@using AppZim.TableSql;
+@using MB.Extensions;
+@using AppZim.Areas.Admin.Controllers;
+@using System.Collections.Concurrent;
+@model ConcurrentBag<ThongKe>
+@{
+    ViewBag.Title = "TeacherDashBoard";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var db = new ZimEntities();
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var salary = StaffSalaryTable.GetByUID(aclog.ID);
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">@ViewBag.TeacherName</li>
+    </ol>
+</nav>
+<a class="btn btn-success" href="/Admin/Report/ExportExcel?teacherID=@ViewBag.TeacherID"><i class="fas fa-file-excel"></i> Xuất Excel</a>
+<br />
+<br />
+<table class="table table-bordered text-center" id="dataTable" width="100%" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Tên khóa học</th>
+            <th>Ngày tạo khóa học</th>
+            <th>Tổng số buổi</th>
+            <th>Số buổi đã dạy</th>
+            <th>Điểm đánh giá</th>
+            <th>Lương/ buổi</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.l.CourseName</td>
+                <td>@item.l.CreatedDate.Value.ToString("dd-MM-yyyy")</td>
+                <td>@CoursesScheduleTable.getbyTeacherIDandcouseID(item.l.CourseID.Value, item.l.TeacherUID.Value).Count</td>
+                <td>
+                    <a href="javascript:;" class="" style="padding: 0 7px;background-color: #c2fd95;" data-toggle="modal" data-target="#exampleModalCenter">
+                        @CoursesScheduleTable.SoBuoiDaDay(item.l.CourseID.Value, 1, item.l.TeacherUID.Value).Count
+                    </a>
+                </td>
+                <td>@FeedbackScheduleTable.CalcRating(item.l.CourseID.Value)</td>
+                <td>@String.Format("{0:0,0}", salary.Salary)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<!-- Modal -->
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Chi tiết các buổi dạy</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered text-center" id="dataTable-detail" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Khung giờ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-detail">
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#dataTable').DataTable();
+    });
+</script>

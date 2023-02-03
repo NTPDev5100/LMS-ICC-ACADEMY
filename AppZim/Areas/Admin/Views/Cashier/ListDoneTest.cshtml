@@ -1,0 +1,59 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@{
+    ViewBag.Title = "ListDoneTest";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var lstudy = Reason.GetAllByType(1);
+    var lstudynon = Reason.GetAllByType(2);
+    var count = StudentAppointmentTestDetailTable.GetAll().Count;
+
+}
+<nav aria-label="breadcrumb" class="mb-5">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item active" aria-current="page">Thống kê học và không học</li>
+    </ol>
+</nav>
+<div class="row">
+    <div class="col-6">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Lý do không học</th>
+                    <th scope="col">Tỷ lệ không học</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in lstudynon)
+                {
+                    var lStudent = StudentAppointmentTestDetailTable.GetByReasonID(item.ID).Count;
+                    <tr>
+                        <th scope="row">@item.Name</th>
+                        <td>@(lStudent*100/count)%</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="col-6">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Lý do quết định học</th>
+                    <th scope="col">Tỷ lệ đăng ký học</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in lstudy)
+                {
+                    var lStudent = StudentAppointmentTestDetailTable.GetByReasonID(item.ID).Count;
+                    <tr>
+                        <th scope="row">@item.Name</th>
+                        <td>@(lStudent*100/count)%</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

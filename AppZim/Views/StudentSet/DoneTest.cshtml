@@ -1,0 +1,1482 @@
+﻿@using AppZim.Models;
+@using AppZim.TableSql;
+@using MB.Extensions;
+@using AppZim.ZIM;
+@{
+    ViewBag.Title = "Result";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_ExerciseGroup> questiongroup = ExerciseGroupTable.getbysetdetail(Model.ID);
+    tbl_SetPackageDetail sd = SetPackageDetailTable.getbyid(Model.ID);
+    tbl_SetPackageHistory setpackagehistory = SetPackageHistoryTable.getbyStudentIDandSetDetailID(aclog.ID, Model.ID);
+    List<tbl_SetPackageStudentExercise> sde = SetPackageStudentExerciseTable.getall(sd.ID, aclog.ID);
+
+}
+<style>
+    .drop-answer .dropwrap {
+        display: inline-block;
+        min-width: 100px;
+        background: #ebebeb;
+        min-height: 31px;
+        text-align: center;
+        padding: 5px;
+        vertical-align: middle;
+        cursor: pointer;
+        margin: 2px 5px 0px 5px;
+    }
+
+    .row.hidden {
+        display: none;
+    }
+
+    .tb-checkmark.true > span:before {
+        content: '\f00c';
+        display: block;
+        font-size: 24px;
+        font-family: 'Font Awesome 5 Free';
+        color: #10b759;
+        font-weight: 900;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+
+    .tb-checkmark.false > span:before {
+        content: '\f00d';
+        display: block;
+        font-size: 24px;
+        font-family: 'Font Awesome 5 Free';
+        color: red;
+        font-weight: 900;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -webkit-transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+
+    .tb-checkmark:hover span::after {
+        display: none
+    }
+
+    .testing .test__wrap .card {
+        height: calc(100vh - 140px);
+        display: -webkit-box;
+        display: flex;
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        flex-direction: column;
+    }
+
+    .q-nav.false {
+        background: red;
+        border-radius: 5px;
+    }
+
+        .q-nav.false a {
+            color: white;
+        }
+
+    .q-nav.true {
+        background: green;
+        border-radius: 5px;
+    }
+
+        .q-nav.true a {
+            color: white;
+        }
+
+    .question-nav ul li a:hover {
+        color: #fff;
+        background: #a4bffb;
+        border-radius: 5px;
+    }
+
+    .question-nav ul li a.active {
+        border-radius: 5px;
+        background: #3462C8;
+        color: #fff;
+    }
+
+    .question__wrap[data-true="True"].active {
+        outline: 2px solid #00ff1b;
+    }
+
+    .question__wrap[data-true="False"].active {
+        outline: 2px solid #ff0000;
+    }
+
+    .btn-warning:hover {
+        color: white;
+        background-color: #e0a800;
+        border-color: #d39e00;
+    }
+
+    .block-overview {
+        display: flex;
+        justify-content: center;
+    }
+
+    .block-correct {
+        padding: 10px;
+        background: #787d7d;
+        border-radius: 15px;
+    }
+
+        .block-correct h4 {
+            color: white;
+            text-align: center;
+        }
+
+    .block-score {
+        margin-right: 30px;
+        padding: 10px;
+        background: #3462C8;
+        border-radius: 15px;
+    }
+
+        .block-score h4 {
+            color: white;
+            text-align: center;
+        }
+
+    .bloc-table {
+        /* display: flex; */
+        /* flex-direction: column; */
+        justify-content: flex-start;
+        margin-top: 12px;
+        /* height: 570px; */
+        overflow: auto;
+        flex-wrap: wrap;
+        flex-grow: 1;
+    }
+
+        .bloc-table table {
+            /* width: 33.33%; */
+            font-size: 16px;
+            border: 5px #fff solid;
+            color: black;
+            width: 100%;
+            background-color: #ccc;
+        }
+
+            .bloc-table table th {
+                border: 5px #fff solid;
+                padding: 5px;
+            }
+
+            .bloc-table table td {
+                /*white-space: nowrap;*/
+                border: 5px #fff solid;
+                min-width: 50px;
+                padding: 5px;
+                font-weight: 500;
+                position: relative;
+            }
+
+            .bloc-table table tr td:first-child, th:first-child {
+                color: #fff;
+                background-color: #3462C8;
+                text-align: left;
+                width: 60px;
+                padding: 5px 33px 5px 10px;
+            }
+
+            .bloc-table table tr td:nth-child(2) {
+                width: 100px
+            }
+
+    /* td.dung:after {
+                content: '\f00c';
+                display: block;
+                font-size: 17px;
+                font-family: 'Font Awesome 5 Free';
+                color: #10b759;
+                font-weight: 600;
+                position: absolute;
+                top: 50%;
+                left: 80%;
+                -webkit-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+                opacity: 1;
+            }
+
+            td.sai:after {
+                content: '\f00d';
+                display: block;
+                font-size: 17px;
+                font-family: 'Font Awesome 5 Free';
+                color: #ff0000;
+                font-weight: 600;
+                position: absolute;
+                top: 50%;
+                left: 80%;
+                -webkit-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+                opacity: 1;
+            }*/
+
+    .btn-warning:not(:disabled):not(.disabled):active, .btn-warning:not(:disabled):not(.disabled).active, .show > .btn-warning.dropdown-toggle {
+        color: #fff;
+        background-color: #ffc107;
+        border-color: #ffc107;
+    }
+
+    .btn-warning:focus, .btn-warning.focus {
+        color: #fff;
+        background-color: #e0a800;
+        border-color: #d39e00;
+        box-shadow: 0 0 0 0.2rem rgba(221, 170, 15, 0.5);
+    }
+
+    .testing .test__wrap .card-body {
+        -webkit-box-flex: 1;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    tr.sai {
+        background: #ffbed1
+    }
+
+        tr.sai:hover td {
+            background: #ff89ab
+        }
+
+    tr.dung:hover td {
+        background: #9c9c9c
+    }
+
+    .reset-margin-padding {
+        margin: 0px !important;
+        padding: 0px !important;
+    }
+
+    @@media (min-width: 768px) {
+        .col-md-6 {
+            flex: 0 0 50%;
+            max-width: 100%;
+        }
+    }
+
+    .left-col.hidden {
+        display: none;
+    }
+
+    .typedetail-1 {
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+</style>
+<div class="exam__wrap">
+    <div class="card mg-b-10" id="exam__top">
+        <div class="card-body pd-y-10">
+            <div class="d-flex justify-content-between pos-relative flex-wrap align-items-center">
+                <div class="exam-info tx-primary tx-medium tx-18">
+                    <span class="name mg-r-10">@aclog.FullName</span> -
+                    <span class="candidate mg-l-10">@aclog.IdentityCard</span>
+                </div>
+                @{
+                    if (!string.IsNullOrEmpty(Model.LinkAudio))
+                    {
+                        <div class="clock-time" style="display: block; left:80%;">
+                            <audio controls style=" height: 35px; width: 500px; float: right;">
+                                <source src="@Model.LinkAudio" type="audio/ogg">
+                                <source src="@Model.LinkAudio" type="audio/mpeg">
+                            </audio>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <div class="test__wrap" id="test-container">
+        <div class="card">
+            <div class="card-header" style="justify-content: space-between;display: flex;">
+                <h4 class="title">@Model.PackageDetailName</h4>
+                <div class="check-flag">
+                    <a href="@Url.Action("SetPackage","StudentSet",new {id=Model.SetPackageID})"
+                       class="btn btn-info">
+                        <i class="fas fa-undo-alt mg-r-5"></i> <span class="text">Trở lại gói bài</span>
+                    </a>
+                    <a href="javascript:;" class="btn btn-warning tx-white test-overview" data-view="2">
+                        <i class="fas fa-file-alt mg-r-5"></i> <span class="text">Chi tiết</span>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body viewstyle1" style="display:none">
+                @{
+                    bool firstshow = false;
+                    string show = "";
+                    foreach (var item in questiongroup)
+                    {
+                        if (item.ExerciseGroupID != null)
+                        {
+                            if (item.ExerciseGroupID > 0)
+                            {
+                                var g = ExerciseGroupTable.getbyid(item.ExerciseGroupID.Value);
+                                item.SetPackageQuestion = g.SetPackageQuestion;
+                            }
+                        }
+                        if (firstshow == true)
+                        {
+                            show = "hidden";
+                        }
+                        else
+                        {
+                            firstshow = true;
+                        }
+                        string left = "show";
+                        string righ = "";
+                        if (sd.TypeDetail == 1 && (item.TypeMultiChoice == 1 || item.TypeMultiChoice == 4 || item.TypeMultiChoice == 5))
+                        {
+                            left = "hidden";
+                            righ = "typedetail-1";
+                        }
+
+                        //custom lại nếu không có bài đọc thì cho câu hỏi sát bên trái
+                        if (item.ExerciseGroupID.Value == 0 || item.ExerciseGroupID == null)
+                        {
+                            if (item.SetPackageQuestion == "")
+                            {
+                                left = "hidden";
+                                righ = "typedetail-1";
+                            }
+                        }
+
+                        <div class="row multipletype @show" group-id="@item.ID" type-multichoice="@item.TypeMultiChoice">
+                            <div class="col-md-6 left-col @left">
+                                <div class="question-para drop-answer question-record">
+                                    @{
+                                        tbl_SetPackageHistoryDetail historydetail = SetPackageHistoryDetailTable.getbyHistoryIDandExerciseGroupID(setpackagehistory.ID, item.ID);
+                                        if (historydetail != null)
+                                        {
+                                            if (!string.IsNullOrEmpty(AssetCRM.RemoveHTMLTags(historydetail.Result.Trim())))
+                                            {
+                                                @Html.Raw(historydetail.Result.Replace("highlight-word has-note", "").Replace("highlight-word", ""));
+                                            }
+                                            else
+                                            {
+                                                @Html.Raw(historydetail.Question.Replace("highlight-word has-note", "").Replace("highlight-word", ""));
+                                            }
+                                        }
+
+                                    }
+                                </div>
+                            </div>
+                            @{
+                                if (item.TypeMultiChoice == 1)//trắc nghiệm 1 câu
+                                {
+                                    <div class="col-md-6 right-col @righ">
+                                        <h4>Chọn câu trả lời đúng</h4>
+                                        @{
+                                            //List<tbl_Exercise> lex = ExerciseTable.getbygroupid(item.ID);
+                                            List<tbl_ExerciseAddonStudent> lexa = ExerciseAddonStudentTable.getbyUIDStudent_ExeGroupID(aclog.ID, item.ID);
+                                            int index = 0;
+                                            foreach (var exer in lexa)
+                                            {
+                                                if (exer != null)
+                                                {
+                                                    List<tbl_ExerciceMultiChoise> emc = ExerciceMultiChoiseTable.getbyexeid(exer.ExerciseID.Value);
+                                                    index++;
+                                                    <div class="qz-wrap">
+                                                        <div class="qz-question" data-id="@exer.ExerciseID">
+                                                            <span class="bold">
+                                                                @Html.Raw(exer.ExerciseQuestion.Replace("highlight-word has-note", "").Replace("highlight-word", ""))
+                                                            </span>
+                                                        </div>
+                                                        <div class="qz-answer">
+                                                            <ul class="qz-answer-ul circlestyle">
+                                                                @foreach (var ans in emc)
+                                                                {
+
+                                                                    if (exer == null)
+                                                                    {
+                                                                        if (ans.isTrue.Value)
+                                                                        {
+                                                                            <li class="radi-item">
+                                                                                <label class="radiolb">
+                                                                                    <input type="radio" disabled class="check-input " name="exercise-single-@exer.ExerciseID"
+                                                                                           value="0">
+                                                                                    <span class="ip-avata" style="background:#12df60"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@ans.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <li class="radi-item">
+                                                                                <label class="radiolb">
+                                                                                    <input type="radio" class="check-input " name="exercise-single-@exer.ExerciseID"
+                                                                                           value="0" disabled>
+                                                                                    <span class="ip-avata"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@ans.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                    }
+                                                                    else if (ans.ID == exer.ExerciseMultipleChoiseID)
+                                                                    {
+                                                                        if (ans.isTrue.Value)
+                                                                        {
+                                                                            <li class="radi-item">
+                                                                                <label class="radiolb">
+                                                                                    <input type="radio" disabled class="check-input " name="exercise-single-@exer.ExerciseID"
+                                                                                           value="0">
+                                                                                    <span class="ip-avata" style="background:#12df60"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@ans.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <li class="radi-item">
+                                                                                <label class="radiolb">
+                                                                                    <input type="radio" class="check-input " name="exercise-single-@exer.ExerciseID"
+                                                                                           value="0" disabled>
+                                                                                    <span class="ip-avata" style="background: #f61f1f "></span>
+                                                                                    <div class="val">
+                                                                                        <p>@ans.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        if (ans.isTrue.Value)
+                                                                        {
+                                                                            <li class="radi-item">
+                                                                                <label class="radiolb">
+                                                                                    <input type="radio" disabled class="check-input " name="exercise-single-@exer.ExerciseID"
+                                                                                           value="0">
+                                                                                    <span class="ip-avata" style="background: #12df60 "></span>
+                                                                                    <div class="val">
+                                                                                        <p>@ans.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <li class="radi-item">
+                                                                                <label class="radiolb">
+                                                                                    <input type="radio" class="check-input " name="exercise-single-@exer.ExerciseID"
+                                                                                           value="0" disabled>
+                                                                                    <span class="ip-avata"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@ans.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                    }
+
+                                                                }
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                        }
+                                    </div>
+                                }
+                                else if (item.TypeMultiChoice == 2)//DRAG
+                                {
+                                    <div class="col-md-6 right-col @righ">
+                                        <h4>Kéo đáp án đúng vào ô trống</h4>
+                                        <div class="dropwrap choose-answer" quest-group-id="quest-group-1">
+                                            @{
+                                                //lấy danh sách kết quả nó đã làm
+                                                List<tbl_ExerciseAddonStudent> lexa = ExerciseAddonStudentTable.getbyUIDStudent_ExeGroupID(aclog.ID, item.ID);
+                                                List<tbl_ExerciceMultiChoise> listdapandung = new List<tbl_ExerciceMultiChoise>();
+                                                foreach (var exer in lexa)
+                                                {
+                                                    List<tbl_ExerciceMultiChoise> trueanswer = ExerciceMultiChoiseTable.getbyexeid(exer.ExerciseID.Value);
+                                                    if (exer != null)
+                                                    {
+                                                        foreach (var da in trueanswer)
+                                                        {
+                                                            if (exer.ExerciseMultipleChoiseID != da.ID)
+                                                            {
+                                                                listdapandung.Add(da);
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        listdapandung.AddRange(trueanswer);
+                                                    }
+                                                }
+                                                foreach (var e in listdapandung)
+                                                {
+                                                    var exercisetitle = ExerciseTable.getbyid(e.ExerciseID.Value);
+                                                    <div class="dropzone draggable-dropzone--occupied question__wrap" data-true="@e.isTrue" data-id="quest-id-@exercisetitle.ExerciseTitle" data-id-ans="@e.ID" quest-group-id="quest-group-1">
+                                                        <span class="select-word">@e.AnswerTitle</span>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                else if (item.TypeMultiChoice == 3)//Input
+                                {
+                                    <div class="col-md-6 right-col input-test @righ">
+                                        <div class="col-md-6 right-col">
+                                            <h4>Điền đáp án đúng vào chỗ trống</h4>
+                                            <div class="dropwrap choose-answer" quest-group-id="quest-group-1">
+                                                @{
+                                                    //List<tbl_Exercise> lex = ExerciseTable.getbygroupid(item.ID);
+                                                    List<tbl_ExerciseAddonStudent> lexa = ExerciseAddonStudentTable.getbyUIDStudent_ExeGroupID(aclog.ID, item.ID);
+                                                    //danh sách đáp án để show ra
+                                                    List<tbl_ExerciceMultiChoise> listdapan = new List<tbl_ExerciceMultiChoise>();
+                                                    foreach (var exer in lexa)
+                                                    {
+                                                        List<tbl_ExerciceMultiChoise> dapan = ExerciceMultiChoiseTable.getbyexeid(exer.ExerciseID.Value).ToList();
+                                                        if (exer != null)
+                                                        {
+                                                            foreach (var da in dapan)
+                                                            {
+                                                                if (exer.ExerciseMultipleChoiseID != da.ID)
+                                                                {
+                                                                    listdapan.Add(da);
+                                                                }
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            listdapan.AddRange(dapan);
+                                                        }
+                                                    }
+                                                    foreach (var e in listdapan)
+                                                    {
+                                                        var exercisetitle = ExerciseTable.getbyid(e.ExerciseID.Value);
+                                                        <div class="dropzone draggable-dropzone--occupied question__wrap" data-id="quest-id-@exercisetitle.ExerciseTitle" data-id-ans="@e.ID" quest-group-id="quest-group-1">
+                                                            <span class="select-word">@e.AnswerTitle</span>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else if (item.TypeMultiChoice == 4)//Multiple check
+                                {
+                                    <div class="col-md-6 right-col @righ">
+                                        <h4>Chọn đáp án đúng</h4>
+                                        @{
+
+                                            List<tbl_ExerciseAddonStudent> lexa = ExerciseAddonStudentTable.getbyUIDStudent_ExeGroupID(aclog.ID, item.ID);
+                                            List<string> cauhoi = lexa.Select(n => n.ExerciseQuestion).Distinct().ToList();
+                                            List<int> ListExID = lexa.Select(n => n.ExerciseID.Value).Distinct().ToList();
+                                            if (cauhoi.Count > 0)//có submit
+                                            {
+                                                int index = 0;
+                                                for (int i = 0; i < ListExID.Count; i++)
+                                                {
+                                                    index++;
+                                                    List<tbl_Exercise> lstChild = ExerciseTable.getListHasParent(ListExID[i]);
+                                                    List<tbl_ExerciceMultiChoise> dscautraloi = ExerciceMultiChoiseTable.getbyexeid(ListExID[i]);
+                                                    foreach (var chil in lstChild)
+                                                    {
+                                                        List<tbl_ExerciceMultiChoise> dscautraloi2 = ExerciceMultiChoiseTable.getbyexeid(chil.ID);
+                                                        dscautraloi.AddRange(dscautraloi2);
+                                                    }
+                                                    <div class="qz-wrap">
+                                                        <div class="qz-question" data-id="@ListExID[i]">
+                                                            <span class="bold">
+                                                                @Html.Raw(cauhoi[i])
+                                                            </span>
+                                                        </div>
+                                                        <div class="qz-answer">
+                                                            <ul class="qz-answer-ul">
+                                                                @foreach (var tl in dscautraloi)
+                                                                {
+                                                                    tbl_ExerciseAddonStudent choose = lexa.Where(n => n.ExerciseMultipleChoiseID == tl.ID).FirstOrDefault();
+                                                                    if (choose == null)
+                                                                    {
+                                                                        if (tl.isTrue.Value)
+                                                                        {
+                                                                            <li class="checkbox-item">
+                                                                                <label class="checklb">
+                                                                                    <input type="checkbox" disabled class="check-input " name="exercise-multiple-@ListExID[i]"
+                                                                                           value="0">
+                                                                                    <span class="ip-avata" style="background:#12df60"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@tl.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <li class="checkbox-item">
+                                                                                <label class="checklb">
+                                                                                    <input type="checkbox" class="check-input " name="exercise-multiple-@ListExID[i]"
+                                                                                           value="0" disabled>
+                                                                                    <span class="ip-avata"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@tl.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                    }
+                                                                    else if (tl.ID == choose.ExerciseMultipleChoiseID)
+                                                                    {
+                                                                        if (tl.isTrue.Value)
+                                                                        {
+                                                                            <li class="checkbox-item">
+                                                                                <label class="checklb">
+                                                                                    <input type="checkbox" disabled class="check-input " name="exercise-multiple-@ListExID[i]"
+                                                                                           value="0">
+                                                                                    <span class="ip-avata" style="background:#12df60"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@tl.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <li class="checkbox-item">
+                                                                                <label class="checklb">
+                                                                                    <input type="checkbox" class="check-input " name="exercise-multiple-@ListExID[i]"
+                                                                                           value="0" disabled>
+                                                                                    <span class="ip-avata" style="background:#f61f1f"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@tl.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        if (tl.isTrue.Value)
+                                                                        {
+                                                                            <li class="checkbox-item">
+                                                                                <label class="checklb">
+                                                                                    <input type="checkbox" disabled class="check-input " name="exercise-multiple-@ListExID[i]"
+                                                                                           value="0">
+                                                                                    <span class="ip-avata" style="background: #12df60"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@tl.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <li class="checkbox-item">
+                                                                                <label class="checklb">
+                                                                                    [<input type="checkbox" class="check-input " name="exercise-multiple-@ListExID[i]"
+                                                                                            value="0" disabled>
+                                                                                    <span class="ip-avata"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@tl.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                    }
+
+                                                                }
+                                                            </ul>
+                                                        </div>
+                                                        @*<div class="qz-answer">
+                                                                <ul class="qz-answer-ul">
+                                                                    @if (lstChild != null)
+                                                                    {
+                                                                        foreach (var v in lstChild)
+                                                                        {
+                                                                            List
+                                                                            <tbl_ExerciceMultiChoise>
+                                                                                aws = ExerciceMultiChoiseTable.getbyexeid(v.ID);
+
+                                                                            foreach (var a in aws)
+                                                                            {
+                                                                                if (a.isTrue.Value)
+                                                                                {
+                                                                                    <li class="checkbox-item">
+                                                                                        <label class="checklb">
+                                                                                            <input type="checkbox" disabled class="check-input " name="exercise-multiple-@ListExID[i]"
+                                                                                                   value="0">
+                                                                                            <span class="ip-avata" style="background:#12df60"></span>
+                                                                                            <div class="val">
+                                                                                                <p>@a.AnswerTitle</p>
+                                                                                            </div>
+                                                                                        </label>
+                                                                                    </li>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <li class="checkbox-item">
+                                                                                        <label class="checklb">
+                                                                                            <input type="checkbox" class="check-input " name="exercise-multiple-@ListExID[i]"
+                                                                                                   value="0" disabled>
+                                                                                            <span class="ip-avata" style="background:#f61f1f"></span>
+                                                                                            <div class="val">
+                                                                                                <p>@a.AnswerTitle</p>
+                                                                                            </div>
+                                                                                        </label>
+                                                                                    </li>
+                                                                                }
+                                                                            }
+
+                                                                        }
+                                                                    }
+                                                                </ul>
+                                                            </div>*@
+                                                    </div>
+                                                }
+                                            }
+                                        }
+                                    </div>
+                                }
+                                else//Map
+                                {
+
+                                    List<tbl_ExerciseAddonStudent> lexa = ExerciseAddonStudentTable.getbyUIDStudent_ExeGroupID(aclog.ID, item.ID);
+                                    List<tbl_ExerciceMultiChoise> lemc = new List<tbl_ExerciceMultiChoise>();
+                                    foreach (var exer in lexa)
+                                    {
+                                        if (exer != null)
+                                        {
+                                            tbl_ExerciceMultiChoise emc = ExerciceMultiChoiseTable.getbyexeid(exer.ExerciseID.Value).FirstOrDefault();
+                                            if (emc != null)
+                                            {
+                                                lemc.Add(emc);
+                                            }
+                                        }
+                                    }
+                                    //ds cau noise
+                                    List<tbl_ExerciceMultiChoise> lnoise = ExerciceMultiChoiseTable.getnoisewordbyExGroupID(item.ID);
+                                    lemc.AddRange(lnoise);
+                                    lemc = lemc.OrderBy(n => n.AnswerTitle).ToList();
+                                    List<string> lemcstring = new List<string>();
+                                    lemcstring = lemc.Select(n => n.AnswerTitle).Distinct().ToList();
+
+                                    <div class="col-md-6 right-col @righ">
+                                        <div class="qz-wrap table-checked">
+                                            <div class="qz-answer">
+                                                <div class="table-responsive table-checkmark">
+                                                    <table class="table table-bordered table-center">
+                                                        <thead>
+                                                            <tr>
+                                                                <th></th>
+                                                                @foreach (var ans in lemcstring)
+                                                                {
+
+                                                                    <th>@ans</th>
+                                                                }
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @{
+                                                                int index = 0;
+                                                            }
+                                                            @foreach (var ques in lexa)
+                                                            {
+                                                                index++;
+                                                                <tr id="quest-id-@ques.ExerciseID.Value" class="question-mark" data-id="@ques.ExerciseID.Value">
+                                                                    <td>
+                                                                        <div class="d-flex align-items-baseline question">
+                                                                            <span>@Html.Raw(ques.ExerciseQuestion.Replace("highlight-word has-note", "").Replace("highlight-word", ""))</span>
+                                                                        </div>
+                                                                    </td>
+                                                                    @foreach (var emcString in lemcstring)
+                                                                    {
+                                                                        List<tbl_ExerciceMultiChoise> lmc = lemc.Where(n => n.AnswerTitle == emcString).ToList();
+
+                                                                        List<int> listans = lmc.Select(n => n.ID).ToList();
+                                                                        List<tbl_ExerciceMultiChoise> listanswer = new List<tbl_ExerciceMultiChoise>();
+                                                                        foreach (var ids in listans)
+                                                                        {
+                                                                            var answers = ExerciceMultiChoiseTable.getbyid(ids);
+                                                                            if (answers != null)
+                                                                            {
+                                                                                listanswer.Add(answers);
+                                                                            }
+                                                                        }
+                                                                        tbl_ExerciceMultiChoise dapandung = ExerciceMultiChoiseTable.getbyanwertrue(ques.ExerciseID.Value);
+
+
+
+                                                                        if (ques.ExerciseMultipleChoiseID.Value == 0) //k chỌn đáp án
+                                                                        {
+                                                                            var check = listanswer.Where(n => n.ID == dapandung.ID).FirstOrDefault();
+                                                                            if (check != null)
+                                                                            {
+                                                                                <td>
+                                                                                    <label class="tb-checkmark true">
+                                                                                        <input type="radio" name="question+@index" data-id="@(string.Join(",", listans))" />
+                                                                                        <span></span>
+                                                                                    </label>
+                                                                                </td>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <td>
+                                                                                    <label class="tb-checkmark none">
+                                                                                        <input type="radio" name="question+@index" data-id="@(string.Join(",", listans))">
+                                                                                        <span></span>
+                                                                                    </label>
+                                                                                </td>
+                                                                            }
+                                                                        }
+                                                                        else //Đã chọn đáp án
+                                                                        {
+                                                                            var check = listanswer.Where(n => n.ID == dapandung.ID).FirstOrDefault();
+                                                                            if (check != null)
+                                                                            {
+                                                                                if (check.ID == ques.ExerciseMultipleChoiseID.Value && ques.ExerciseID == check.ExerciseID)
+                                                                                {
+                                                                                    <td>
+                                                                                        <label class="tb-checkmark true">
+                                                                                            <input type="radio" name="question+@index" data-id="@(string.Join(",", listans))">
+                                                                                            <span></span>
+                                                                                        </label>
+                                                                                    </td>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <td>
+                                                                                        <label class="tb-checkmark true">
+                                                                                            <input type="radio" name="question+@index" data-id="@(string.Join(",", listans))">
+                                                                                            <span></span>
+                                                                                        </label>
+                                                                                    </td>
+                                                                                }
+
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                var check2 = listanswer.Where(n => n.ID == ques.ExerciseMultipleChoiseID.Value).FirstOrDefault();
+                                                                                if (check2 != null)
+                                                                                {
+                                                                                    <td>
+                                                                                        <label class="tb-checkmark false">
+                                                                                            <input type="radio" name="question+@index" data-id="@(string.Join(",", listans))">
+                                                                                            <span></span>
+                                                                                        </label>
+                                                                                    </td>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <td>
+                                                                                        <label class="tb-checkmark none">
+                                                                                            <input type="radio" name="question+@index" data-id="@(string.Join(",", listans))">
+                                                                                            <span></span>
+                                                                                        </label>
+                                                                                    </td>
+                                                                                }
+
+                                                                            }
+
+                                                                        }
+                                                                    }
+
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                }
+            </div>
+            <div class="card-body viewstyle2">
+                @{
+                    List<Tuple<bool, string, List<string>, List<string>, string>> dsDapAn = new List<Tuple<bool, string, List<string>, List<string>, string>>();
+                    int total = 0;
+                    int correct = 0;
+                    int dem2 = 0;
+                    string title = "";
+                    foreach (var item in questiongroup)
+                    {
+                        if (item != null)
+                        {
+
+                            List<tbl_ExerciseAddonStudent> lexa = ExerciseAddonStudentTable.getbyUIDStudent_ExeGroupID(aclog.ID, item.ID);
+                            List<int> ListExID = lexa.Select(n => n.ExerciseID.Value).Distinct().ToList();
+
+
+                            for (int i = 0; i < ListExID.Count; i++)
+                            {
+                                var giaithich = ExerciseTable.getbyid(ListExID[i]);
+                                List<tbl_Exercise> checkCauHoiCon = ExerciseTable.getListHasParent(ListExID[i]);
+                                if (checkCauHoiCon.Count > 0)
+                                {
+                                    //ds câu trả lời - cả con lẫn cha
+                                    List<tbl_ExerciseAddonStudent> exstudentchoise = ExerciseAddonStudentTable.getListbyuidvsexeid(aclog.ID, ListExID[i]);
+                                    List<tbl_ExerciceMultiChoise> cautraloi = new List<tbl_ExerciceMultiChoise>();
+                                    foreach (var exs in exstudentchoise)
+                                    {
+                                        tbl_ExerciceMultiChoise exsc = ExerciceMultiChoiseTable.getbyid(exs.ExerciseMultipleChoiseID.Value);
+                                        if (exsc != null)
+                                        {
+                                            cautraloi.Add(exsc);
+                                        }
+                                    }
+                                    cautraloi = cautraloi.Select(n =>
+                                    {
+                                        if (n.isHide != true && n.isTrue == true)
+                                        {
+                                            n.AnswerTitle = "<p class=\"reset-margin-padding\" style=\"color:green\">" + n.AnswerTitle + "</p>";
+                                        }
+                                        else
+                                        {
+                                            n.AnswerTitle = "<p class=\"reset-margin-padding\" style=\"color:red\">" + n.AnswerTitle + "</p>";
+                                        }
+                                        return n;
+                                    }).ToList();
+                                    List<tbl_ExerciceMultiChoise> dscautraloidung = ExerciceMultiChoiseTable.getbyexeid(ListExID[i]).Where(n => n.isTrue == true && n.isHide != true).ToList();
+                                    List<tbl_ExerciceMultiChoise> dscautraloichadung = ExerciceMultiChoiseTable.getbyexeid(ListExID[i]).Where(n => n.isTrue == true && n.isHide != true).ToList();
+                                    List<tbl_ExerciceMultiChoise> dscautraloidungCon = new List<tbl_ExerciceMultiChoise>();
+                                    foreach (var con in checkCauHoiCon)
+                                    {
+                                        dscautraloidungCon = ExerciceMultiChoiseTable.getbyexeid(con.ID).Where(n => n.isTrue == true && n.isHide != true).ToList();
+                                        dscautraloidung.AddRange(dscautraloidungCon);
+                                    }
+                                    bool status = true;
+                                    IEnumerable<tbl_ExerciceMultiChoise> check = (from exmID in cautraloi
+                                                                                  join tldung in dscautraloichadung on exmID.ID equals tldung.ID
+                                                                                  select tldung).ToList();
+                                    if (check.Count() <= 0)
+                                    {
+                                        status = false;
+                                    }
+                                    if (cautraloi.Count > dscautraloidung.Count)
+                                    {
+                                        status = false;
+                                    }
+                                    if (status == true)
+                                    {
+                                        correct++;
+                                    }
+                                    ///cjglh
+                                    dem2++;
+                                    total++;
+                                    title = dem2.ToString();
+                                    bool statuscon = true;
+                                    // dùng để đếm số câu đúng sai, thay đổi trạng thái màu
+                                    foreach (var contemp in checkCauHoiCon)
+                                    {
+                                        statuscon = true;
+                                        total++;
+                                        dem2++;
+                                        title = title + "-" + dem2.ToString();
+                                        // tăng câu đúng khi câu con đúng
+
+                                        dscautraloidungCon = ExerciceMultiChoiseTable.getbyexeid(contemp.ID).Where(n => n.isTrue == true && n.isHide != true).ToList();
+
+                                        IEnumerable<tbl_ExerciceMultiChoise> checkcon = (from exmID in cautraloi
+                                                                                         join tldung in dscautraloidungCon on exmID.ID equals tldung.ID
+                                                                                         select tldung).ToList();
+                                        if (checkcon.Count() <= 0)
+                                        {
+                                            statuscon = false;
+                                        }
+                                        if (cautraloi.Count > dscautraloidung.Count)
+                                        {
+                                            statuscon = false;
+                                        }
+                                        if (statuscon == true)
+                                        {
+                                            correct++;
+                                        }
+                                        
+
+                                    }
+                                    if (status != statuscon && status != true)
+                                    {
+                                        status = true;
+                                    }
+                                    dsDapAn.Add(new Tuple<bool, string, List<string>, List<string>, string>(status, title, cautraloi.Select(n => n.AnswerTitle).ToList(), dscautraloidung.Select(n => n.AnswerTitle).ToList(), giaithich.DescribeAnswer));
+                                }
+                                else
+                                {
+                                    List<tbl_ExerciceMultiChoise> dscautraloidung = ExerciceMultiChoiseTable.getbyexeid(ListExID[i]).Where(n => n.isTrue == true && n.isHide != true).ToList();
+                                    List<string> dscautraloi = dscautraloidung.Select(n => n.AnswerTitle).Distinct().ToList();
+                                    bool status = true;
+                                    List<tbl_ExerciseAddonStudent> exstudentchoise = ExerciseAddonStudentTable.getListbyuidvsexeid(aclog.ID, ListExID[i]);
+                                    List<tbl_ExerciceMultiChoise> cautraloi = new List<tbl_ExerciceMultiChoise>();
+                                    foreach (var exs in exstudentchoise)
+                                    {
+                                        tbl_ExerciceMultiChoise exsc = ExerciceMultiChoiseTable.getbyid(exs.ExerciseMultipleChoiseID.Value);
+                                        if (exsc != null)
+                                        {
+                                            cautraloi.Add(exsc);
+                                        }
+                                    }
+                                    IEnumerable<tbl_ExerciceMultiChoise> check = from exmID in cautraloi
+                                                                                 join tldung in dscautraloidung on exmID.ID equals tldung.ID
+                                                                                 select tldung;
+                                    cautraloi = cautraloi.Select(n =>
+                                    {
+                                        if (n.isHide != true && n.isTrue == true && n.ExerciseID == ListExID[i])
+                                        {
+                                            n.AnswerTitle = "<p class=\"reset-margin-padding\" style=\"color:green\">" + n.AnswerTitle + "</p>";
+                                        }
+                                        else
+                                        {
+                                            n.AnswerTitle = "<p class=\"reset-margin-padding\" style=\"color:red\">" + n.AnswerTitle + "</p>";
+                                        }
+                                        return n;
+                                    }).ToList();
+                                    List<string> cautlcuaban = cautraloi.Select(n => n.AnswerTitle).Distinct().ToList();
+
+                                    if (check.Count() == 0 || check.Count() != dscautraloidung.Count())
+                                    {
+                                        status = false;
+                                        if (item.TypeMultiChoice == 3)
+                                        {
+                                            if (check.Count() > 0)
+                                            {
+                                                status = true;
+                                            }
+                                        }
+                                    }
+                                    if (cautlcuaban.Count != dscautraloi.Count && item.TypeMultiChoice != 3)
+                                    {
+                                        status = false;
+                                    }
+                                    if (status == true)
+                                    {
+                                        correct++;
+                                    }
+                                    total++;
+                                    dem2++;
+                                    title = dem2.ToString();
+                                    
+                                    dsDapAn.Add(new Tuple<bool, string, List<string>, List<string>, string>(status, title, cautlcuaban, dscautraloi, giaithich.DescribeAnswer));
+                                }
+                            }
+                        }
+                    }
+                }
+                <div class="block-overview">
+                    <div class="block-score">
+                        <h4>Tổng điểm</h4>
+                        <h4>@setpackagehistory.TotalPoint</h4>
+                    </div>
+                    <div class="block-correct">
+                        <h4>Số câu đúng</h4>
+                        <h4>@correct/@total</h4>
+                    </div>
+                </div>
+                <div class="bloc-table">
+                    @{
+
+                        int count = 0;
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:4%"></th>
+                                    <th class="no-wrap" style="width:32%">Đáp án của bạn</th>
+                                    <th class="no-wrap" style="width:32%">Đáp án đúng</th>
+                                    <th class="no-wrap" style="width:32%">Giải thích</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int j = 0; j < dsDapAn.Count; j++)
+                                {
+                                    count++;
+                                    Tuple<bool, string, List<string>, List<string>, string> item = dsDapAn[j];
+                                    <tr class="@(item.Item1==true ? "dung" : "sai")">
+                                        <td class="">@item.Item2</td>
+                                        <td>
+                                            @foreach (var cautl in item.Item3)
+                                            {
+                                                @Html.Raw(cautl)
+                                            }
+                                        </td>
+                                        <td>
+                                            @foreach (var dapan in item.Item4)
+                                            {
+                                                @dapan <br />
+                                            }
+                                        </td>
+                                        <td>@item.Item5</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="card-footer viewstyle1" style="display:none">
+            <div class="test__footer d-flex justify-content-between align-items-center">
+                @{
+
+                    int dem = 0;
+                    <div class="question-nav d-flex align-items-center justify-content-center">
+                        <a href="javascript:;" class="btn btn-dark btn-prev">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                        <ul class="list-q-nav mg-x-10">
+                            @foreach (var item in questiongroup)
+                            {
+                                if (item != null)
+                                {
+                                    List<tbl_ExerciseAddonStudent> lexa = ExerciseAddonStudentTable.getbyUIDStudent_ExeGroupID(aclog.ID, item.ID);
+                                    List<int> ListExID = lexa.Select(n => n.ExerciseID.Value).Distinct().ToList();
+                                    List<string> ListQues = lexa.Select(n => n.ExerciseQuestion).Distinct().ToList();
+
+                                    for (int i = 0; i < ListExID.Count; i++)
+                                    {
+                                        List<tbl_Exercise> checkCauHoiCon = ExerciseTable.getListHasParent(ListExID[i]);
+                                        if (checkCauHoiCon.Count > 0)
+                                        {
+                                            string status = "true";
+                                            List<tbl_ExerciceMultiChoise> dscautraloidungCha = ExerciceMultiChoiseTable.getbyexeid(ListExID[i]).Where(n => n.isTrue == true).ToList();
+                                            List<tbl_ExerciseAddonStudent> exstudentchoise = ExerciseAddonStudentTable.getListbyuidvsexeid(aclog.ID, ListExID[i]);
+                                            List<tbl_ExerciceMultiChoise> cautraloi = new List<tbl_ExerciceMultiChoise>();
+                                            List<tbl_ExerciceMultiChoise> dscautraloidungCon = new List<tbl_ExerciceMultiChoise>();
+                                            List<tbl_ExerciceMultiChoise> dscautraloidung = new List<tbl_ExerciceMultiChoise>();
+                                            dscautraloidung.AddRange(dscautraloidungCha);
+                                            foreach (var con in checkCauHoiCon)
+                                            {
+                                                dscautraloidungCon = ExerciceMultiChoiseTable.getbyexeid(con.ID).Where(n => n.isTrue == true && n.isHide != true).ToList();
+                                                dscautraloidung.AddRange(dscautraloidungCon);
+                                            }
+                                            foreach (var exs in exstudentchoise)
+                                            {
+                                                tbl_ExerciceMultiChoise exsc = ExerciceMultiChoiseTable.getbyid(exs.ExerciseMultipleChoiseID.Value);
+                                                if (exsc != null)
+                                                {
+                                                    cautraloi.Add(exsc);
+                                                }
+                                            }
+                                            IEnumerable<tbl_ExerciceMultiChoise> checkCha = (from exmID in cautraloi
+                                                                                             join tldung in dscautraloidungCha on exmID.ID equals tldung.ID
+                                                                                             select tldung).ToList();
+                                            //cần so sánh danh sách tổng câu trả lời đúng của cha và con với danh sách cautraloi để thay đổi status.
+                                            if (checkCha.Count() <= 0 || checkCha.Count() < dscautraloidungCha.Count)
+                                            {
+                                                status = "false";
+                                            }
+                                            if (cautraloi.Count > dscautraloidung.Count)
+                                            {
+                                                status = "false";
+                                            }
+                                            dem++;
+                                            if (item.TypeMultiChoice != 2 && item.TypeMultiChoice != 3)
+                                            {
+                                                <li class="q-nav @status" group-id="@item.ID" type-multichoise="@item.TypeMultiChoice">
+                                                    <a href="javascript:;" class="q-nav-link" data-id="quest-id-@ListExID[i]">@dem</a>
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li class="q-nav @status" group-id="@item.ID" type-multichoise="@item.TypeMultiChoice">
+                                                    <a href="javascript:;" class="q-nav-link" data-id="quest-id-@ListQues[i]">@dem</a>
+                                                </li>
+                                            }
+                                            foreach (var con in checkCauHoiCon)
+                                            {
+                                                string statusCon = "true";
+                                                // chạy lại ds câu trả lời con đúng để tìm ra câu con đúng và hiển thị màu cho chuẩn
+                                                dscautraloidungCon = ExerciceMultiChoiseTable.getbyexeid(con.ID).Where(n => n.isTrue == true && n.isHide != true).ToList();
+                                                IEnumerable<tbl_ExerciceMultiChoise> checkCon = (from exmID in cautraloi
+                                                                                                 join tldung in dscautraloidungCon on exmID.ID equals tldung.ID
+                                                                                                 select tldung).ToList();
+                                                if (checkCon.Count() <= 0 || checkCon.Count() < dscautraloidungCon.Count)
+                                                {
+                                                    statusCon = "false";
+
+                                                }
+                                                if (cautraloi.Count > dscautraloidung.Count)
+                                                {
+                                                    statusCon = "false";
+                                                }
+                                                dem++;
+                                                if (item.TypeMultiChoice != 2 && item.TypeMultiChoice != 3)
+                                                {
+                                                    <li class="q-nav @statusCon" group-id="@item.ID" type-multichoise="@item.TypeMultiChoice">
+                                                        <a href="javascript:;" class="q-nav-link" data-id="quest-id-@ListExID[i]">@dem</a>
+                                                    </li>
+                                                }
+                                                else
+                                                {
+                                                    <li class="q-nav @statusCon" group-id="@item.ID" type-multichoise="@item.TypeMultiChoice">
+                                                        <a href="javascript:;" class="q-nav-link" data-id="quest-id-@ListQues[i]">@dem</a>
+                                                    </li>
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            List<tbl_ExerciceMultiChoise> dscautraloidung = ExerciceMultiChoiseTable.getbyexeid(ListExID[i]).Where(n => n.isTrue == true).ToList();
+                                            string status = "true";
+                                            List<tbl_ExerciseAddonStudent> exstudentchoise = ExerciseAddonStudentTable.getListbyuidvsexeid(aclog.ID, ListExID[i]);
+                                            List<tbl_ExerciceMultiChoise> cautraloi = new List<tbl_ExerciceMultiChoise>();
+                                            foreach (var exs in exstudentchoise)
+                                            {
+                                                tbl_ExerciceMultiChoise exsc = ExerciceMultiChoiseTable.getbyid(exs.ExerciseMultipleChoiseID.Value);
+                                                if (exsc != null)
+                                                {
+                                                    cautraloi.Add(exsc);
+                                                }
+                                            }
+                                            IEnumerable<tbl_ExerciceMultiChoise> check = from exmID in cautraloi
+                                                                                         join tldung in dscautraloidung on exmID.ID equals tldung.ID
+                                                                                         select tldung;
+                                            List<string> cautlcuaban = cautraloi.Select(n => n.AnswerTitle).Distinct().ToList();
+                                            if (check.Count() == 0 || check.Count() != dscautraloidung.Count())
+                                            {
+                                                status = "false";
+                                                if (item.TypeMultiChoice == 3)
+                                                {
+                                                    if (check.Count() > 0)
+                                                    {
+                                                        status = "true";
+                                                    }
+                                                }
+                                            }
+
+                                            if (cautlcuaban.Count != dscautraloidung.Count && item.TypeMultiChoice != 3)
+                                            {
+                                                status = "false";
+
+                                            }
+                                            dem++;
+                                            if (item.TypeMultiChoice != 2 && item.TypeMultiChoice != 3)
+                                            {
+                                                <li class="q-nav @status" group-id="@item.ID" type-multichoise="@item.TypeMultiChoice">
+                                                    <a href="javascript:;" class="q-nav-link" data-boxid="@ListExID[i]" data-id="quest-id-@ListExID[i]">@dem</a>
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li class="q-nav @status" group-id="@item.ID" type-multichoise="@item.TypeMultiChoice">
+                                                    <a href="javascript:;" class="q-nav-link" data-boxid="@ListExID[i]" data-id="quest-id-@ListQues[i]">@dem</a>
+                                                </li>
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        </ul>
+                        <a href="javascript:;" class="btn btn-dark btn-next">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="/app-assets/zimV2/lib/ion-rangeslider/css/ion.rangeSlider.min.css">
+@section myScripts{
+    <script src="/app-assets/zimV2/lib/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+    <script src="/app-assets/zimV2/assets/dev/dragable.js"></script>
+    <script src="/app-assets/zimV2/assets/dev/dropable.js"></script>
+    <script src="/app-assets/zimV2/assets/dev/swappable.js"></script>
+    <script>
+        $(document).ready(function () {
+            $($('.list-q-nav .q-nav-link')[0]).trigger('click');
+        });
+        $('input[name="checkFlag"]').click(function () {
+            let currentLiActive = $('.list-q-nav .q-nav-link.active');
+            if (currentLiActive.length == 0) {
+                currentLiActive = $('.list-q-nav .q-nav-link')[0];
+            }
+            if ($(currentLiActive).hasClass('flag')) {
+                currentLiActive.removeClass('flag');
+            }
+            else {
+                currentLiActive.addClass('flag');
+            }
+        });
+        $('.btn-next').click(function () {
+            let currentLiActive = $('.list-q-nav .q-nav-link.active');
+            let nextElement;
+            if (currentLiActive.length == 0) {
+                nextElement = $('.list-q-nav .q-nav-link')[0];
+            } else {
+                nextElement = currentLiActive.closest('li.q-nav').next();
+            }
+
+            $(nextElement).trigger('click');
+        });;
+        $('.btn-prev').click(function () {
+            let currentLiActive = $('.list-q-nav .q-nav-link.active');
+            console.log(currentLiActive)
+            let nextElement;
+            if (currentLiActive.length == 0) {
+                nextElement = $('.list-q-nav .q-nav-link')[0];
+            } else {
+                nextElement = currentLiActive.closest('li.q-nav').prev();
+            }
+            $(nextElement).trigger('click');
+        });;
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            let isPlaying = false;
+            let soundVolumn = 1;
+            const setVolumnAudio = (volumnNumb) => {
+                let audios = document.getElementsByTagName('audio');
+                if (audios.length > 0) {
+                    [...audios].forEach(function (audio) {
+                        audio.volume = volumnNumb;
+                    });
+                }
+                if (volumnNumb == 0) {
+                    $(".audio-volumn svg.feather").replaceWith(feather.icons["volume-x"].toSvg());
+                } else {
+                    $(".audio-volumn svg.feather").replaceWith(feather.icons["volume-2"].toSvg());
+                }
+            }
+            const volumnChange = ($data) => {
+                soundVolumn = $data.input.val();
+                setVolumnAudio(soundVolumn);
+            }
+            $("#js-volumn-control").ionRangeSlider({
+                min: 0,
+                max: 1,
+                step: 0.01,
+                from: 1,
+                hide_min_max: true,
+                hide_from_to: true,
+                grid_margin: false,
+                onChange: volumnChange
+            });
+            const pad = (n) => {
+                return n < 10 ? '0' + n : n;
+            };
+            const FirstLoad = () => {
+                $.ajax({
+                    type: "POST",
+                    url: "/StudentSet/StartTest",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs != true) {
+                            if (msg.type == 1) {
+                                if (msg.linkaudio != "") {
+                                    $('#test-audio-1').attr('src', msg.linkaudio);
+                                }
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: '' + msg.message + '',
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                });
+                            }
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: éc éc oạc oạc");
+                    }
+                });
+            };
+            FirstLoad();
+            const playaudio = (playButton) => {
+                const audioTest = document.getElementById('test-audio-1');
+                audioTest.volume = soundVolumn;
+                let playIcon = playButton.querySelector('.fas');
+                let playText = playButton.querySelector('.text');
+                audioTest.onplaying = function () {
+                    playIcon.classList.remove('fa-play');
+                    playIcon.classList.add('fa-stop');
+                    playText.textContent = 'Dừng lại';
+                    isPlaying = true;
+                };
+                audioTest.onpause = function () {
+                    playIcon.classList.add('fa-play');
+                    playIcon.classList.remove('fa-stop');
+                    playText.textContent = 'Nghe thử';
+                    isPlaying = false;
+                }
+                if (isPlaying) {
+                    audioTest.pause()
+                    audioTest.currentTime;
+                } else {
+                    audioTest.play();
+                }
+            };
+            $('.sound-test').on('click touchstart', function () {
+                playaudio(this);
+            });
+            $('body').addClass('testing');
+            $('#test-container').show();
+        });
+        $('li.q-nav').on('click', function () {
+            let $this = this;
+            $($this).children().addClass('active');
+            $('li.q-nav').not($this).children().removeClass('active');
+            let typemulti = $($this).attr('type-multichoise');
+            let id = $($this).children().attr('data-id');
+            let groupID = $($this).attr('group-id');
+            $('.row.multipletype').each(function (index, e) {
+                if ($(e).attr('type-multichoice') == typemulti && $(e).attr('group-id') == groupID) {
+                    $(e).removeClass("hidden");
+                    let ansBox = $(e).find('div.col-md-6.right-col');
+                    let listAns = ansBox.find('div.qz-wrap');
+                    if (typemulti == 3 || typemulti == 2) {
+                        $(e).find('.question__wrap ').each(function (index, ex) {
+                            if ($(ex).attr('id') == id || $(ex).attr('data-id') == id) {
+                                $(ex).addClass('active');
+                            }
+                            else {
+                                $(ex).removeClass('active');
+                            }
+                        });
+                    } else {
+                        if (typemulti != 5) {
+                            let elementScroll = $(listAns).find('div.qz-question[data-id="' + $($this).children().attr('data-boxid') + '"]').closest('.qz-wrap');
+                            let scrollHeight = 0;
+                            let elementIndex = $(listAns).index(elementScroll);
+                            scrollHeight = ansBox.scrollTop() + (elementScroll.offset().top - ansBox.offset().top)
+                            $(ansBox).scrollTop(scrollHeight);
+                        }
+                    }
+                } else {
+                    $(e).addClass("hidden");
+                }
+            });
+        });
+        $('.tb-checkmark').on('click', function (e) {
+            e.preventDefault();
+        });
+        $('.test-overview').click(function () {
+            let viewid = $(this).attr('data-view');
+            if (viewid == 1) {
+                $('.viewstyle1').hide();
+                $('.viewstyle2').show();
+                $(this).attr('data-view', 2);
+
+            } else {
+                $('.viewstyle2').hide();
+                $('.viewstyle1').show();
+                $(this).attr('data-view', 1);
+            }
+        });
+    </script>
+}

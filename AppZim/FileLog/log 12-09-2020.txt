@@ -1,0 +1,2 @@
+PageError: CustomerController    FunctionError: CustomerWarning    loginUID: 1    MessageError: Column 'SchoolID' does not belong to table Table.    12/09/2020 22:46
+PageError: CustomerController    FunctionError: CustomerWarning    loginUID: 1    MessageError: Column 'SchoolID' does not belong to table Table.    12/09/2020 22:46

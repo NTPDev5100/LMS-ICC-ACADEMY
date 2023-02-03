@@ -1,0 +1,69 @@
+﻿
+@{
+    ViewBag.Title = "RegistrationZoom";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+
+@section myStyles{
+    <style>
+        .fix-container {
+            max-width: initial;
+        }
+
+        .editor-wrap {
+            background: white;
+        }
+    </style>
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mg-b-30">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item active" aria-current="page">Hướng dẫn cấu hình Zoom</li>
+    </ol>
+</nav>
+<div class="new-post-wrap fix-container">
+    <div class="editor-wrap pd-20">
+        <p>1. Đăng ký tài khoản Zoom Developer <a href="https://zoom.us/signin" target="_blank">tại đây.</a></p>
+        <p class="pd-l-10">+ Chọn đăng ký/đăng nhập bằng Google <button type="button" class="btn btn-outline-info btn-sm" data-toggle="modal" data-target="#exampleModalCenter">Xem hình</button></p>
+        <p class="pd-l-10">+ Tài khoản mail cũng là tài khoản cấu hình cần nhập. Có thể xem <a href="https://us05web.zoom.us/profile" target="_blank">tại đây.</a> (Chọn show Sign-In Email và Copy)</p>
+        <p>2. Sau khi đăng nhập => Chọn "Develop" góc trên bên trái => Build App => Create App JWT <button type="button" class="btn btn-outline-info btn-sm" data-toggle="modal" data-target="#exampleModalCenter1">Xem hình</button></p>
+        <p class="pd-l-10">+ Tại mục Information: nhập App Name và Company Name <button type="button" class="btn btn-outline-info btn-sm" data-toggle="modal" data-target="#exampleModalCenter2">Xem hình</button></p>
+        <p class="pd-l-10">+ Tại mục App Credentials: Sao chép API Key và API Secret <button type="button" class="btn btn-outline-info btn-sm" data-toggle="modal" data-target="#exampleModalCenter3">Xem hình</button></p>
+    </div>
+</div>
+
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:800px">
+        <div class="modal-content">
+            <img src="~/ZoomJs/HuongDan/login.png" />
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="exampleModalCenter1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:800px">
+        <div class="modal-content">
+            <img src="~/ZoomJs/HuongDan/buildapp.png" />
+            <img src="~/ZoomJs/HuongDan/createapp.png" />
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="exampleModalCenter2" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:800px">
+        <div class="modal-content">
+            <img src="~/ZoomJs/HuongDan/information.PNG" />
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="exampleModalCenter3" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:800px">
+        <div class="modal-content">
+            <img src="~/ZoomJs/HuongDan/appcredentials.PNG" />
+        </div>
+    </div>
+</div>
+
+

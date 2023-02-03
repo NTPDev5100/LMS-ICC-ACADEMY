@@ -1,0 +1,131 @@
+﻿@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_DayOff>
+@{
+    ViewBag.Title = "DayOff";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Ngày nghỉ</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("DayOff", "Option", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="#div-add-district" class="btn btn-primary" data-toggle="modal"><i data-feather="edit-3"></i> Thêm</a>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Ghi chú</th>
+                    <th>Chỉnh sửa</th>
+                    <th>Thời gian sửa</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.DayOff.Value.ToString("dd/MM/yyyy")</td>
+                        <td>@item.DayOffName</td>
+                        <td>@item.ModifiedBy</td>
+                        <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">
+                            <a href="javascript:;" data-id="@item.ID" class="btn btn-danger btn-icon btn-sm remove-day-off">
+                                <i data-feather="x"></i> Xóa
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @Html.PagedListPager(Model, page => Url.Action("DayOff", new
+    {
+        page,
+        search = ViewBag.Search,
+    }),
+    new PagedListRenderOptions
+    {
+        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+    })
+</nav>
+
+<div class="modal" id="div-add-district" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddDayOff", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfpercent" id="hdfpercent" value="0" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Tạo mới</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-dayoff">Từ ngày:</label>
+                                    <input name="txt-dayoff" id="txt-dayoff" type="text" required class="form-control datetimepicker date-only" placeholder="__/__/____">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-to-dayoff">Đến ngày:</label>
+                                    <input name="txt-to-dayoff" id="txt-to-dayoff" type="text" required class="form-control datetimepicker date-only" placeholder="__/__/____">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-district">Ghi chú:</label>
+                                    <textarea id="txt-note" name="txt-note" required class="form-control" rows="1" placeholder="..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@using (Html.BeginForm("RemoveDayOff", "Option", FormMethod.Post, new { id = "delete-off" }))
+{
+    <input type="hidden" name="hdfID" />
+}
+@section myScripts
+{
+    <script>
+        $(document).on("click", ".remove-day-off", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            if (confirm('Bạn có muốn xóa ngày nghỉ này?')) {
+                $('#delete-off').submit();
+            }
+        });
+    </script>
+}

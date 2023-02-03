@@ -1,0 +1,35 @@
+﻿<div class="nav-wrapper">
+    <ul class="left hide-on-med-and-down" id="ul-horizontal-nav" data-menu="menu-navigation">
+        <li>
+            <a href="@Url.Action("Dashboard", "Home", new { area = "" })">
+                <i class="material-icons">dashboard</i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li>
+            <a href="@Url.Action("CourseList", "StudentCourse", new { area = "" })">
+                <i class="material-icons">dvr</i>
+                <span>Khóa học của tôi</span>
+            </a>
+        </li>
+        <li>
+            <a href="@Url.Action("PrizeList", "StudentPrize", new { area = "" })">
+                <i class="material-icons">local_mall</i>
+                <span>Giải thưởng</span>
+            </a>
+        </li>
+        <li>
+            <a href="@Url.Action("Message", "Account", new { area = "" })">
+                <i class="material-icons">forum</i>
+                <span>Tin nhắn</span>
+            </a>
+        </li>
+        <li>
+            <a href="@Url.Action("Notifications", "Account", new { area = "" })">
+                <i class="material-icons">notifications</i>
+                <span>Thông báo</span>
+            </a>
+        </li>
+    </ul>
+</div>
+<!-- END: Horizontal nav start-->

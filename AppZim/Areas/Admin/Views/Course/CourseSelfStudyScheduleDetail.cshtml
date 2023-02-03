@@ -1,0 +1,81 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "TeacherList";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    int courseid = Model.ID;
+    var schs = CoursesScheduleTable.getbycourseid(courseid).OrderBy(n => n.Date).Select(n => n.Date).Distinct();
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item" aria-current="page"><a href="@Url.Action("CourseListSelfStudy", "Course", new { area = "Admin" })">Khóa tự học</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.CourseName</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th><span class="bold">NGÀY HỌC</span></th>
+                    <th><span class="bold">GIÁO VIÊN</span></th>
+                    <th><span class="bold">TRUNG TÂM</span></th>
+                    <th><span class="bold">CA</span></th>
+                    <th><span class="bold">PHÒNG HỌC</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in schs)
+                    {
+                        var sche = CoursesScheduleTable.getbycourseidbydateall(courseid, item.Value.Date);
+
+
+                        string teacher = "";
+                        string room = "";
+                        string cahoc = "";
+
+                        foreach (var jtem in sche)
+                        {
+                            var te = AccountTable.getbyID(jtem.TeacherID.Value);
+                            tbl_SchoolRoom r = SchoolRoomTable.getbyID(jtem.SchoolRoomID.Value);
+                            tbl_StudyTime ca = StudyTimeTable.getbyid(jtem.StudyTimeID.Value);
+                            if (r != null)
+                            {
+                                if (!room.Contains(r.RoomName))
+                                {
+                                    room += r.RoomName + " ";
+                                }
+                            }
+                            if (ca != null)
+                            {
+                                if (!cahoc.Contains(ca.StudyTimeName))
+                                {
+                                    cahoc += ca.StudyTimeName + " ";
+                                }
+                            }
+
+                            if (!teacher.Contains(te.FullName))
+                            {
+                                teacher += te.FullName + " ";
+                            }
+                        }
+
+                        <tr>
+                            <td><span>@item.Value.ToString("dd/MM/yyyy")</span></td>
+                            <td><span>@teacher</span></td>
+                            <td><span>@Model.SchoolName</span></td>
+                            <td><span>@cahoc</span></td>
+                            <td><span>@room</span></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

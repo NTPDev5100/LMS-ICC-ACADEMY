@@ -1,0 +1,941 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "AppointmentDetailTest";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+
+    List<tbl_SourceOfCustomer> sc = SourceOfCustomerTable.getall();
+    List<tbl_Job> jobs = JobTable.getall();
+    List<tbl_Account> lsale = AccountTable.getall().Where(n => n.Status == 2 && (n.RoleID == 6 || n.RoleID == 3 || n.RoleID == 2)).OrderBy(n => n.FullName).ToList();
+    List<tbl_AcademicPurposes> mucdich = AcademicPurposesTable.getall();
+    var lReason = ReasonTable.GetAllByType(1);
+    tbl_Account jtem = AccountTable.getbyID(Model.StudentUID);
+    var lLanguage = Language.GetAll();
+    string Birthday = "";
+    string IdentityCardDate = "";
+    string DateExam = "";
+    if (jtem.Birthday != null)
+    {
+        Birthday = jtem.Birthday.Value.ToString("dd/MM/yyyy");
+    }
+    if (jtem.IdentityCardDate != null)
+    {
+        IdentityCardDate = jtem.IdentityCardDate.Value.ToString("dd/MM/yyyy");
+    }
+    if (jtem.DateExam != null)
+    {
+        DateExam = jtem.DateExam.Value.ToString("dd/MM/yyyy");
+    }
+    var classList = ClassTable.GetByType(2);
+    //buổi test
+    tbl_StudentAppointmentTest data = StudentAppointmentTestTable.getbyid(Model.ID);
+    tbl_StudentAppointmentTestDetail l = StudentAppointmentTestDetailTable.getbyAppointmentTestID(data.ID);
+    if (l == null)
+    {
+        l = new tbl_StudentAppointmentTestDetail();
+        l.ID = 0;
+        l.AdvisoryUID = 0;
+        l.TeacherTestID = 0;
+        l.Listening = "";
+        l.Speaking = "";
+        l.Reading = "";
+        l.Writing = "";
+        l.Vocab = "";
+        l.ConsultingPrice = 0;
+        l.Note = "";
+    }
+    else if (l.ReasonID != null)
+    {
+        lReason = ReasonTable.GetByID(l.ReasonID.Value);
+    }
+    tbl_Account student = AccountTable.getbyID(data.StudentUID.Value);
+    List<tbl_Account> teacher = AccountTable.getbyrole(4).Where(n => n.Status == 2).OrderBy(n => n.FullName).ToList();// giáo viên
+    List<tbl_AcademicLevel> trinhdo = AcademicLevelTable.getByLanguage(jtem.Language.Value);
+    var nations = NationTable.GetAll();
+    var studypath = StudyPathTable.getall();
+}
+
+@section myStyles{
+    <link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1">
+        <li class="breadcrumb-item" aria-current="page"><a href="@(ViewBag.PreUrl == null ? Url.Action("ListAppointmentTest","Cashier", new { area = "Admin" }) : ViewBag.PreUrl)">Danh sách khách hẹn test</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Chi tiết buổi test</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="media d-block d-lg-flex">
+    <div class="config-teacher" style="width:100%">
+        <div class="teacher-infomation mg-b-15">
+            <div class="collapse-content">
+                <div class="schedule-test-form mg-t-30">
+                    <div class="row" id="test-register">
+                        <div class="col-12 col-md-12">
+                            <fieldset class="form-fieldset">
+                                <legend>Thông tin chi tiết</legend>
+
+                                <div class="form-row">
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Tài khoản:</label>
+                                        <input type="text" class="form-control" id="ddl-username-@jtem.ID" value="@jtem.UserName" disabled>
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Nguồn khách:</label>
+                                        <select class="form-control select2" id="ddl-source-@jtem.ID">
+                                            <option value="0">Tư Vấn Viên</option>
+                                            @{
+                                                foreach (var s in sc)
+                                                {
+                                                    if (jtem.SourceID != null)
+                                                    {
+                                                        if (jtem.SourceID == s.ID)
+                                                        {
+                                                            <option value="@s.ID" selected>@s.SourceOfCustomer</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@s.ID">@s.SourceOfCustomer</option>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@s.ID">@s.SourceOfCustomer</option>
+                                                    }
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Tư vấn viên:</label>
+                                        <select class="form-control select2" id="ddl-support-@jtem.ID">
+                                            <option value="0">---</option>
+                                            @{
+                                                foreach (var s in lsale)
+                                                {
+                                                    if (jtem.SupportUID != null)
+                                                    {
+                                                        if (jtem.SupportUID == s.ID)
+                                                        {
+                                                            <option value="@s.ID" selected>@s.FullName</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@s.ID">@s.FullName</option>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@s.ID">@s.FullName</option>
+                                                    }
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label for="address" class="">Ngôn ngữ theo học:</label>
+                                        <select class="form-control" id="dll-language-@jtem.ID" name="dll-language" onchange="LoadLevel()">
+                                            <option value="0"></option>
+                                            @foreach (var item in lLanguage)
+                                            {
+                                                <option value="@item.ID" @(item.ID == jtem.Language ? "selected" : "")>@item.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Họ và tên:</label>
+                                        <input type="text" class="form-control" id="txt-fullname-@jtem.ID" value="@jtem.FullName">
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Số điện thoại:</label>
+                                        <input type="number" class="form-control" id="txt-phone-@jtem.ID" value="@jtem.Phone">
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Email:</label>
+                                        <input type="email" class="form-control" id="txt-email-@jtem.ID" value="@jtem.Email">
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Ngày sinh:</label>
+                                        <input type="text" class="form-control datetimepicker date-only" id="txt-birthday-@jtem.ID" value="@Birthday" placeholder="DD / MM / YYYY">
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Công việc:</label>
+                                        <select class="form-control select2" id="ddl-job-@jtem.ID">
+                                            @{
+                                                foreach (var j in jobs)
+                                                {
+                                                    if (jtem.JobID != null)
+                                                    {
+                                                        if (jtem.JobID == j.ID)
+                                                        {
+                                                            <option value="@j.ID" selected>@j.JobName</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@j.ID">@j.JobName</option>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@j.ID">@j.JobName</option>
+                                                    }
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Mục đích học tập:</label>
+                                        <select class="form-control select2" id="ddl-muc-dich-@jtem.ID">
+                                            <option value="0">---</option>
+                                            @{
+                                                foreach (var ac in mucdich)
+                                                {
+                                                    if (jtem.AcademicPurposesID != null)
+                                                    {
+                                                        if (jtem.AcademicPurposesID == ac.ID)
+                                                        {
+                                                            <option value="@ac.ID" selected>@ac.AcademicPurposesName</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@ac.ID">@ac.AcademicPurposesName</option>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@ac.ID">@ac.AcademicPurposesName</option>
+                                                    }
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Đơn vị công tác/Học tập:</label>
+                                        <input type="text" class="form-control" id="txt-work-place-@jtem.ID" value="@jtem.WorkPlace">
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label for="address" class="">Địa chỉ:</label>
+                                        <input type="text" class="form-control" id="txt-address-@jtem.ID" value="@jtem.Address">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-sm-3 form-group" hidden>
+                                        <label class="">Loại đào tạo:</label>
+                                        <select class="form-control select2" id="ddl-academic-@jtem.ID">
+                                            @{
+                                                if (!string.IsNullOrEmpty(jtem.TypeOfEducation))
+                                                {
+                                                    if (jtem.TypeOfEducation.Contains("Academic"))
+                                                    {
+                                                        <option selected value="Academic">Academic</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="Academic">Academic</option>
+                                                    }
+                                                    if (jtem.TypeOfEducation.Contains("General"))
+                                                    {
+                                                        <option selected value="General">General</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="General">General</option>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <option value="Academic">Academic</option>
+                                                    <option value="General">General</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label class="">Người nhà</label>
+                                        <input type="text" class="form-control" id="txt-home-@jtem.ID" value="@jtem.NoteHome">
+                                    </div>
+                                    <div class="col-sm-3 form-group">
+                                        <label>GMT+:</label>
+                                        <select class="custom-select select2" name="slNation" id="nation-@jtem.ID">
+                                            @{
+                                                foreach (var n in nations)
+                                                {
+                                                    <option value="@n.ID">@n.Nation</option>
+                                                }
+                                            }
+                                        </select>
+                                        <script>$('#nation-@jtem.ID').val(@jtem.NationID)</script>
+                                    </div>
+                                    <div class="col-sm-6 form-group">
+                                        <label class="">Link facebook</label>
+                                        <input type="text" class="form-control" id="txt-fb-@jtem.ID" value="@jtem.LinkFB">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-sm-2 form-group" hidden>
+                                        <label class="">Ngày thi:</label>
+                                        <input type="text" class="form-control datetimepicker date-only" id="txt-exam-@jtem.ID" placeholder="DD / MM / YYYY" value="@DateExam">
+                                    </div>
+                                    <div class="col-sm-2 form-group" hidden>
+                                        <label class="">Trạng thái:</label>
+                                        <select class="form-control" id="ddl-status-@jtem.ID">
+                                            @{
+                                                if (jtem.Status == 1)
+                                                {
+                                                    <option value="1" selected>Chưa kích hoạt</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="1">Chưa kích hoạt</option>
+                                                }
+                                                if (jtem.Status == 2)
+                                                {
+                                                    <option value="2" selected>Hoạt động</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="2">Hoạt động</option>
+                                                }
+                                                if (jtem.Status == 3)
+                                                {
+                                                    <option value="3" selected>Khóa</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="3">Khóa</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-3 form-group" hidden>
+                                        <label class="">Mật khẩu mới:</label>
+                                        <input type="password" class="form-control" id="txt-password-@jtem.ID" placeholder="*******" autocomplete="new-password">
+                                    </div>
+                                </div>
+                                <hr />
+                                @using (Html.BeginForm("SaveInfoTest", "Cashier", FormMethod.Post, new { id = "save-info" }))
+                                {
+                                    <input type="hidden" name="hdfID" value="@data.ID" />
+                                    @*<input type="hidden" name="hdtitle" value="" />
+                                        <input type="hidden" name="hdcontent" value="" />*@
+                                    <div class="form-row">
+                                        <div class="col-sm-12 form-group text-center">
+                                            <h4>Học vụ điền</h4>
+                                        </div>
+                                        <div class="col-sm-4 form-group">
+                                            <label class="required">Người tư vấn:</label>
+                                            @{
+                                                if (l.ID == 0)
+                                                {
+                                                    <select name="ddl-user" required class="form-control select2">
+                                                        <option value="@aclog.ID">---@aclog.FullName---</option>
+                                                        @{
+                                                            foreach (var item in lsale)
+                                                            {
+                                                                <option value="@item.ID">@item.FullName</option>
+                                                            }
+                                                        }
+                                                    </select>
+                                                }
+                                                else
+                                                {
+                                                    var actuvan = AccountTable.getbyID(l.AdvisoryUID.Value);
+                                                    <input class="form-control" placeholder="..." type="text" value="@actuvan.FullName" />
+                                                }
+                                            }
+                                        </div>
+
+                                        <div class="col-sm-4 form-group">
+                                            <label class="required">Giáo viên test:</label>
+                                            @{
+                                                if (l.ID == 0)
+                                                {
+                                                    <select name="ddl-teacher-test" class="form-control select2" required>
+                                                        <option value="">------</option>
+                                                        @{
+                                                            foreach (var item in teacher)
+                                                            {
+                                                                <option value="@item.ID">@item.FullName</option>
+                                                            }
+                                                        }
+                                                    </select>
+
+                                                }
+                                                else
+                                                {
+                                                    var acgv = AccountTable.getbyID(l.TeacherTestID.Value);
+                                                    if (acgv != null)
+                                                    {
+                                                        <input class="form-control" placeholder="..." type="text" value="@acgv.FullName" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <select name="ddl-teacher-test" class="form-control select2" required>
+                                                            <option value="">------</option>
+                                                            @{
+                                                                foreach (var item in teacher)
+                                                                {
+                                                                    <option value="@item.ID">@item.FullName</option>
+                                                                }
+                                                            }
+                                                        </select>
+                                                    }
+                                                }
+                                            }
+                                        </div>
+                                        @if (aclog.RoleID == 1 || aclog.RoleID == 7)
+                                        {
+                                            <div class="col-sm-4 form-group">
+                                                <label class="required">Lương giáo viên test:</label>
+                                                @{
+                                                   <input name="salaryTeacher" data-type="currency" class="form-control" value="@String.Format("{0:0,0}", data.SalaryTeacher)" />
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="form-row text-center">
+                                        @{
+                                            if (l.ReasonID == 0 || l.ReasonID == null)
+                                            {
+                                                <button type="submit" class="btn btn-primary" data-id="@jtem.ID" style="margin:0 auto;">Cập nhật</button>
+                                            }
+                                        }
+                                    </div>
+                                }
+                                <hr />
+                                @using (Html.BeginForm("SaveResultTest", "Cashier", FormMethod.Post, new { id = "save-result" }))
+                                {
+                                    <input type="hidden" name="hdftID" value="@data.ID" />
+                                    <div class="col-sm-12 form-group text-center">
+                                        <h4>Giáo viên điền</h4>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-sm-12 form-group">
+                                            <label for="txt-note">Ghi chú:</label>
+                                            <textarea id="txt-note" name="txt-note" required class="form-control" rows="1">@l.Note</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="form-row text-center">
+                                        <button type="submit" class="btn btn-primary update-result" data-id="@jtem.ID" style="margin:0 auto;">Cập nhật</button>
+                                    </div>
+                                }
+                                <hr />
+                                @using (Html.BeginForm("SaveAcademicResult", "Cashier", FormMethod.Post, new { id = "save-academic" }))
+                                {
+                                    <input type="hidden" name="hdddID" value="@data.ID" />
+                                    <input type="hidden" name="hdtt" value="" />
+                                    <input type="hidden" name="hdct" value="" />
+                                    <input type="hidden" name="hdttdt" value="" />
+                                    <input type="hidden" name="hdctdt" value="" />
+                                    <input type="hidden" name="sendmail" value="0" />
+                                    <div class="col-sm-12 form-group text-center">
+                                        <h4>Tư vấn viên điền</h4>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-sm-3 form-group">
+                                            <label for="in-point-hope" class="required">Đầu vào:</label>
+                                            <select class="custom-select select2" id="in-point-hope" name="in-point-hope" required>
+                                                @{
+                                                    foreach (var i in trinhdo)
+                                                    {
+                                                        <option value="@i.ID">@i.LevelName</option>
+                                                    }
+                                                }
+                                            </select>
+                                            <script>$('select[name=in-point-hope]').val(@jtem.ScoreIn.ToInt(0))</script>
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label for="out-point-hope" class="required">Đầu ra:</label>
+                                            <select class="custom-select select2" required id="out-point-hope" name="out-point-hope">
+                                                @{
+                                                    foreach (var i in trinhdo)
+                                                    {
+                                                        <option value="@i.ID" data-content="@i.LevelContent">@i.LevelName</option>
+                                                    }
+                                                }
+                                            </select>
+                                            <script>$('select[name=out-point-hope]').val(@jtem.ScoreOut.ToInt(0))</script>
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label for="txt-numberoflesson">Số buổi học:</label>
+                                            <input id="txt-numberoflesson" name="txt-numberoflesson" required class="form-control" value="@data.NumberOfLesson" />
+                                        </div>
+                                        <div class="col-sm-3 form-group">
+                                            <label for="txt-timeoflesson">Thời lượng học:</label>
+                                            <input id="txt-timeoflesson" name="txt-timeoflesson" required class="form-control" value="@data.TimeOfLesson" />
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="col-sm-3 form-group">
+                                            <label>Lộ trình học:</label>
+                                            <select class="custom-select" onchange="LoadLinkDriver()" id="studypath">
+                                                <option data-driver="">---</option>
+                                                @foreach (var s in studypath)
+                                                {
+                                                    <option value="@s.ID" data-driver="@s.LinkCurriculumn">@s.PathName</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-9 form-group">
+                                            <label for="txt-linkdoc">Lộ trình học:</label>
+                                            <textarea id="txt-linkdoc" name="txt-linkdoc" required class="form-control" rows="1">@data.LinkDocument</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="form-row text-center">
+                                        <button type="button" class="btn btn-primary" onclick="LoadEmailAll(3)" data-id="@jtem.ID" style="margin:0 auto;">Cập nhật và gửi 2 email</button>
+                                        <button type="button" class="btn btn-primary" onclick="LoadEmailDone(2)" data-id="@jtem.ID" style="margin:0 auto;">Cập nhật và gửi email kết quả</button>
+                                        <button type="button" class="btn btn-primary" onclick="LoadEmailDaoTao(1)" data-id="@jtem.ID" style="margin:0 auto;">Cập nhật và gửi email đào tạo</button>
+                                        <button type="button" class="btn btn-primary btn-only-update" data-id="@jtem.ID" style="margin:0 auto;">Chỉ cập nhật</button>
+                                    </div>
+                                }
+
+                                <hr />
+
+                                @using (Html.BeginForm("UpdateReason", "Cashier", FormMethod.Post, new { id = "save-academic" }))
+                                {
+                                    <input type="hidden" name="hdfIDr" value="@data.ID" />
+                                    <div class="form-row">
+                                        <div class="col-sm-6 form-group">
+                                            <label>Loại lý do:</label>
+                                            <select class="form-control select2" id="ReasonType" name="ReasonType">
+                                                <option value="">------</option>
+                                                <option value="1" @(l.ReasonType == 1 ? "selected" : "")>Học</option>
+                                                <option value="2" @(l.ReasonType == 2 ? "selected" : "")>Không học</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-6 form-group">
+                                            <label>Lý do:</label>
+                                            <select class="form-control select2" id="ReasonID" name="ReasonID">
+                                                <option value="">------</option>
+                                                @if (l.ReasonType != null && l.ReasonID != null)
+                                                {
+                                                    foreach (var item in lReason)
+                                                    {
+                                                        <option value="@item.ID" @(item.ID == l.ReasonID ? "selected" : "")>@item.Name</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row text-center">
+                                        <button type="submit" class="btn btn-primary" data-id="@jtem.ID" style="margin:0 auto;">Cập nhật</button>
+                                    </div>
+                                }
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- media -->
+<div class="modal fade show" id="div-all" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Mẫu Email</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Tiêu đề:</label>
+                            <input type="text" name="txt-title-all" id="txt-title-all" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Nội dung:</label>
+                            <textarea id="txt-content-all" name="txt-content-all" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary update-info" onclick="LoadEmailDaoTao(3)">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade show" id="div-done" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Mẫu Email</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Tiêu đề:</label>
+                            <input type="text" name="txt-title-done" id="txt-title-done" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Nội dung:</label>
+                            <textarea id="txt-content-done" name="txt-content-done" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary update-done">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade show" id="div-daotao" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Mẫu Email đào tạo</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label>Tiêu đề:</label>
+                            <input type="text" name="txt-title-daotao" id="txt-title-daotao" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label>Nội dung:</label>
+                            <textarea id="txt-content-daotao" name="txt-content-daotao" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary update-daotao">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+@section myScripts{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#txt-content-all',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+                font_formats:
+                    "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+            });
+            tinymce.init({
+                selector: '#txt-content-done',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+                font_formats:
+                    "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+            });
+            tinymce.init({
+                selector: '#txt-content-daotao',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+                font_formats:
+                    "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+            });
+        });
+
+        $(document).ready(function () {
+            $('select[name=ddl-user]').val(@ViewBag.AcademicID)
+            $('select[name=ddl-user]').trigger('change')
+
+            $('select[name=ddl-teacher-test]').val(@ViewBag.TeacherID)
+            $('select[name=ddl-teacher-test]').trigger('change')
+        });
+
+        //$('.update-info').click(function () {
+        //    var id = $(this).attr('data-id');
+
+        //    var sourceid = $('#ddl-source-' + id + '').val();
+        //    var language = $('#dll-language-' + id + '').val();
+
+        //    var fullname = $('#txt-fullname-' + id + '').val();
+        //    var phone = $('#txt-phone-' + id + '').val();
+        //    var email = $('#txt-email-' + id + '').val();
+        //    var address = $('#txt-address-' + id + '').val();
+        //    var workplace = $('#txt-work-place-' + id + '').val();
+        //    var mucdicid = $('#ddl-muc-dich-' + id + '').val();
+        //    var note = $('#txt-home-' + id + '').val();
+        //    var typeedu = $('#ddl-academic-' + id + '').val();
+        //    var dateexam = $('#txt-exam-' + id + '').val();
+        //    var status = $('#ddl-status-' + id + '').val();
+        //    var supportid = $('#ddl-support-' + id + '').val();
+        //    var linkfb = $('#txt-fb-' + id + '').val();
+        //    var nation = $('#nation-' + id + '').val();
+
+        //    $.ajax({
+        //        type: "POST",
+        //        url: "/Admin/Customer/UpdateCusAjax",
+        //        data: '{id: ' + id + ', sourceid:' + sourceid + ', citydis:0, fullname:"' + fullname
+        //            + '", phone:"' + phone + '", email:"' + email + '", address:"' + address + '", cmnd:"", cmndcity:0, cmnddate:"", birth:"' + "" + '", jobid:' + 0
+        //            + ', workplace:"' + workplace + '", mucdicid:' + mucdicid + ', note:"' + note + '", typeedu:"'
+        //            + typeedu + '", scorein:0, scoreout:0, dateexam:"' + dateexam + '", status:' + status + ', supportid:' + supportid
+        //            + ', pass:"", district:0, ward:0, street:0, home:"", language:' + language + ', linkfb:"' + linkfb + '", nation:' + nation + '}',
+        //        contentType: "application/json; charset=utf-8",
+        //        dataType: "json",
+        //        success: function (msg) {
+        //        },
+        //        error: function (xmlhttprequest, textstatus, errorthrow) {
+        //            console.log(xmlhttprequest);
+        //        }
+        //    });
+        //    $('input[name=hdtitle]').val($('input[name=txt-title]').val());
+        //    $('input[name=hdcontent]').val(tinymce.editors[0].contentDocument.activeElement.innerHTML);
+        //    $('#save-info').submit();
+        //})
+
+        $("#ReasonType").on("change", function () {
+            var reasontype = $("#ReasonType").val();
+            $.ajax({
+                url: "/Admin/Reason/GetAllByType",
+                method: "post",
+                data: { type: reasontype },
+                success: function (rs) {
+                    var html = ``;
+                    for (var i = 0; i < rs.length; i++) {
+                        html += `<option value="` + rs[i].ID + `">` + rs[i].Name +`</option>`
+                    }
+                    $("#ReasonID").html(html);
+                },
+                error: function () {
+                    $("#ReasonID").html(`<option value="">------</option>`);
+                }
+            })
+        });
+        function LoadLevel() {
+            var language = $('select[name=dll-language]').val();
+            console.log(language);
+            $.ajax({
+                url: "/Admin/Option/LoadLevel",
+                method: "post",
+                data: '{ level:' + language + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('select[name=in-point-hope]').html(msg.data);
+                        $('select[name=out-point-hope]').html(msg.data);
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Chưa có trình độ của ngôn ngữ đang chọn',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        });
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        function LoadEmailDone(s) {
+            $('input[name=sendmail]').val(s);
+            var e = $('input[name=hdddID]').val();
+            var lesson = $('input[name=txt-numberoflesson]').val();
+            var time = $('input[name=txt-timeoflesson]').val();
+            var lotrinhhoc = $('#txt-linkdoc').val();
+            $.ajax({
+                url: "/Admin/Cashier/LoadEmailDone",
+                method: "post",
+                data: '{id: ' + parseInt(e) + ', lesson:"' + lesson + '", time:"' + time + '", lotrinhhoc:"' + lotrinhhoc + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title-done').val(msg.tt);
+                        tinymce.get('txt-content-done').getBody().innerHTML = msg.ct;
+                        $('#div-done').modal('show');
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        function LoadEmailAll(s) {
+            $('input[name=sendmail]').val(s);
+            var e = $('input[name=hdddID]').val();
+            var lesson = $('input[name=txt-numberoflesson]').val();
+            var time = $('input[name=txt-timeoflesson]').val();
+            var lotrinhhoc = $('#txt-linkdoc').val();
+            $.ajax({
+                url: "/Admin/Cashier/LoadEmailDone",
+                method: "post",
+                data: '{id: ' + parseInt(e) + ', lesson:"' + lesson + '", time:"' + time + '", lotrinhhoc:"' + lotrinhhoc + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title-all').val(msg.tt);
+                        tinymce.get('txt-content-all').getBody().innerHTML = msg.ct;
+                        $('#div-all').modal('show');
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        function LoadEmailDaoTao(s) {
+            $('input[name=sendmail]').val(s);
+            var e = $('input[name=hdddID]').val();
+            $.ajax({
+                url: "/Admin/Cashier/LoadEmailDaoTao",
+                method: "post",
+                data: '{id: ' + parseInt(e) + ', input:"' + $('#in-point-hope :selected').text() + '", output:"' + $('#out-point-hope :selected').attr('data-content') + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title-daotao').val(msg.title);
+                        tinymce.get('txt-content-daotao').getBody().innerHTML = msg.content;
+                        $('#div-done').modal('hide');
+                        $('#div-all').modal('hide');
+                        $('#div-daotao').modal('show');
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        $('.update-daotao').click(function () {
+            $('input[name=hdtt]').val($('input[name=txt-title-all]').val());
+            $('input[name=hdct]').val(tinymce.get('txt-content-all').contentDocument.activeElement.innerHTML);
+            $('input[name=hdttdt]').val($('input[name=txt-title-daotao]').val());
+            $('input[name=hdctdt]').val(tinymce.get('txt-content-daotao').contentDocument.activeElement.innerHTML);
+            $('#save-academic').submit();
+        });
+
+        $('.update-done').click(function () {
+            $('input[name=hdtt]').val($('input[name=txt-title-done]').val());
+            $('input[name=hdct]').val(tinymce.get('txt-content-done').contentDocument.activeElement.innerHTML);
+            $('#save-academic').submit();
+        });
+
+        $('.btn-only-update').click(function () {
+            $('input[name=sendmail]').val(0);
+            $('#save-academic').submit();
+        });
+
+        function LoadLinkDriver() {
+            $('#txt-linkdoc').val($('#studypath :selected').data('driver'));
+        }
+    </script>
+}

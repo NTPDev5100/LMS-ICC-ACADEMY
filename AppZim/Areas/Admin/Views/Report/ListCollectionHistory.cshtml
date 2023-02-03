@@ -1,0 +1,43 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc
+@using System.Configuration
+@model List<tbl_StudentAppointment>
+@{
+    ViewBag.Title = "ListCollectionHistory";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Giáo viên: @ViewBag.TeacherName - Lịch sử thu tiền</li>
+    </ol>
+</nav>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Tên học viên</th>
+            <th>Ngày chuyển tiền</th>
+            <th>Số tiền đã chuyển</th>
+            <th>Số tiền còn lại</th>
+            <th>Ghi chú</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.StudentName</td>
+                <td>@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td>@String.Format("{0:0,0}", item.Deposit)</td>
+                <td>@String.Format("{0:0,0}", item.ClassPrice + item.CommitmentPrice - item.DiscountPrice - item.Deposit)</td>
+                <td>@item.Note</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script>
+    $(document).ready(function () {
+        $("table").DataTable();
+    })
+</script>

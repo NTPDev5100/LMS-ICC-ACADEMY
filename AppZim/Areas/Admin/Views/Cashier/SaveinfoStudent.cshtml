@@ -1,0 +1,566 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using MB.Extensions
+
+@{
+    ViewBag.Title = "SaveinfoStudent";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var jobs = JobTable.getall();
+    var schools = SchoolTable.getall();
+    var studys = StudyTimeTable.getall();
+    var source = SourceOfCustomerTable.getall();
+    List<tbl_Account> lsale = AccountTable.getall().Where(n => n.Status == 2 && (n.RoleID == 6 || n.RoleID == 3 || n.RoleID == 2)).OrderBy(n => n.FullName).ToList();
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var lLanguage = Language.GetAll();
+    var classList = ClassTable.GetByType(2);
+    var nations = NationTable.GetAll();
+    List<tbl_AcademicPurposes> mucdich = AcademicPurposesTable.getall();
+    var teachers = AccountTable.getbyrole(4);
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Thêm lịch hẹn</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="schedule-test-form mg-t-30">
+    @using (Html.BeginForm("AddAppointmentTest", "Cashier", FormMethod.Post, new { id = "save-info" }))
+    {
+        @Html.AntiForgeryToken();
+        <input type="hidden" name="sendmail" value="0" />
+        <input type="hidden" name="hdtitle" value="" />
+        <input type="hidden" name="hdcontent" value="" />
+        <div class="row" id="test-register">
+            <div class="col-12 col-md-12">
+                <fieldset class="form-fieldset">
+                    <legend>Thông tin</legend>
+                    <div class="form-row">
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="txt-phone">Tài khoản<i class="far fa-question-circle" data-toggle="tooltip" data-placement="right" title="nhập email và bấm vào icon kính lúp"></i>:</label>
+                            <input id="txt-phone" name="txt-phone" type="text" class="form-control" required placeholder="...">
+                            <a href="javascript:;" class="search-number" id="check-phone" onclick="LoadLevel()"><i data-feather="search"></i></a>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="full-name">Họ và tên:</label>
+                            <input id="full-name" name="txt-full-name" class="form-control" type="text" required placeholder="...">
+                        </div>
+
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="dll-language">Ngôn ngữ theo học:</label>
+                            <select class="form-control select2" id="dll-language" name="dll-language" required onchange="LoadLevel()">
+                                <option value="0"></option>
+                                @foreach (var item in lLanguage)
+                                {
+                                    <option value="@item.ID">@item.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="ddl-soucrce">Kênh lấy data:</label>
+                            <select name="ddl-soucrce" id="ddl-soucrce" class="form-control select2" required>
+                                <option value="">------</option>
+                                @{
+                                    foreach (var item in source)
+                                    {
+                                        <option value="@item.ID">@item.SourceOfCustomer</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="txt-email">Số điện thoại:</label>
+                            <input id="txt-email" name="txt-email" required type="text" class="form-control">
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="dateofbirth">Ngày sinh:</label>
+                            <input id="dateofbirth" name="txt-birth-day" required class="datetimepicker date-only form-control" type="text" placeholder="DD / MM / YYYY">
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label for="village">Công việc:</label>
+                            <select name="ddl-job" class="form-control select2">
+                                <option value="">-- Công việc --</option>
+                                @{
+                                    foreach (var item in jobs)
+                                    {
+                                        <option value="@item.ID">@item.JobName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label for="txt-work-place">Nơi làm việc:</label>
+                            <input id="txt-work-place" name="txt-work-place" type="text" class="validate form-control" placeholder="Nơi công tác">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-3 form-group">
+                            <label class="">Mục đích học tập:</label>
+                            <select class="form-control select2" name="slPurpose">
+                                <option value="0">---</option>
+                                @{
+                                    foreach (var ac in mucdich)
+                                    {
+                                        <option value="@ac.ID">@ac.AcademicPurposesName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="">Địa chỉ:</label>
+                            <input type="text" class="form-control" id="txt-address" name="txt-address" placeholder="Việt Nam">
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="">Link facebook:</label>
+                            <input type="text" class="form-control" id="txt-fb" name="txt-fb">
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label>GMT+:</label>
+                            <select class="custom-select select2" name="slNation">
+                                <option value="0">---</option>
+                                @{
+                                    foreach (var n in nations)
+                                    {
+                                        <option value="@n.ID">@n.Nation @n.TimeZoneName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <hr />
+                    <h5>Lịch sử hẹn test</h5>
+                    <div id="div-history" class="form-row">
+
+                    </div>
+                    <hr />
+                    <div class="form-row">
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="tvv">Tư vấn viên:</label>
+                            <select name="ddl-accsale" id="tvv" required class="form-control select2">
+                                <option value="">---</option>
+                                @{
+                                    foreach (var item in lsale)
+                                    {
+                                        <option value="@item.ID">@item.FullName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="center">Trung tâm:</label>
+                            <select name="ddl-school" id="center" required class="form-control select2">
+                                @{
+                                    foreach (var item in schools)
+                                    {
+                                        <option value="@item.ID">@item.SchoolName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="txt-deposit">Ngày hẹn:</label>
+                            <input id="txt-deposit" name="txt-date-test" required class="datetimepicker date-only form-control" type="text" placeholder="DD / MM / YYYY">
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label>Giáo viên:</label>
+                            <select name="slTeacher" id="slTeacher" class="form-control select2">
+                                <option value="0">---</option>
+                                @foreach (var t in teachers)
+                                {
+                                    <option value="@t.ID">@t.FullName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="in-point-hope">Đầu vào dự kiến:</label>
+                            <select class="custom-select select2" name="in-point-hope" required>
+                            </select>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="out-point-hope">Đầu ra dự kiến:</label>
+                            <select class="custom-select select2" name="out-point-hope" required>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="txt-note">Ghi chú:</label>
+                            <textarea id="txt-note" rows="1" required name="txt-note" class="materialize-textarea form-control" placeholder="..."></textarea>
+                        </div>
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="txt-nationtime">Giờ Việt Nam:</label>
+                            <select name="txt-nationtime" id="txt-nationtime" required class="form-control select2">
+                                @for (int i = 0; i <= 23; i++)
+                                {
+                                    var h = i < 10 ? "0" + i.ToString() : i.ToString();
+                                    for (int j = 0; j <= 55; j += 5)
+                                    {
+                                        var m = j < 10 ? "0" + j.ToString() : j.ToString();
+                                        <option value="@h:@m">@h:@m</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-3 form-group">
+                            <label class="required" for="sltime">Giờ quốc tế:</label>
+                            <select name="txt-time-test" id="sltime" required class="form-control select2">
+                                @for (int i = 0; i <= 23; i++)
+                                {
+                                    var h = i < 10 ? "0" + i.ToString() : i.ToString();
+                                    for (int j = 0; j <= 55; j += 5)
+                                    {
+                                        var m = j < 10 ? "0" + j.ToString() : j.ToString();
+                                        <option value="@h:@m">@h:@m</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 pd-b-0">
+                            <button type="button" onclick="LoadEmailTest()" class="float-right btn btn-primary waves-light">Lưu và gửi Email</button>
+                            <button type="submit" class="float-right btn btn-primary waves-light" style="margin-right:10px;">Chỉ lưu</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    }
+</div>
+<div class="modal fade show" id="div-infotest" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Mẫu Email</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Tiêu đề:</label>
+                            <input type="text" name="txt-title" id="txt-title" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Nội dung:</label>
+                            <textarea id="txt-content" name="txt-content" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary update-info">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts
+{
+    <script src="~/app-assets/mycalendar/js/moment.min.js"></script>
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+    $(document).ready(function () {
+
+        $('#full-name').prop("readonly", true);
+        $('#txt-email').prop("readonly", true);
+        $('#dateofbirth').prop("readonly", true);
+        $('#txt-address').prop("readonly", true);
+        $('#txt-fb').prop("readonly", true);
+
+        $('#txt-identity-card').prop("readonly", true);
+        $('#txt-identity-date').prop("readonly", true);
+
+        $('#txt-work-place').prop("readonly", true);
+        $('#txt-note-home').prop("readonly", true);
+
+        $('select[name=ddl-district]').prop("disabled", true);
+        $('select[name=ddl-identity-city]').prop("disabled", true);
+        $('select[name=ddl-job]').prop("disabled", true);
+        $('select[name=slPurpose]').prop("disabled", true);
+        $('select[name=slNation]').prop("disabled", true);
+        $('select[name=dll-language]').prop("disabled", true);
+        $('select[name=ddl-soucrce]').prop("disabled", true);
+        //$('select').formSelect();
+
+        if (!ckstring('@TempData["InvoiceURL"]')) {
+            // invoice
+            window.open('@TempData["InvoiceURL"]');
+        }
+    });
+
+    $('#check-phone').click(function () {
+        $('#full-name').val('');
+        $('#txt-email').val('');
+        $('#dateofbirth').val('');
+        $('#txt-address').val('');
+        $('#txt-fb').val('');
+        $('select[name=ddl-soucrce]').val('');
+
+        $('select[name=ddl-district]').val('');
+
+        $('#txt-identity-card').val('');
+        $('#txt-identity-date').val('');
+        $('select[name=ddl-identity-city]').val('');
+        $('select[name=ddl-job]').val('');
+        $('select[name=slPurpose]').val('');
+        $('select[name=slNation]').val('');
+
+
+        $('#full-name').prop("readonly", true);
+        $('#txt-email').prop("readonly", true);
+        $('#dateofbirth').prop("readonly", true);
+        $('#txt-address').prop("readonly", true);
+        $('#txt-fb').prop("readonly", true);
+        $('select[name=ddl-district]').prop("disabled", true);
+
+        $('#txt-work-place').prop("readonly", true);
+        $('#txt-note-home').prop("readonly", true);
+
+        $('#txt-identity-card').prop("readonly", true);
+        $('#txt-identity-date').prop("readonly", true);
+        $('select[name=ddl-identity-city]').prop("disabled", true);
+        $('select[name=ddl-job]').prop("disabled", true);
+        $('select[name=slPurpose]').prop("disabled", true);
+        $('select[name=slNation]').prop("disabled", true);
+        $('select[name=dll-language]').prop("disabled", true);
+        $('select[name=ddl-soucrce]').prop("disabled", true);
+
+        $.ajax({
+            type: "POST",
+            url: "/Admin/Account/SearchPhone",
+            data: '{phone: "' + $('#txt-phone').val() + '"}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                $('#full-name').prop("readonly", false);
+                $('#txt-email').prop("readonly", false);
+                $('#dateofbirth').prop("readonly", false);
+                $('#txt-address').prop("readonly", false);
+                $('#txt-fb').prop("readonly", false);
+
+                $('#txt-identity-card').prop("readonly", false);
+                $('#txt-identity-date').prop("readonly", false);
+
+                $('#txt-work-place').prop("readonly", false);
+                $('#txt-note-home').prop("readonly", false);
+
+                $('select[name=ddl-district]').prop("disabled", false);
+                $('select[name=ddl-identity-city]').prop("disabled", false);
+                $('select[name=ddl-job]').prop("disabled", false);
+                $('select[name=slPurpose]').prop("disabled", false);
+                $('select[name=slNation]').prop("disabled", false);
+                $('select[name=dll-language]').prop("disabled", false);
+                $('select[name=ddl-soucrce]').prop("disabled", false);
+
+
+                if (msg.rs == false) {
+                    console.log(msg.rolename);
+                    if (msg.rolename.length > 0) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Đây là tài khoản ' + msg.rolename,
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        });
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Chưa có dữ liệu',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        });
+                    }
+                }
+                else {
+                    $('#hdfID').val(msg.acc.ID);
+                    $('#full-name').val(msg.acc.FullName);
+                    $('#txt-email').val(msg.acc.Phone);
+                    $('#dateofbirth').val(moment(msg.acc.Birthday).format("DD/MM/YYYY"));
+                    $('#txt-address').val(msg.acc.Address);
+                    $('#txt-fb').val(msg.acc.LinkFB);
+                    $('select[name=ddl-soucrce]').val(msg.acc.SourceID);
+                    if (msg.acc.DistrictID != 0) {
+                        $('select[name=ddl-district]').val(msg.acc.DistrictID);
+                    }
+                    else {
+                        $('select[name=ddl-district]').val('0-' + msg.acc.LocationID);
+                    }
+
+                    $('#txt-identity-card').val(msg.acc.IdentityCard);
+                    $('#txt-identity-date').val(moment(msg.acc.IdentityCardDate).format("DD/MM/YYYY"));
+
+                    $('#txt-work-place').val(msg.acc.WorkPlace);
+                    $('#txt-note-home').val(msg.acc.NoteHome);
+
+                    $('select[name=ddl-identity-city]').val(msg.acc.IdentityCardCityID);
+                    $('select[name=ddl-job]').val(msg.acc.JobID);
+                    $('select[name=slPurpose]').val(msg.acc.AcademicPurposesID);
+                    $('select[name=slNation]').val(msg.acc.AcademicPurposesID);
+                    $('select[name=dll-language]').val(msg.acc.Language);
+                    $('#tvv').val(msg.acc.SupportUID);
+
+                    $('select[name=ddl-district]').trigger("change");
+                    $('select[name=ddl-soucrce]').trigger("change");
+                    $('select[name=ddl-identity-city]').trigger("change");
+                    $('select[name=ddl-job]').trigger("change");
+                    $('select[name=slPurpose]').trigger("change");
+                    $('select[name=slNation]').trigger("change");
+                    $('select[name=dll-language]').trigger("change");
+                    $('#tvv').trigger("change");
+                    $("#in-point-hope").val(msg.acc.ScoreIn);
+                    $("#out-point-hope").val(msg.acc.ScoreOut);
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("error");
+            }
+        });
+
+        $('#div-history').empty();
+        $.ajax({
+            type: "POST",
+            url: "/Admin/Cashier/GetTestHistory",
+            data: '{phone: "' + $('#txt-phone').val() + '"}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                    $('#div-history').html(msg.data);
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log(xmlhttprequest);
+            }
+        });
+    })
+        function LoadLevel() {
+            var language = parseInt($('#dll-language').val());
+            $.ajax({
+                url: "/Admin/Option/LoadLevel",
+                method: "POST",
+                data: '{level: ' + language + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('select[name=in-point-hope]').html(msg.data);
+                        $('select[name=out-point-hope]').html(msg.data);
+                    } else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Chưa có trình độ của ngôn ngữ đang chọn',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        });
+                    }
+                },
+                error: function () {
+                    console.log('lỗi rồi Hùng ơi =))');
+                }
+            });
+        }
+
+        function LoadEmailTest() {
+            $.ajax({
+                url: "/Admin/Cashier/LoadEmailTest",
+                method: "post",
+                data: '{fullname:"' + $('#full-name').val() + '", language:' + $('#dll-language').val() +
+                    ', nation:' + $('select[name=slNation]').val() + ', teacherid:' + $('#slTeacher').val() +
+                    ', gioquocte:"' + $('#sltime').val() + '", giovn:"' + $('#txt-nationtime').val() +
+                    '",thoigianhoc:"' + $('#txt-deposit').val() + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title').val(msg.tt);
+                        tinymce.get('txt-content').getBody().innerHTML = msg.ct;
+                        $('#div-infotest').modal('show');
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        $('.update-info').click(function () {
+            $('input[name=sendmail]').val(1);
+            $('input[name=hdtitle]').val($('input[name=txt-title]').val());
+            $('input[name=hdcontent]').val(tinymce.editors[0].contentDocument.activeElement.innerHTML);
+            $('#save-info').submit();
+        })
+
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#txt-content',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+                font_formats:
+                    "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+            });
+        });
+    </script>
+}

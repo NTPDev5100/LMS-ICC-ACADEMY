@@ -1,0 +1,151 @@
+﻿@using AppZim.TableSql
+@using PagedList.Mvc
+@using MB.Extensions
+@using AppZim.Models
+@model List<ASW_History_Seller_Result>
+@{
+    ViewBag.Title = "SalaryStaff";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+
+    var schools = SchoolTable.getall();
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách lương đã duyệt</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div>
+    </div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("SalaryStaff", "SalaryStaff", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" name="search" placeholder="..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select class="custom-select" name="sort" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp -- </option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Số tiền (Thấp)</option>
+                            }
+                            else
+                            {
+                                <option value="1">Số tiền (Thấp)</option>
+                            }
+
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Số tiền (Cao)</option>
+                            }
+                            else
+                            {
+                                <option value="2">Số tiền (Cao)</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Ngày duyệt (Tăng)</option>
+                            }
+                            else
+                            {
+                                <option value="3">Ngày duyệt (Tăng)</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Ngày duyệt (Giảm)</option>
+                            }
+                            else
+                            {
+                                <option value="4">Ngày duyệt (Giảm)</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="">
+                    <a href="javascript:;" class="btn btn-success export-excel"><i data-feather="file-text"></i> Xuất Excel</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Họ và tên</th>
+                    <th>Chiến dịch</th>
+                    <th>Lương chiến dịch</th>
+                    <th>Thưởng thêm</th>
+                    <th>Tổng lương nhận</th>
+                    <th>Ghi chú</th>
+                    <th>Ngày duyệt</th>
+                    <th>Người duyệt</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="no-wrap">@item.FullName</td>
+                        <td>@item.CampaignName</td>
+                        <td>@String.Format("{0:0,0}", item.TienChienDich)</td>
+                        <td>@String.Format("{0:0,0}", item.AdditionFee.Value)</td>
+                        <td class="text-success">@String.Format("{0:0,0}", item.PaidReal.Value)</td>
+                        <td>@item.Note</td>
+                        <td>@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@item.NguoiDuyet</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </ul>
+</nav>
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        //Xuất excel
+        $('.export-excel').click(function () {
+            let search = $('input[name=search]').val();
+            let sort = $('select[name=sort]').val();
+            $.ajax({
+                type: "POST",
+                url: "/SalaryStaff/ExportExcelHistorySalarySeller",
+                data: '{search: "' + search + '",sort:"' + sort + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        fnExcelReport(msg.data, msg.f); //hàm này ở layout
+                    }
+                    else {
+                        alert(msg.noti);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        });
+    </script>
+}

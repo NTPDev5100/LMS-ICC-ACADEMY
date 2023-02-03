@@ -1,0 +1,121 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@model List<Admin_VideoSchedule_GetList_Result>
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    tbl_Courses course = CoursesTable.getbyid(ViewBag.CourseID);
+    var totalLesson = CoursesScheduleTable.getbycourseid(course.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(course.ID, 1).Count;// số buổi đã học
+    int remainLesson = totalLesson - learnedLesson - course.DifferenceSchedule.Value;
+}
+<div class="all">
+    <div class="schedule-course row">
+        <div class="col-12 col-sm-12 col-md-12 col-xl-9">
+            <div class="table-responsive">
+                <table class="table table-striped table-vcenter">
+                    <thead class="thead-light">
+                        <tr>
+                            <th></th>
+                            <th>Ngày học</th>
+                            <th>Môn học</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            foreach (var item in Model)
+                            {
+                                var videos = CoursesScheduleFileTable.getbyScheduleID(item.ID);
+                                <tr class="tr-row">
+                                    <td><a href="javascript:;" class="collapse-toggle" data-id="@item.ID"><i class="fas fa-plus-square"></i></a></td>
+                                    <td><span>@item.Date.Value.ToString("dd/MM/yyyy") @item.TimeName</span></td>
+                                    <td><span>@item.SubjectName</span></td>
+                                    <td>@item.StatusName</td>
+                                </tr>
+                                <tr class="collapse-row">
+                                    <td colspan="4">
+                                        <div class="collapse-content">
+                                            @foreach (var i in videos)
+                                            {
+                                                <div>
+                                                    <video width="750" controls>
+                                                        <source src="@i.FileName" type="video/mp4">
+                                                    </video>
+                                                </div>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-12 col-sm-12 col-md-12 col-xl-3">
+            <div class="navigator">
+                <div class="card-body pd-0">
+                    <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@course.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Số buổi học chênh lệch">@course.DifferenceSchedule</button></label>
+                    <ul class="list-menu">
+                        <li class="menu-item">
+                            <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", course.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                        </li>
+                        @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 4 || aclog.RoleID == 7)
+                        {
+                            <li class="menu-item">
+                                <a href="@Url.Action("EditCourse", "CourseDetail", new { area = "Admin", id = course.ID })" class="menu-link"><i data-feather="edit"></i>Chỉnh sửa</a>
+                            </li>
+                        }
+                        <li class="menu-item">
+                            <a href="@Url.Action("ListStudent","CourseDetail", new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="book"></i>Học viên</a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="@Url.Action( "AttendanceCourse","CourseDetail", new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="check-circle"></i>Điểm danh</a>
+                        </li>
+
+                        @*<li class="menu-item">
+                            <a href="@Url.Action("CourseExam","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="activity"></i>Điểm số</a>
+                        </li>
+                        @if (aclog.RoleID != 6)
+                        {
+                            <li class="menu-item">
+                                <a href="@Url.Action( "ExerciseCourse","CourseDetail", new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="book-open"></i>Bài tập</a>
+                            </li>
+                        }*@
+                        @if (aclog.RoleID != 6)
+                        {
+                            <li class="menu-item">
+                                <a href="@Url.Action( "DocumentCourse","CourseDetail", new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="file-text"></i>Tài liệu</a>
+                            </li>
+                        }
+                        <li class="menu-item">
+                            <a href="@Url.Action("NoteCourse","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="flag"></i>Đánh giá</a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="@Url.Action("NotificationCourse","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="@Url.Action("TeacherCourse","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                        </li>
+                        <li class="menu-item active">
+                            <a href="@Url.Action("VideoOfSchedule","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="video"></i>Video bài giảng</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+    </script>
+}

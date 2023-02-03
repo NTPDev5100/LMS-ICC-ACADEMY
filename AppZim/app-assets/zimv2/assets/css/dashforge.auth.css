@@ -1,0 +1,57 @@
+/*
+ * Dashforge Auth Pages (Signin, Signup, etc.)
+ *
+ * This style is use in auth pages.
+ *
+ */
+.content-auth {
+  min-height: calc(100vh - 106px);
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+          flex-direction: column;
+  -webkit-box-pack: center;
+          justify-content: center; }
+  .content-auth > .container {
+    padding: 0; }
+    @media (max-width: 1139px) {
+      .content-auth > .container {
+        max-width: none;
+        padding: 0 20px; } }
+    .content-auth > .container:first-child {
+      -webkit-box-flex: 1;
+              flex: 1; }
+
+.content-auth-alt {
+  min-height: calc(100vh - 106px);
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+          flex-direction: column;
+  -webkit-box-pack: center;
+          justify-content: center; }
+  .content-auth-alt .container {
+    padding: 0; }
+    @media (max-width: 1139px) {
+      .content-auth-alt .container {
+        max-width: none; } }
+
+.sign-wrapper {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+          flex-direction: column;
+  -webkit-box-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+          align-items: center;
+  width: 340px; }
+  @media (min-width: 1200px) {
+    .sign-wrapper {
+      width: 340px; } }
+  .sign-wrapper .form-group label {
+    display: block;
+    margin-bottom: 5px; }

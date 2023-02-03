@@ -1,0 +1,121 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions;
+@{
+    ViewBag.Title = "CourseList";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+
+<!-- Breadcrumb -->
+<div class="row mg-b-30">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item">Danh sách khóa học</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<!-- End breadcrumb -->
+<div class="row row-xs d-flex flex-wrap course-list-wrap mg-t-20">
+    @{
+        foreach (tbl_CoursesStudent item in Model)
+        {
+            tbl_Courses c = CoursesTable.getbyid(item.CourseID.Value);
+            List<tbl_CoursesSchedule> listSchedule = CoursesScheduleTable.getbycourseid(item.CourseID.Value);
+
+            var listTeacher = listSchedule.GroupBy(t => new { Id = t.TeacherID }).Select(g => new { g.Key.Id }).ToList();
+            <div class="col-12 col-md-6 col-xl-4 mg-t-10">
+                <a href="@Url.Action("CourseDetail", "StudentCourse", new { area = "", id = item.CourseID })">
+                    <div class="card pos-relative card-shadow course-item">
+                        <div class="course-image">
+                            <img src="/app-assets/zimv2/images/img-course.jpg" alt="image" onerror="this.onerror = null; this.src = '/app-assets/images/avatar/avatardefault.png';">
+                        </div>
+                        <div class="d-flex justify-content-betwween top-info">
+                            <div class="teacher-list-icon d-inline-flex flex-wrap">
+                                @for (int i = 0; i < listTeacher.Count; i++)
+                                {
+                                    var acinfo = AccountTable.getbyID(listTeacher[i].Id.Value);
+                                    if (!string.IsNullOrEmpty(acinfo.Avatar))
+                                    {
+                                        <div class="avatar mg-x-3">
+                                            <img src="@acinfo.Avatar" alt="" class="rounded-circle avatar" data-toggle="tooltip" data-placement="bottom" title="@acinfo.FullName"  onerror="this.onerror = null; this.src = '/app-assets/images/avatar/avatardefault.png';">
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar mg-x-3">
+                                            <img src="/app-assets/images/avatar/avatar-4.png" alt="" class="rounded-circle avatar" data-toggle="tooltip" data-placement="top" title="@acinfo.FullName"  onerror="this.onerror = null; this.src = '/app-assets/images/avatar/avatardefault.png';">
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            <div class="marker marker-ribbon marker-primary">@c.SchoolName</div>
+                        </div>
+
+                        <div class="card-body pd-t-10">
+                            <div class="course-name ">
+                                <div class="course-info d-flex justify-content-between align-items-start">
+                                    <span class="tx-18" data-toggle="tooltip" data-placement="top" title="@c.CourseName">@c.CourseName - @c.ClassName <span class="badge badge-@(c.TypeCourse==2?"success":"secondary") pd-l-10 pd-r-10 pd-t-5 pd-b-5" style="font-size:12px">@(c.TypeCourse == 2 ? "Online" : "Offline")</span></span>
+                                    <span class="d-inline-flex align-items-center txt-color"><i data-feather="user"></i>@c.CountStudent</span>
+                                </div>
+                            </div>
+                            <div class="course-info-block d-flex mg-t-5 row">
+                                <div class="col-12">
+                                    <div class="block">
+                                        <p><span class="lb">Mở ngày:</span>@c.OpeningDate.Value.ToString("dd/MM/yyyy")</p>
+                                    </div>
+                                    <div class="block">
+                                        <p>
+                                            <span class="lb">Kết thúc:</span>
+                                            @{
+                                                if (listSchedule.Count() > 0)
+                                                {
+                                                    var lastdate = listSchedule.OrderByDescending(n => n.Date).ToList()[0];
+                                                    <span>@lastdate.Date.Value.ToString("dd/MM/yyyy")</span>
+                                                }
+                                            }
+                                    </div>
+                                    <div class="block">
+                                        <p><span class="lb">Trạng thái:</span><span style="color:#4caf50">@c.StatusName</span></p>
+                                    </div>
+                                    <div class="block">
+                                        <p><span class="lb">Đã thanh toán:</span><span style="color:#4caf50">@String.Format("{0:0,0}", item.TotalPaid)</span></p>
+                                    </div>
+                                    <div class="block">
+                                        <p><span class="lb">Còn thiếu:</span><span class="text-danger">@String.Format("{0:0,0}", item.PriceLeft)</span></p>
+                                    </div>
+                                    @*<div class="block">
+                                        <p>
+                                            <span class="lb">Chứng chỉ:</span><span class="text-danger">
+                                                @{
+                                                    if (!string.IsNullOrEmpty(item.CertificateFile))
+                                                    {
+                                                        <a href="@item.CertificateFile" download="" class="mg-r-10"><i data-feather="download-cloud"></i></a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>Chưa có</span>
+                                                    }
+                                                }
+                                            </span>
+                                        </p>
+                                    </div>*@
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    }
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+
+        });
+
+    </script>
+}

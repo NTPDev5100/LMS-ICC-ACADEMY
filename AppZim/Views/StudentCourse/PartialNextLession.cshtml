@@ -1,0 +1,17 @@
+﻿@{
+    var Top6 = ViewBag.Top6;
+}
+<div class="schedule-coming">
+    <label class="tx-uppercase tx-sans tx-10 tx-medium tx-spacing-1 tx-color-03 mg-b-15">STUDY COMING SOON</label>
+    <div class="schedule-group">
+        @for (int i = 0; i < Top6.Count; i++)
+        {
+            var item = Top6[i];
+            <a href="#" class="schedule-item bd-l bd-2" style="border-color:@item.borderColor">
+                <h6>@item.className</h6>
+                <span>@item.start.ToString("HH:mm") - @item.end.ToString("HH:mm"), @item.start.ToString("dd/MM/yyyy")</span>
+            </a>
+        }
+    </div>
+</div>
+

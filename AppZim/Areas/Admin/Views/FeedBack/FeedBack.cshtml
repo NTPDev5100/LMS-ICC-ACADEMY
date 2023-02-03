@@ -1,0 +1,830 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using System.Data.Entity
+@{
+    ViewBag.Title = "FeedBack";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_FeedBackCategory> lca = FeedBackCategoryTable.getall().Where(n => n.Role == aclog.RoleID || n.Role == 0).ToList();
+    IEnumerable<tbl_FeedBack> lfeedback = FeedBackTable.getbyuid(aclog.ID).OrderByDescending(n => n.ModifiedDate).ToList();
+    List<tbl_Account> student = new List<tbl_Account>();
+    if (aclog.RoleID == 6)
+    {
+        student = AccountTable.getallbysupportID(aclog.ID);
+    }
+    //load đầu tiền
+    int fbfirt = 0;
+    //bỏ qua từ thằng này so sort
+    int idskip = 0;
+
+    int alls = lfeedback.Count();
+    int nows = 0;
+    int important = 0;
+    int pendding = 0;
+    int done = 0;
+
+    IEnumerable<tbl_FeedBackImportant> limpor = FeedBackImportantTable.getbyuid(aclog.ID);
+    if (lfeedback.Count() > 0)
+    {
+        nows = lfeedback.Where(n => n.ModifiedDate >= GetDateTime.Now.AddDays(-3)).ToList().Count();
+        var data = from f in lfeedback
+                   join i in limpor on f.ID equals i.FeedBackID
+                   select f;
+        important = data.Count();
+
+        pendding = lfeedback.Where(n => n.Rate == null).ToList().Count;
+        done = lfeedback.Where(n => n.Rate > 0).ToList().Count;
+    }
+
+    int type = ViewBag.Type;
+    if (type == 1)
+    {
+        lfeedback = lfeedback.Where(n => n.ModifiedDate >= GetDateTime.Now.AddDays(-3)).ToList();
+    }
+    if (type == 2)
+    {
+        var data = from f in lfeedback
+                   join i in limpor on f.ID equals i.FeedBackID
+                   select f;
+        lfeedback = data;
+    }
+    if (type == 3)
+    {
+        lfeedback = lfeedback.Where(n => n.Rate == null).ToList();
+    }
+    if (type == 4)
+    {
+        lfeedback = lfeedback.Where(n => n.Rate > 0).ToList();
+    }
+    if (lfeedback.Count() > 0)
+    {
+        fbfirt = lfeedback.OrderByDescending(n => n.ModifiedDate).FirstOrDefault().ID;
+        idskip = lfeedback.OrderByDescending(n => n.ModifiedDate).FirstOrDefault().ID;
+    }
+    if (lfeedback.Count() > 20)
+    {
+        lfeedback = lfeedback.Skip(0).Take(20).ToList();
+    }
+}
+
+<style>
+    .feedback {
+        width: unset;
+    }
+
+    .mail-group-body {
+        top: 7px;
+    }
+
+    .result-search-ajax {
+        z-index: 1;
+        background: #f0f0f0;
+    }
+
+    .result-autocompele {
+        margin: 0px;
+        padding-left: 0px;
+    }
+
+    ul {
+        list-style: none;
+    }
+
+    .result-autocompele > li {
+        padding: 8px;
+        border-bottom: #bbb9b9 1px solid;
+    }
+
+    .li-search {
+        padding: 10px;
+        border-bottom: solid 1px;
+    }
+
+    .rate-block {
+        background: unset;
+    }
+
+    @@media only screen and (max-width: 600px) {
+        .rate-block {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            margin-left: -20px;
+            z-index: 999;
+            background: rgba(52,98,200,0.015);
+        }
+
+        .mail-content {
+            bottom: 100px !important;
+        }
+
+        .tx-18 {
+            display: none;
+        }
+    }
+</style>
+<link rel="stylesheet" href="~/app-assets/zimv2/assets/css/dashforge.mail.css">
+<div class="mail-wrapper" style="margin:0 270px">
+    <div class="mail-sidebar">
+        <div class="mail-sidebar-body">
+            <div class="pd-20">
+                <button id="mailComposeBtn" class="btn btn-primary btn-block tx-uppercase tx-10 tx-medium tx-sans tx-spacing-4">Tạo phản hồi</button>
+            </div>
+            <div class="pd-b-10 pd-x-10">
+                @using (Html.BeginForm("FeedBack", "FeedBack", FormMethod.Get, new { id = "form-fill-type" }))
+                {
+                    <input type="hidden" name="type-nav" value="0" />
+                    <nav class="nav nav-sidebar tx-13">
+                        <a href="javascript:;" class="nav-link fill-search" data-val="0"><i data-feather="inbox"></i> <span>Tất cả</span> <span class="badge">@alls</span></a>
+                        <a href="javascript:;" class="nav-link fill-search" data-val="1"><i data-feather="clock"></i> <span>Gần đây</span> <span class="badge">@nows</span></a>
+                        <a href="javascript:;" class="nav-link fill-search" data-val="2"><i data-feather="star"></i> <span>Quan trọng</span> <span class="badge">@important</span></a>
+                        <a href="javascript:;" class="nav-link fill-search" data-val="3"><i data-feather="monitor"></i> <span>Chờ xử lý</span> <span class="badge">@pendding</span></a>
+                        <a href="javascript:;" class="nav-link fill-search" data-val="4"><i data-feather="lock"></i> <span>Hoàn thành</span> <span class="badge">@done</span></a>
+                    </nav>
+                }
+            </div>
+        </div><!-- mail-sidebar-body -->
+    </div><!-- mail-sidebar -->
+    <div class="mail-group">
+        <div class="mail-group-header">
+            <i data-feather="search"></i>
+            <div class="search-form">
+                <input type="text" id="txt-customer-name" name="txt-customer-name" class="form-control call-search-ajax-customer" placeholder="Tìm kiếm...">
+                <div id="result-search-customer" class="result-search-ajax"></div>
+            </div><!-- search-form -->
+        </div><!-- mail-group-header -->
+        <div class="mail-group-body">
+            <div class="pd-y-15 pd-x-20 d-flex justify-content-between align-items-center">
+                <h6 class="tx-uppercase tx-semibold mg-b-0">Danh sách phản hồi</h6>
+            </div>
+            <div id="div-data-li">
+                <label class="mail-group-label">Hôm nay</label>
+                <ul class="list-unstyled media-list mg-b-0">
+                    @{
+                        var daynow = lfeedback.Where(n => n.ModifiedDate.Value.Date == GetDateTime.Now.Date).ToList().OrderByDescending(n => n.ModifiedDate).ToList();
+                        foreach (var item in daynow)
+                        {
+                            var acc = AccountTable.getbyID(item.SupportID.Value);
+                            if (acc != null)
+                            {
+                                string n = "";
+                                acc.FullName = acc.FullName.Trim();
+                                for (int i = acc.FullName.Length - 1; i >= 0; i--)
+                                {
+                                    if (acc.FullName[i].ToString().Contains(" "))
+                                    {
+                                        n = acc.FullName[i + 1].ToString();
+                                        break;
+                                    }
+                                }
+
+                                var cate = FeedBackCategoryTable.getbyID(item.TypeID.Value);
+                                if (item.TypeID == -1)
+                                {
+                                    cate = new tbl_FeedBackCategory() { ID = -1, CategoryFeedback = "Hỗ trợ học viên" };
+                                }
+                                <li class="media class-load" data-id="@item.ID">
+                                    <div class="avatar">
+                                        <div class="avatar"><span class="avatar-initial rounded-circle bg-indigo">@n</span></div>
+                                    </div>
+                                    <div class="media-body mg-l-15">
+                                        <div class="tx-color-03 d-flex align-items-center justify-content-between mg-b-2">
+                                            <span class="tx-12">@acc.FullName</span>
+                                            <span class="tx-11">@item.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+                                        <h6 class="tx-13">@cate.CategoryFeedback</h6>
+                                        <p class="tx-12 tx-color-03 mg-b-0">@item.Title</p>
+                                    </div><!-- media-body -->
+                                </li>
+                            }
+                        }
+                    }
+                </ul>
+                <label class="mail-group-label">Tất cả</label>
+                <ul class="list-unstyled media-list mg-b-0">
+                    @{
+                        var daynotnow = lfeedback.Where(n => n.ModifiedDate.Value.Date != GetDateTime.Now.Date).OrderByDescending(n => n.ModifiedDate).ToList();
+                        foreach (var item in daynotnow)
+                        {
+                            var acc = AccountTable.getbyID(item.SupportID.Value);
+                            if (acc != null)
+                            {
+                                acc.FullName = acc.FullName.Trim();
+                                string n = "";
+                                for (int i = acc.FullName.Length - 1; i >= 0; i--)
+                                {
+                                    if (acc.FullName[i].ToString().Contains(" "))
+                                    {
+                                        n = acc.FullName[i + 1].ToString();
+                                        break;
+                                    }
+                                }
+                                var cate = FeedBackCategoryTable.getbyID(item.TypeID.Value);
+                                if (item.TypeID == -1)
+                                {
+                                    cate = new tbl_FeedBackCategory() { ID = -1, CategoryFeedback = "Hỗ trợ học viên" };
+                                }
+                                <li class="media class-load" data-id="@item.ID">
+                                    <div class="avatar">
+                                        <div class="avatar"><span class="avatar-initial rounded-circle bg-indigo">@n</span></div>
+                                    </div>
+                                    <div class="media-body mg-l-15">
+                                        <div class="tx-color-03 d-flex align-items-center justify-content-between mg-b-2">
+                                            <span class="tx-12">@acc.FullName</span>
+                                            <span class="tx-11">@item.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+                                        <h6 class="tx-13">@cate.CategoryFeedback</h6>
+                                        <p class="tx-12 tx-color-03 mg-b-0">@item.Title</p>
+                                    </div><!-- media-body -->
+                                </li>
+                            }
+                        }
+                    }
+                </ul>
+            </div>
+            <div class="pd-t-1 pd-b-5">
+                <a href="javascript:;" class="btn btn-xs btn-block btn-light bd-0 tx-uppercase tx-10 tx-spacing-1 tx-medium mn-ht-0 btn-loadmore">Xem thêm</a>
+            </div>
+        </div><!-- mail-group-body -->
+    </div><!-- mail-group -->
+    <div class="mail-content">
+        <div class="mail-content-header">
+            <a href="" id="mailContentClose" class="link-02 d-none d-lg-block d-xl-none mg-r-20"><i data-feather="arrow-left"></i></a>
+            <div class="media mg-r-20" id="head-mail-content">
+                <div class="avatar avatar-sm"><img src="https://via.placeholder.com/600" class="rounded-circle" alt=""></div>
+                <div class="media-body mg-l-10">
+                    <h6 class="mg-b-2 tx-13">Đỗ Thị Thu Phương</h6>
+                    <span class="d-block tx-11 tx-color-03">20/04/2019 10:30</span>
+                </div><!-- media-body -->
+            </div><!-- media -->
+
+            <div class="pd-t-0 rate-block">
+                <div class="star-rating d-flex align-items-center">
+                    <span class="tx-18">Đánh giá:  </span>
+                    <div class="feedback">
+                        <div class="rating">
+                            <input type="radio" name="rating" data-vl="5" id="rating-5">
+                            <label for="rating-5"></label>
+                            <input type="radio" name="rating" data-vl="4" id="rating-4">
+                            <label for="rating-4"></label>
+                            <input type="radio" name="rating" data-vl="3" id="rating-3">
+                            <label for="rating-3"></label>
+                            <input type="radio" name="rating" data-vl="2" id="rating-2">
+                            <label for="rating-2"></label>
+                            <input type="radio" name="rating" data-vl="1" id="rating-1">
+                            <label for="rating-1"></label>
+                            <div class="emoji-wrapper">
+                                <div class="emoji">
+                                    <svg class="rating-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                        <circle cx="256" cy="256" r="256" fill="#ffd93b" />
+                                        <path d="M512 256c0 141.44-114.64 256-256 256-80.48 0-152.32-37.12-199.28-95.28 43.92 35.52 99.84 56.72 160.72 56.72 141.36 0 256-114.56 256-256 0-60.88-21.2-116.8-56.72-160.72C474.8 103.68 512 175.52 512 256z" fill="#f4c534" />
+                                        <ellipse transform="scale(-1) rotate(31.21 715.433 -595.455)" cx="166.318" cy="199.829" rx="56.146" ry="56.13" fill="#fff" />
+                                        <ellipse transform="rotate(-148.804 180.87 175.82)" cx="180.871" cy="175.822" rx="28.048" ry="28.08" fill="#3e4347" />
+                                        <ellipse transform="rotate(-113.778 194.434 165.995)" cx="194.433" cy="165.993" rx="8.016" ry="5.296" fill="#5a5f63" />
+                                        <ellipse transform="scale(-1) rotate(31.21 715.397 -1237.664)" cx="345.695" cy="199.819" rx="56.146" ry="56.13" fill="#fff" />
+                                        <ellipse transform="rotate(-148.804 360.25 175.837)" cx="360.252" cy="175.84" rx="28.048" ry="28.08" fill="#3e4347" />
+                                        <ellipse transform="scale(-1) rotate(66.227 254.508 -573.138)" cx="373.794" cy="165.987" rx="8.016" ry="5.296" fill="#5a5f63" />
+                                        <path d="M370.56 344.4c0 7.696-6.224 13.92-13.92 13.92H155.36c-7.616 0-13.92-6.224-13.92-13.92s6.304-13.92 13.92-13.92h201.296c7.696.016 13.904 6.224 13.904 13.92z" fill="#3e4347" />
+                                    </svg>
+                                    <svg class="rating-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                        <circle cx="256" cy="256" r="256" fill="#ffd93b" />
+                                        <path d="M512 256A256 256 0 0 1 56.7 416.7a256 256 0 0 0 360-360c58.1 47 95.3 118.8 95.3 199.3z" fill="#f4c534" />
+                                        <path d="M328.4 428a92.8 92.8 0 0 0-145-.1 6.8 6.8 0 0 1-12-5.8 86.6 86.6 0 0 1 84.5-69 86.6 86.6 0 0 1 84.7 69.8c1.3 6.9-7.7 10.6-12.2 5.1z" fill="#3e4347" />
+                                        <path d="M269.2 222.3c5.3 62.8 52 113.9 104.8 113.9 52.3 0 90.8-51.1 85.6-113.9-2-25-10.8-47.9-23.7-66.7-4.1-6.1-12.2-8-18.5-4.2a111.8 111.8 0 0 1-60.1 16.2c-22.8 0-42.1-5.6-57.8-14.8-6.8-4-15.4-1.5-18.9 5.4-9 18.2-13.2 40.3-11.4 64.1z" fill="#f4c534" />
+                                        <path d="M357 189.5c25.8 0 47-7.1 63.7-18.7 10 14.6 17 32.1 18.7 51.6 4 49.6-26.1 89.7-67.5 89.7-41.6 0-78.4-40.1-82.5-89.7A95 95 0 0 1 298 174c16 9.7 35.6 15.5 59 15.5z" fill="#fff" />
+                                        <path d="M396.2 246.1a38.5 38.5 0 0 1-38.7 38.6 38.5 38.5 0 0 1-38.6-38.6 38.6 38.6 0 1 1 77.3 0z" fill="#3e4347" />
+                                        <path d="M380.4 241.1c-3.2 3.2-9.9 1.7-14.9-3.2-4.8-4.8-6.2-11.5-3-14.7 3.3-3.4 10-2 14.9 2.9 4.9 5 6.4 11.7 3 15z" fill="#fff" />
+                                        <path d="M242.8 222.3c-5.3 62.8-52 113.9-104.8 113.9-52.3 0-90.8-51.1-85.6-113.9 2-25 10.8-47.9 23.7-66.7 4.1-6.1 12.2-8 18.5-4.2 16.2 10.1 36.2 16.2 60.1 16.2 22.8 0 42.1-5.6 57.8-14.8 6.8-4 15.4-1.5 18.9 5.4 9 18.2 13.2 40.3 11.4 64.1z" fill="#f4c534" />
+                                        <path d="M155 189.5c-25.8 0-47-7.1-63.7-18.7-10 14.6-17 32.1-18.7 51.6-4 49.6 26.1 89.7 67.5 89.7 41.6 0 78.4-40.1 82.5-89.7A95 95 0 0 0 214 174c-16 9.7-35.6 15.5-59 15.5z" fill="#fff" />
+                                        <path d="M115.8 246.1a38.5 38.5 0 0 0 38.7 38.6 38.5 38.5 0 0 0 38.6-38.6 38.6 38.6 0 1 0-77.3 0z" fill="#3e4347" />
+                                        <path d="M131.6 241.1c3.2 3.2 9.9 1.7 14.9-3.2 4.8-4.8 6.2-11.5 3-14.7-3.3-3.4-10-2-14.9 2.9-4.9 5-6.4 11.7-3 15z" fill="#fff" />
+                                    </svg>
+                                    <svg class="rating-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                        <circle cx="256" cy="256" r="256" fill="#ffd93b" />
+                                        <path d="M512 256A256 256 0 0 1 56.7 416.7a256 256 0 0 0 360-360c58.1 47 95.3 118.8 95.3 199.3z" fill="#f4c534" />
+                                        <path d="M336.6 403.2c-6.5 8-16 10-25.5 5.2a117.6 117.6 0 0 0-110.2 0c-9.4 4.9-19 3.3-25.6-4.6-6.5-7.7-4.7-21.1 8.4-28 45.1-24 99.5-24 144.6 0 13 7 14.8 19.7 8.3 27.4z" fill="#3e4347" />
+                                        <path d="M276.6 244.3a79.3 79.3 0 1 1 158.8 0 79.5 79.5 0 1 1-158.8 0z" fill="#fff" />
+                                        <circle cx="340" cy="260.4" r="36.2" fill="#3e4347" />
+                                        <g fill="#fff">
+                                            <ellipse transform="rotate(-135 326.4 246.6)" cx="326.4" cy="246.6" rx="6.5" ry="10" />
+                                            <path d="M231.9 244.3a79.3 79.3 0 1 0-158.8 0 79.5 79.5 0 1 0 158.8 0z" />
+                                        </g>
+                                        <circle cx="168.5" cy="260.4" r="36.2" fill="#3e4347" />
+                                        <ellipse transform="rotate(-135 182.1 246.7)" cx="182.1" cy="246.7" rx="10" ry="6.5" fill="#fff" />
+                                    </svg>
+                                    <svg class="rating-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                        <circle cx="256" cy="256" r="256" fill="#ffd93b" />
+                                        <path d="M407.7 352.8a163.9 163.9 0 0 1-303.5 0c-2.3-5.5 1.5-12 7.5-13.2a780.8 780.8 0 0 1 288.4 0c6 1.2 9.9 7.7 7.6 13.2z" fill="#3e4347" />
+                                        <path d="M512 256A256 256 0 0 1 56.7 416.7a256 256 0 0 0 360-360c58.1 47 95.3 118.8 95.3 199.3z" fill="#f4c534" />
+                                        <g fill="#fff">
+                                            <path d="M115.3 339c18.2 29.6 75.1 32.8 143.1 32.8 67.1 0 124.2-3.2 143.2-31.6l-1.5-.6a780.6 780.6 0 0 0-284.8-.6z" />
+                                            <ellipse cx="356.4" cy="205.3" rx="81.1" ry="81" />
+                                        </g>
+                                        <ellipse cx="356.4" cy="205.3" rx="44.2" ry="44.2" fill="#3e4347" />
+                                        <g fill="#fff">
+                                            <ellipse transform="scale(-1) rotate(45 454 -906)" cx="375.3" cy="188.1" rx="12" ry="8.1" />
+                                            <ellipse cx="155.6" cy="205.3" rx="81.1" ry="81" />
+                                        </g>
+                                        <ellipse cx="155.6" cy="205.3" rx="44.2" ry="44.2" fill="#3e4347" />
+                                        <ellipse transform="scale(-1) rotate(45 454 -421.3)" cx="174.5" cy="188" rx="12" ry="8.1" fill="#fff" />
+                                    </svg>
+                                    <svg class="rating-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                        <circle cx="256" cy="256" r="256" fill="#ffd93b" />
+                                        <path d="M512 256A256 256 0 0 1 56.7 416.7a256 256 0 0 0 360-360c58.1 47 95.3 118.8 95.3 199.3z" fill="#f4c534" />
+                                        <path d="M232.3 201.3c0 49.2-74.3 94.2-74.3 94.2s-74.4-45-74.4-94.2a38 38 0 0 1 74.4-11.1 38 38 0 0 1 74.3 11.1z" fill="#e24b4b" />
+                                        <path d="M96.1 173.3a37.7 37.7 0 0 0-12.4 28c0 49.2 74.3 94.2 74.3 94.2C80.2 229.8 95.6 175.2 96 173.3z" fill="#d03f3f" />
+                                        <path d="M215.2 200c-3.6 3-9.8 1-13.8-4.1-4.2-5.2-4.6-11.5-1.2-14.1 3.6-2.8 9.7-.7 13.9 4.4 4 5.2 4.6 11.4 1.1 13.8z" fill="#fff" />
+                                        <path d="M428.4 201.3c0 49.2-74.4 94.2-74.4 94.2s-74.3-45-74.3-94.2a38 38 0 0 1 74.4-11.1 38 38 0 0 1 74.3 11.1z" fill="#e24b4b" />
+                                        <path d="M292.2 173.3a37.7 37.7 0 0 0-12.4 28c0 49.2 74.3 94.2 74.3 94.2-77.8-65.7-62.4-120.3-61.9-122.2z" fill="#d03f3f" />
+                                        <path d="M411.3 200c-3.6 3-9.8 1-13.8-4.1-4.2-5.2-4.6-11.5-1.2-14.1 3.6-2.8 9.7-.7 13.9 4.4 4 5.2 4.6 11.4 1.1 13.8z" fill="#fff" />
+                                        <path d="M381.7 374.1c-30.2 35.9-75.3 64.4-125.7 64.4s-95.4-28.5-125.8-64.2a17.6 17.6 0 0 1 16.5-28.7 627.7 627.7 0 0 0 218.7-.1c16.2-2.7 27 16.1 16.3 28.6z" fill="#3e4347" />
+                                        <path d="M256 438.5c25.7 0 50-7.5 71.7-19.5-9-33.7-40.7-43.3-62.6-31.7-29.7 15.8-62.8-4.7-75.6 34.3 20.3 10.4 42.8 17 66.5 17z" fill="#e24b4b" />
+                                    </svg>
+                                    <svg class="rating-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                        <g fill="#ffd93b">
+                                            <circle cx="256" cy="256" r="256" />
+                                            <path d="M512 256A256 256 0 0 1 56.8 416.7a256 256 0 0 0 360-360c58 47 95.2 118.8 95.2 199.3z" />
+                                        </g>
+                                        <path d="M512 99.4v165.1c0 11-8.9 19.9-19.7 19.9h-187c-13 0-23.5-10.5-23.5-23.5v-21.3c0-12.9-8.9-24.8-21.6-26.7-16.2-2.5-30 10-30 25.5V261c0 13-10.5 23.5-23.5 23.5h-187A19.7 19.7 0 0 1 0 264.7V99.4c0-10.9 8.8-19.7 19.7-19.7h472.6c10.8 0 19.7 8.7 19.7 19.7z" fill="#e9eff4" />
+                                        <path d="M204.6 138v88.2a23 23 0 0 1-23 23H58.2a23 23 0 0 1-23-23v-88.3a23 23 0 0 1 23-23h123.4a23 23 0 0 1 23 23z" fill="#45cbea" />
+                                        <path d="M476.9 138v88.2a23 23 0 0 1-23 23H330.3a23 23 0 0 1-23-23v-88.3a23 23 0 0 1 23-23h123.4a23 23 0 0 1 23 23z" fill="#e84d88" />
+                                        <g fill="#38c0dc">
+                                            <path d="M95.2 114.9l-60 60v15.2l75.2-75.2zM123.3 114.9L35.1 203v23.2c0 1.8.3 3.7.7 5.4l116.8-116.7h-29.3z" />
+                                        </g>
+                                        <g fill="#d23f77">
+                                            <path d="M373.3 114.9l-66 66V196l81.3-81.2zM401.5 114.9l-94.1 94v17.3c0 3.5.8 6.8 2.2 9.8l121.1-121.1h-29.2z" />
+                                        </g>
+                                        <path d="M329.5 395.2c0 44.7-33 81-73.4 81-40.7 0-73.5-36.3-73.5-81s32.8-81 73.5-81c40.5 0 73.4 36.3 73.4 81z" fill="#3e4347" />
+                                        <path d="M256 476.2a70 70 0 0 0 53.3-25.5 34.6 34.6 0 0 0-58-25 34.4 34.4 0 0 0-47.8 26 69.9 69.9 0 0 0 52.6 24.5z" fill="#e24b4b" />
+                                        <path d="M290.3 434.8c-1 3.4-5.8 5.2-11 3.9s-8.4-5.1-7.4-8.7c.8-3.3 5.7-5 10.7-3.8 5.1 1.4 8.5 5.3 7.7 8.6z" fill="#fff" opacity=".2" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rate-confirm d-flex align-items-center hide">
+                        <a href="javascript:;" id="btn-confirm-rate" class="btn btn-primary mg-r-10">Xác nhận</a>
+                        <a href="javascript:;" class="btn btn-danger  cancel">Hủy</a>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav nav-icon-only mg-l-auto">
+                <a href="javascript:;" id="btn-feedback-important" data-toggle="tooltip" data-placement="left" title="important" class="nav-link d-none d-sm-block icon-action"><i data-feather="star"></i></a>
+            </nav>
+        </div><!-- mail-content-header -->
+        <div class="mail-content-body">
+            <div id="div-content-feedback">
+            </div>
+            <div class="pd-20 pd-lg-25 pd-t-0-f hide-show-rep">
+                <div id="content-editor-reply" class="tx-13 tx-lg-14 ht-100 content-editor">
+                </div>
+                <div class="d-flex align-items-center justify-content-between mg-t-10" style="float:right">
+                    <button type="button" id="btn-reply" class="btn btn-primary">Gửi</button>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+        </div><!-- mail-content-body -->
+    </div><!-- mail-content -->
+</div>
+    <!-- mail-wrapper -->
+    <div id="mailCompose" class="mail-compose">
+        <div class="mail-compose-dialog">
+            <div class="mail-compose-header">
+                <h6 class="mail-compose-title tx-white">Phản hồi mới</h6>
+                <nav class="nav nav-icon-only">
+                    <a id="mailComposeMinimize" href="" class="nav-link nav-link-minimize d-none d-lg-block">
+                        <i data-feather="minus"></i>
+                        <i data-feather="square"></i>
+                    </a>
+                    <a id="mailComposeShrink" href="" class="nav-link nav-link-shrink d-none d-lg-block">
+                        <i data-feather="minimize-2"></i>
+                        <i data-feather="maximize-2"></i>
+                    </a>
+                    <a id="mailComposeClose" href="" class="nav-link nav-link-close"><i data-feather="x"></i></a>
+                </nav>
+            </div><!-- mail-compose-header -->
+            <div class="mail-compose-body">
+                @using (Html.BeginForm("AddFeedBack", "FeedBack", FormMethod.Post, new { id = "form-feedback" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="hdfanswer" />
+                    <div class="form-row align-items-center">
+                        <div class="col-sm">Loại phản hồi:</div>
+                        <div class="col-sm-7">
+                            <select name="ddl-type" required class="form-control">
+                                @{
+                                    foreach (var item in lca)
+                                    {
+                                        <option value="@item.ID">@item.CategoryFeedback</option>
+                                    }
+                                }
+                            </select>
+                            @if (aclog.RoleID == 6)
+                            {
+                                <select name="ddl-student" required class="form-control" style="display:none">
+                                    <option value="0">--Chọn học viên--</option>
+                                    @{
+                                        foreach (var item in student)
+                                        {
+                                            <option value="@item.ID">@item.FullName - @item.Phone</option>
+                                        }
+                                    }
+                                </select>
+                            }
+
+                        </div>
+                        @{
+                            if (aclog.RoleID == 6)
+                            {
+                                <div class="col-sm-3">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="sendtostudent" name="sendtostudent">
+                                        <label class="custom-control-label" for="sendtostudent">Gửi cho học viên</label>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <hr class="mg-y-10">
+                    <div class="form-row align-items-center" style="padding-bottom: 10px;">
+                        <div class="col-sm">Tiêu đề:</div>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="txt-title" placeholder="..." autocomplete="off">
+                        </div>
+                    </div>
+                    <div id="content-editor" class="ht-150 mg-t-15 content-editor"></div>
+                    <div class="d-sm-flex align-items-center justify-content-between mg-t-25" style="float:right;">
+                        <div class="tx-13 mg-t-15 mg-sm-t-0">
+                            <a href="javascript:;" id="btn-check" class="btn btn-primary">Gửi</a>
+                        </div>
+                    </div>
+                    <div class="clearfix"></div>
+                }
+            </div><!-- mail-compose-body -->
+        </div><!-- mail-compose-dialog -->
+    </div><!-- mail-compose -->
+    @section myScripts{
+        @* <script src="~/app-assets/zimv2/lib/quill/quill.min.js"></script>*@
+        <script src="~/app-assets/zimv2/assets/js/dashforge.mail.js"></script>
+        <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+        <script>
+        var fbid = @fbfirt;
+        var idskip = @idskip;
+        $('#sendtostudent').on('click', function () {
+            if ($(this).prop('checked')) {
+                $('select[name="ddl-student"]').show();
+                $('select[name="ddl-student"]').select2({ dropdownParent: $('#mailCompose') });
+                $('select[name="ddl-type"]').hide();
+            } else {
+                $('select[name="ddl-type"]').show();
+                $('select[name="ddl-student"]').select2('destroy');
+                $('select[name="ddl-student"]').hide();
+            }
+        });
+        $(document).ready(function () {
+
+            $('body').addClass('app-mail');
+            $('#scroll-to-top').hide();
+
+            loadfeedbackdetail(fbid);
+            $('.report-reply').on('click', '.collapse-reply', function () {
+                $(this).closest('.reply-block').find('.reply-content').slideToggle();
+                $(this).toggleClass('show');
+            });
+            $('.icon-action').on('click', function () {
+                $(this).toggleClass('active');
+            });
+            $('.star-rating').on('change', 'input[name="rating"]', function () {
+                $('.rate-confirm').removeClass('hide');
+            });
+            $('.star-rating').on('click', '.cancel', function () {
+                $('.rate-confirm').addClass('hide');
+                $('.star-rating').find('input[name="rating"]').prop('checked', false);
+            });
+
+            tinymce.init({
+                selector: '.content-editor',
+                plugin: "autosave",
+                menubar: false,
+                oninit: "setPlainText",
+                plugins: "paste",
+                paste_as_text: true,
+                inline: false,
+                menubar: 'file edit insert view format table tools help',
+                toolbar: 'alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+                mobile: {
+                    theme: 'silver'
+                },
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: () => {
+                            // create input element, call modal dialog w
+                            var fileInput = document.createElement('input');
+                            fileInput.setAttribute('type', 'file');
+                            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                            // if file is submitted run our key code
+                            fileInput.addEventListener('change', () => {
+
+                                if (fileInput.files != null && fileInput.files[0] != null) {
+                                    // create instance of FileReader()
+                                    var formData = new FormData();
+                                    formData.append("FileUpload", fileInput.files[0]);
+                                    $.ajax({
+                                        async: false,
+                                        type: 'POST',
+                                        url: '/Admin/FeedBack/UploadFileImageFeedBack',
+                                        data: formData,
+                                        dataType: 'json',
+                                        contentType: false,
+                                        processData: false,
+                                        success: function (msg) {
+                                            console.log(msg.l);
+                                            editor.insertContent('<img src="' + msg.l + '"/>');
+                                        },
+                                        error: function (error) {
+                                            console.log('error upload file audio');
+                                        }
+                                    });
+
+                                    //var reader = new FileReader();
+                                    //// create event triggered after successful reading operation
+                                    //reader.onloadend = (e) => {
+                                    //    // insert content in TinyMCE
+                                    //    editor.insertContent('<img src="' + e.target.result + '"/>');
+                                    //    fileInput.value = '';
+                                    //};
+                                    //console.log(fileInput.files);
+                                    //reader.readAsDataURL(fileInput.files[0]);
+
+                                }
+                            });
+                            fileInput.click()
+                        }
+                    });
+                }
+            });
+
+            $('.fill-search').each(function () {
+                if ($(this).attr('data-val') == @ViewBag.Type) {
+                    $(this).addClass('active');
+                }
+                else {
+                    $(this).removeClass('active');
+                }
+            });
+
+
+            $("#txt-customer-name").keyup(delay(function (e) {
+                $("#txt-phone").val('');
+                $("#txt-email").val('');
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/FeedBack/SearchFeedback",
+                    data: '{search: "' + $(this).val() + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#txt-customer-name").css("background", "#FFF url(/app-assets/zimv2/images/loading-search.gif) no-repeat 165px");
+                        $("#txt-customer-name").css("background-position", "right");
+                    },
+                    success: function (msg) {
+                        $("#div-data-li").empty();
+                        $("#div-data-li").html(msg.html);
+                        $("#txt-customer-name").css("background", "#FFF");
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error: SearchFeedback");
+                    }
+                });
+            }, 1000));
+        });
+        function uploadImage(editor) {
+
+
+        }
+
+        $('#btn-check').click(function () {
+            if (confirm('Bạn có muốn gửi phản hồi?')) {
+                var content = tinymce.get('content-editor').contentDocument.activeElement.innerHTML;
+                var text = tinymce.get('content-editor').contentDocument.activeElement.innerText;
+
+                $('input[name=hdfanswer]').val(content);
+                if (text.length == 1) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Nội dung không được để trống',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                }
+                else {
+                    $('#form-feedback').submit();
+                    $(this).addClass('disabled');
+                }
+            }
+        })
+
+        $(document).on('click', '.class-load', function () {
+            var id = $(this).attr('data-id');
+            loadfeedbackdetail(id);
+        });
+        function loadfeedbackdetail(id) {
+            fbid = id;
+            $.ajax({
+                type: 'POST',
+                url: '/Admin/FeedBack/LoadContentFeedback',
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#head-mail-content').empty();
+                    $('#div-content-feedback').empty();
+                    $('#head-mail-content').append(msg.h);
+                    $('#div-content-feedback').append(msg.b);
+                    //tin quan trọng
+                    $('#btn-feedback-important').removeClass('active');
+                    if (msg.imp) {
+                        $('#btn-feedback-important').addClass('active');
+                    }
+
+                    if (msg.l.Rate) {
+                        $('input[name="rating"]').each(function () {
+                            if ($(this).attr('data-vl') == msg.l.Rate) {
+                                $(this).prop('checked', true);
+                            }
+                            else {
+                                $(this).prop('checked', false);
+                            }
+                            $(this).prop('disabled', true);
+                            $('.hide-show-rep').hide();
+                            $('.rate-confirm').addClass('hide');
+                        });
+                    }
+                    else {
+                        $('input[name="rating"]').each(function () {
+                            $(this).prop('checked', false);
+                            $(this).prop('disabled', false);
+                            $('.hide-show-rep').show();
+                        });
+                    }
+                },
+                error: function (error) {
+                    console.log('error upload file audio');
+                }
+            });
+        }
+        $('#btn-reply').click(function () {
+            var content = tinymce.get('content-editor-reply').contentDocument.activeElement.innerHTML;
+            var contentbase64 = btoa(unescape(encodeURIComponent(content)));
+            var text = tinymce.get('content-editor-reply').contentDocument.activeElement.innerText;
+            var e = $(this);
+            $('input[name=hdfanswer]').val(content);
+            if (text.length == 1) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Nội dung không được để trống',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                })
+            }
+            else {
+                $(e).attr('disabled', true);
+                console.log(fbid);
+                console.log(content);
+                $.ajax({
+                    type: 'POST',
+                    url: '/Admin/FeedBack/ReplyFeedback',
+                    data: '{id: ' + fbid + ', content:"' + contentbase64 + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $('#div-content-feedback').append(msg.d);
+                        tinymce.get('content-editor-reply').setContent('');
+                        $(e).attr('disabled', false);
+                    },
+                    error: function (error) {
+                        console.log('error reply feedback');
+                    }
+                });
+            }
+        })
+
+        $('#btn-confirm-rate').click(function () {
+            var rate = 0;
+            $('input[name="rating"]').each(function () {
+                if ($(this).prop("checked") == true) {
+                    rate = $(this).attr('data-vl');
+                }
+            });
+            $.ajax({
+                type: 'POST',
+                url: '/Admin/FeedBack/UpdateRate',
+                data: '{id: ' + fbid + ', rate:' + rate + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('.rate-confirm').addClass('hide');
+                    }
+                },
+                error: function (error) {
+                    console.log('error reply feedback');
+                }
+            });
+        })
+
+        $('#btn-feedback-important').click(function () {
+            $.ajax({
+                type: 'POST',
+                url: '/Admin/FeedBack/UpdateImportant',
+                data: '{id: ' + fbid + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                    }
+                },
+                error: function (error) {
+                    console.log('error btn-feedback-important');
+                }
+            });
+        })
+
+        //search theo type
+        $('.fill-search').click(function () {
+            $('input[name="type-nav"]').val($(this).attr('data-val'));
+            $('#form-fill-type').submit();
+        })
+
+        //chỉnh kích thuoc load input search text ajax
+        $('.result-search-ajax').each(function (index, element) {
+            var $element = $(element);
+            var input = $(element).siblings('.call-search-ajax-customer');
+
+            console.log(input);
+            input.on('focus', function () {
+                console.log('focus');
+                var topPos = input.offset().top;
+                var leftPos = input.offset().left;
+                console.log(input.outerWidth() + '  ' + input.offset().left);
+                $element.css({
+                    'position': 'fixed',
+                    'top': '55px',
+                    'left': '220px',
+                    'width': '320px',
+                    'background': 'fff'
+                });
+            })
+        });
+        function delay(callback, ms) {
+            var timer = 0;
+            return function () {
+                var context = this, args = arguments;
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    callback.apply(context, args);
+                }, ms || 0);
+            };
+        }
+
+        $(document).on('click', '.btn-loadmore', function () {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/FeedBack/LoadMore",
+                data: '{search: "' + $('#txt-customer-name').val() + '", type: ' + @ViewBag.Type + ', id:' + idskip + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                beforeSend: function () {
+                    $(this).css("background", "#FFF url(/app-assets/zimv2/images/loading-search.gif) no-repeat 165px");
+                    $(this).css("background-position", "right");
+                },
+                success: function (msg) {
+                    $("#div-data-li").append(msg.html);
+                    $(this).css("background", "#FFF");
+                    idskip = msg.skipid;
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error: GetProjectNote");
+                }
+            });
+        });
+        </script>
+    }

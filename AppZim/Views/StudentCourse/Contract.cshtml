@@ -1,0 +1,54 @@
+﻿
+@{
+    ViewBag.Title = "Contract";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+@section myStyles{
+    <style>
+        .fix-container {
+            max-width: initial;
+        }
+    </style>
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mg-b-30">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item active" aria-current="page">Mẫu hợp đồng</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="new-post-wrap fix-container">
+    <div class="editor-wrap" style="width:720px;margin:auto;">
+        <textarea name="txt-content" class="raw-txt" id="post-content">@Html.Raw(ViewBag.Content)</textarea>
+    </div>
+</div>
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+    <script>
+        tinymce.init({
+            selector: '#post-content',
+            oninit: "setPlainText",
+            plugins: 'paste autoresize stickytoolbar print autolink autosave save directionality fullscreen image link media charmap hr pagebreak nonbreaking anchor toc insertdatetime advlist lists wordcount imagetools textpattern help charmap emoticons',
+            paste_as_text: true,
+            inline: false,
+            menubar: '',
+            toolbar: '',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                '/app-assets/zimv2/assets/css/dashforge.css',
+                '/app-assets/zimv2/assets/css/custom.css',
+                '/app-assets/zimv2/assets/css/dashforge.profile.css',
+                '/app-assets/zimv2/assets/dev/contractcss.css'
+            ],
+            height: 250,
+            images_dataimg_filter: function (img) {
+                return img.hasAttribute('internal-blob');
+            },
+            fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt"
+        });
+    </script>
+}
+
+
+

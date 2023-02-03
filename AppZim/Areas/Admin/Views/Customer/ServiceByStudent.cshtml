@@ -1,0 +1,168 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_ServicesStudent>
+@{
+    ViewBag.Title = "ServiceByStudent";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+@section myStyles{
+    <style>
+        .pd-sm-b-40 {
+            padding-bottom: 5px;
+        }
+    </style>
+}
+@using (Html.BeginForm("ServiceByStudent", "Customer", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                        <li class="breadcrumb-item active" aria-current="page">Danh sách dịch vụ</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th class="no-wrap">Dịch vụ</th>
+                    <th class="no-wrap">Ngày thi</th>
+                    <th>Giá bán</th>
+                    <th>Số tiền được giảm</th>
+                    <th class="no-wrap">Đã thanh toán</th>
+                    <th class="text-center">Chứng chỉ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        tbl_ServicesStudent jtem = item;
+                        string DateService = "";
+                        if (jtem.DateService != null)
+                        {
+                            DateService = jtem.DateService.Value.ToString("dd/MM/yyyy");
+                        }
+
+                        string giaban = "";
+                        var ser = ServiceExamsTable.getbyID(item.ServiceExamsID.Value);
+                        if (ser != null)
+                        {
+                            giaban = String.Format("{0:0,0}", ser.ExamPrice.Value);
+                        }
+
+                        <tr class="tr-row">
+                            <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                            <td>@jtem.ServiceName</td>
+                            <td class="no-wrap">@jtem.ExamDate.Value.ToString("dd/MM/yyyy")</td>
+                            <td>@giaban</td>
+                            <td>
+                                @{
+                                    if (ser != null)
+                                    {
+                                        <span>@String.Format("{0:0,0}", (ser.ExamPrice.Value - jtem.PriceService.Value))</span>
+                                    }
+                                }
+                            </td>
+                            <td class="no-wrap text-success">@String.Format("{0:0,0}", jtem.PriceService)</td>
+                            <td class="text-center">
+                                @{
+                                    if (!string.IsNullOrEmpty(item.CertificateFile))
+                                    {
+                                        <a href="@item.CertificateFile" download="" data-toggle="tooltip" data-placement="top" title="Tải xuống"><i data-feather="download-cloud"></i></a>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                        <tr class="collapse-row">
+                            <td colspan="8">
+                                <div class="collapse-content">
+                                    <table class="table table-bordered">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th class="no-wrap">Nhà cung cấp</th>
+                                                <th>Ghi chú</th>
+                                                <th>Ngày đặt</th>
+                                                <th>Phương thức thanh toán</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="no-wrap">@jtem.SupplierServices</td>
+                                                <td>@jtem.Note</td>
+                                                <td>@DateService</td>
+                                                <td>@jtem.PaymentmethodName</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        @Html.PagedListPager(Model, page => Url.Action("ServiceCustomer", new
+        {
+            page,
+            search = ViewBag.Search,
+            sort = ViewBag.Sort,
+            service = ViewBag.ServiceID,
+            supplier = ViewBag.SupplierID,
+            from = ViewBag.From,
+            to = ViewBag.To
+        }),
+        new PagedListRenderOptions
+        {
+            UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+        })
+
+    </nav>
+</div>
+
+
+@section myScripts{
+    <script src="~/app-assets/js/accounting.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+    </script>
+}
+

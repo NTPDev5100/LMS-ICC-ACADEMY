@@ -1,0 +1,419 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@{
+    ViewBag.Title = "Nhân viên";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_Account teacher = AccountTable.getbyID(Model.ID);
+    var position = SalarySettingTable.getall();
+
+}
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+<style>
+    .list-student-course .table tr td {
+        background: #fff !important;
+    }
+
+    .list-student-course .table th {
+        background: #f3f4f7 !important;
+    }
+
+    td.class-name {
+        width: 200px;
+        min-width: 200px;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        background: #fff !important;
+    }
+
+    .select-td {
+        min-width: 150px;
+    }
+
+    .teach {
+        width: 60px;
+        min-width: 60px;
+        position: sticky;
+        left: 200px;
+        background: #fff;
+    }
+
+
+    .rating-box {
+        display: flex;
+        align-items: center;
+    }
+
+    .col-form-label {
+        text-align: right;
+    }
+
+    .rating-total,
+    .rating-detail,
+    .rating-close {
+        padding: 0px;
+    }
+
+    .rating-nav {
+        list-style-type: none;
+        padding: 0px;
+    }
+
+        .rating-nav li {
+            display: flex;
+            align-items: center;
+        }
+
+            .rating-nav li + li {
+                margin-top: 10px;
+            }
+
+        .rating-nav .star {
+            margin-right: 5px;
+            font-size: 14px;
+            color: #566376;
+        }
+
+        .rating-nav .process-bar {
+            width: 130px;
+            height: 10px;
+            background-color: white;
+            position: relative;
+            margin-right: 20px;
+            border-radius: 5px;
+        }
+
+            .rating-nav .process-bar .process-bar-inside {
+                background-color: #ffa500;
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                border-radius: 5px;
+            }
+
+        .rating-nav .rating-link {
+            text-decoration: none;
+        }
+
+    .rating-close-btn {
+        border: 1px solid #e1e1e1;
+        padding: 8px 20px;
+        text-decoration: none;
+        transition: .2s;
+        display: inline-block;
+        border-radius: 2px;
+    }
+
+        .rating-close-btn:hover {
+            background-color: #01a301;
+            color: #fff;
+        }
+
+    .student-rating {
+        display: flex;
+        align-items: center;
+        /*padding: 30px;*/
+    }
+
+        .student-rating .rate {
+            height: 46px;
+            padding: 0 17px;
+            float: left;
+            margin-right: 20px;
+        }
+
+    .rate:not(:checked) > input {
+        display: none;
+    }
+
+    .rate:not(:checked) > label {
+        float: right;
+        width: 1em;
+        overflow: hidden;
+        white-space: nowrap;
+        cursor: pointer;
+        font-size: 30px;
+        color: #ccc;
+    }
+
+        .rate:not(:checked) > label:before {
+            content: '★';
+        }
+
+    .rate > input:checked ~ label {
+        color: #ffa500;
+    }
+    /*.rate:not(:checked)>label:hover,
+        .rate:not(:checked)>label:hover~label {
+            color: #ffa500;
+        }*/
+    .student-rating .title {
+        /*margin-right: 20px;*/
+        display: inline-block;
+    }
+
+    .student-rating .submit-rating {
+        padding: 5px 10px;
+        background-color: #01a301;
+        position: relative;
+        color: #fff;
+        text-decoration: none;
+        transition: .2s;
+    }
+
+        .student-rating .submit-rating::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 10px solid transparent;
+            border-right-color: #01a301;
+            transition: .2s;
+        }
+
+    @@media only screen and (max-width : 768px) {
+        .rating-total, .rating-detail, .rating-close {
+            padding: 15px;
+        }
+
+        .rating-box {
+            display: block;
+            text-align: center;
+        }
+
+        .rating-detail {
+            border-top: 1px solid #e1e1e1;
+            border-bottom: 1px solid #e1e1e1;
+            border-right: 0;
+            border-left: 0;
+        }
+
+        .rating-nav li {
+            justify-content: center;
+        }
+
+        .rating-nav .process-bar {
+            width: 120px;
+        }
+
+        .student-rating {
+            flex-wrap: wrap;
+        }
+
+            .student-rating .title {
+                width: 100%;
+            }
+
+            .student-rating .rate {
+                margin-right: 10px;
+            }
+
+        .student-rating {
+            padding: 15px;
+        }
+    }
+</style>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item"><a href="@Url.Action("SellerList", "Staff", new { area = "Admin" })">Danh sách tư vấn viên</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Cập nhật thông tin</li>
+    </ol>
+</nav>
+<div class="media d-block d-lg-flex">
+    <div class="config-teacher" style="flex-grow:1;">
+        <div class="teacher-infomation mg-b-15">
+            <fieldset class="form-fieldset">
+                <legend>Thông tin tài khoản</legend>
+
+                @using (Html.BeginForm("EditStaff", "Staff", FormMethod.Post))
+                {
+                    <input type="hidden" value="@teacher.ID" name="hdfID" />
+                    <div class="form-group row">
+                        <label for="user_name" class="col-sm-2 col-form-label">Tài khoản</label>
+                        <div class="col-sm-4">
+                            <input type="text" disabled class="form-control" id="user_name" placeholder="Full name" value="@Model.UserName">
+                        </div>
+                        <label class="col-sm-2 col-form-label">Trạng thái</label>
+                        <div class="col-sm-4">
+                            <select name="ddl-status" required class="form-control select2">
+                                <option value="1">Chưa kích hoạt</option>
+                                <option value="2">Hoạt động</option>
+                                <option value="3">Khóa</option>
+                            </select>
+                            <script>
+                                        $('select[name=ddl-status]').val(@teacher.Status);
+                            </script>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-full-name" class="col-sm-2 col-form-label">Họ và tên</label>
+                        <div class="col-sm-4">
+                            <input value="@Model.FullName" name="txt-full-name" type="text" class="validate form-control" required>
+                        </div>
+                        <label for="txt-email" class="col-sm-2 col-form-label">Email</label>
+                        <div class="col-sm-4">
+                            <input type="email" class="form-control" id="txt-email" name="txt-email" placeholder="Email address" value="@Model.Email">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-phone" class="col-sm-2 col-form-label">Số điện thoại</label>
+                        <div class="col-sm-4">
+                            <input type="number" class="form-control" id="txt-phone" name="txt-phone" placeholder="Phone number" value="@Model.Phone">
+                        </div>
+                        <label for="txt-birthday" class="col-sm-2 col-form-label">Ngày sinh</label>
+                        <div class="col-sm-4">
+                            <input type="text" id="txt-birthday" name="txt-birthday" class="form-control datetimepicker date-only" placeholder="dd/mm/yyyy" required
+                                   value="@Model.Birthday.ToString("dd/MM/yyyy")">
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="txt-address" class="col-sm-2 col-form-label">Địa chỉ</label>
+                        <div class="col-sm-4">
+                            <textarea type="text" class="form-control" row="1" id="txt-address" name="txt-address">@teacher.Address</textarea>
+                        </div>
+
+                        <label for="txt-fb" class="col-sm-2 col-form-label">Link FB</label>
+                        <div class="col-sm-4">
+                            <textarea type="text" class="form-control" row="1" id="txt-fb" name="txt-fb">@teacher.LinkFB</textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-form-label col-sm-2 col-form-label">Giới tính</label>
+                        <div class="col-sm-4 d-flex align-items-center">
+
+                            @{ int gen = teacher.GenderID.Value;
+                                if (gen == 1)
+                                {
+                                    <div class="custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-male" value="1" checked>
+                                        <label class="custom-control-label" for="sex-male">Nam</label>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-male" value="1">
+                                        <label class="custom-control-label" for="sex-male">Nam</label>
+                                    </div>
+                                }
+                                if (gen == 2)
+                                {
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-female" value="2" checked>
+                                        <label class="custom-control-label" for="sex-female">Nữ</label>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-female" value="2">
+                                        <label class="custom-control-label" for="sex-female">Nữ</label>
+                                    </div>
+                                }
+                                if (gen == 3)
+                                {
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-free" value="3" checked>
+                                        <label class="custom-control-label" for="sex-free">Không xác định</label>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="mg-l-20 custom-control custom-radio">
+                                        <input type="radio" name="sex" class="custom-control-input" id="sex-free" value="3">
+                                        <label class="custom-control-label" for="sex-free">Không xác định</label>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        @if (teacher.RoleID == 2 || teacher.RoleID == 3 || teacher.RoleID == 6)
+                        {
+                            <label for="txt-dw" class="col-form-label col-sm-2 pt-0">Cấp bậc</label>
+                            <div class="col-sm-4">
+                                <select name="ddl-position" required class="form-control select2">
+                                    <option value="0">---</option>
+                                    @foreach (var i in position)
+                                    {
+                                        <option value="@i.ID">@i.PositionName</option>
+                                    }
+                                </select>
+                                <script>$('select[name=ddl-position]').val(@teacher.Position)</script>
+                            </div>
+                        }
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-form-label col-sm-2 pt-0">Doanh thu cũ</label>
+                        <div class="col-sm-4">
+                            <input type="text" id="txt-revenue" name="txt-revenue" class="form-control" oninput="moneyfm(this)" value="@String.Format("{0:0,0}", teacher.Revenue)" />
+                        </div>
+                        <label for="txt-bank" class="col-sm-2 col-form-label">Thông tin ngân hàng</label>
+                        <div class="col-sm-4">
+                            <textarea type="text" class="form-control" id="txt-bank" name="txt-bank" rows="1">@teacher.BankInformation</textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-dw" class="col-form-label col-sm-2 pt-0">Ngày nhận việc</label>
+                        <div class="col-sm-4">
+                            <input type="text" id="txt-dw" name="txt-dw" class="form-control datetimepicker date-only" value="@(teacher.DateStartWork == null ? "" : teacher.DateStartWork.Value.ToString("dd/MM/yyyy"))">
+                        </div>
+                        <label for="txt-dw" class="col-form-label col-sm-2 pt-0">Chức vụ</label>
+                        <div class="col-sm-4">
+                            <select name="ddl-role" required class="form-control select2">
+                                <option value="1">Admin</option>
+                                <option value="2">Trưởng phòng</option>
+                                <option value="3">Trưởng nhóm</option>
+                                <option value="6">Tư vấn viên</option>
+                            </select>
+                            <script>$('select[name=ddl-role]').val(@teacher.RoleID)</script>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-form-label col-sm-2 pt-0">Mật khẩu:</label>
+                        <div class="col-sm-4">
+                            <input type="password" id="txt-password" name="txt-password" class="form-control" placeholder="******" autocomplete="new-password" />
+
+                        </div>
+                        <label class="col-form-label col-sm-2 pt-0">Nhập lại:</label>
+                        <div class="col-sm-4">
+                            <input type="password" class="form-control" id="txt-password-confirm" name="txt-password-confirm" placeholder="******" autocomplete="new-password" />
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-primary">Cập nhật</button>
+                    </div>
+                }
+            </fieldset>
+        </div>
+    </div>
+</div><!-- media -->
+
+@section myScripts{
+    <script>
+         $(document).ready(function () {
+
+            $('.filter-sale').on('click', 'a', function (e) {
+                var $this = $(this);
+                $this.addClass('active');
+                $('.filter-sale a').not($this).removeClass('active');
+            });
+
+            $('.edit-profile').on('click', function () {
+                $('.cs-account').slideToggle();
+                $('.cs-profile').slideToggle();
+            });
+
+            $('.change-password').on('click', function () {
+                $('.cs-account').slideDown();
+                $('.cs-profile').slideUp();
+            });
+
+            $('select[name=ddl-status]').val(@teacher.Status);
+            $('select[name="ddl-gender]').val(@teacher.GenderID);
+        });
+    </script>
+}

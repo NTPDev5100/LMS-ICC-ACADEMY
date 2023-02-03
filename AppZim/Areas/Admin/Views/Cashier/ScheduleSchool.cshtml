@@ -1,0 +1,261 @@
+﻿
+@{
+    ViewBag.Title = "Schedule";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+@section myStyles{
+    <link href="~/app-assets/js/fullcalendar/fullcalendar.min.css" rel="stylesheet" />
+    <style>
+        .fc-time-grid .fc-slats td {
+            height: 3.5em;
+        }
+
+        .schedule-calendar .fc-toolbar.fc-header-toolbar {
+            height: 75px;
+        }
+    </style>
+}
+<div class="row mg-b-30">
+    <div class="col-9">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item">Lịch dạy trung tâm</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="col-3 @ViewBag.Hide">
+        <select class="form-control" id="ddl-school">
+            @Html.Raw(ViewBag.School);
+        </select>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-12 mg-t-20 mg-xl-t-0">
+        <div id="schedule-calendar" class="schedule-calendar"></div>
+    </div>
+</div>
+
+@section myScripts
+{
+    <script src="~/app-assets/mycalendar/js/moment.min.js"></script>
+    <script src="~/app-assets/js/fullcalendar/fullcalendar.min.js"></script>
+    <script>
+    $(document)
+        .ajaxStart(function () {
+            $('#AjaxLoader').show();
+        })
+        .ajaxStop(function () {
+            $('#AjaxLoader').hide();
+        });
+        var m = '@ViewBag.m';
+
+        $(document).ready(function () {
+            // Initialize fullCalendar
+            // Calendar Event Source
+            var curYear = moment().format('YYYY');
+            var curMonth = moment().format('MM');
+            var calendarEvents = {
+                id: 1,
+                backgroundColor: '#f7f7f7',
+                borderColor: 'transparent',
+                events: [
+
+                ]
+            };
+
+            var DK = $('#schedule-calendar').fullCalendar({
+                height: 'parent',
+                eventLimit: false,
+                timeFormat: 'HH:mm',
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'month,agendaWeek,agendaDay,listWeek'
+                },
+                navLinks: true,
+                slotEventOverlap: false,
+                selectable: false,
+                displayEventEnd: true,
+                selectLongPressDelay: 100,
+                editable: false,
+                nowIndicator: true,
+                defaultView: 'listMonth',
+                views: {
+                    agenda: {
+                        columnHeaderHtml: function (mom) {
+                            return '<span>' + mom.format('ddd') + '</span>' + ' ' +
+                                '<span>' + mom.format('DD') + '</span>';
+                        }
+                    },
+                    day: { columnHeader: false },
+                    listMonth: {
+                        listDayFormat: 'ddd DD',
+                        listDayAltFormat: false
+                    },
+                    listWeek: {
+                        listDayFormat: 'ddd DD',
+                        listDayAltFormat: false
+                    },
+                    agendaThreeDay: {
+                        type: 'agenda',
+                        duration: { days: 3 },
+                        titleFormat: 'MMMM YYYY'
+                    }
+                },
+                events: calendarEvents,
+                eventAfterAllRender: function (view) {
+                    if (view.name === 'listMonth' || view.name === 'listWeek') {
+                        var dates = view.el.find('.fc-list-heading-main');
+                        dates.each(function () {
+                            var text = $(this).text().split(' ');
+                            var now = moment().format('DD');
+
+                            $(this).html(text[0] + '<span>' + text[1] + '</span>');
+                            if (now === text[1]) { $(this).addClass('now'); }
+                        });
+                    }
+                },
+                eventRender: function (event, element) {
+                    if (event) {
+                        if (element.find('.fc-list-item-title').length > 0) {
+                            element.find('.fc-list-item-title').append(
+                                `<div class="box-info">
+                                    <p class="txt">${event.room}</p>
+                                    <p class="txt">${event.course}</p>
+                                    <p class="txt"><span class="subject">${event.subject}</span></p>
+                                </div> `);
+                        } else {
+                            element.append(
+                                `<div class="box-info">
+                                    <p class="txt">${event.room}</p>
+                                    <p class="txt">${event.course}</p>
+                                    <p class="txt"><span class="subject">${event.subject}</span></p>
+                                </div>`
+                            );
+                        }
+                    }
+                    var eBorderColor = (event.source.borderColor) ? event.borderColor : 'rgb(247, 247, 247)';
+                    element.find('.fc-event-dot').css('backgroundColor', eBorderColor)
+                    element.css('borderLeft', `2px solid ${eBorderColor}`);
+                },
+            });
+
+            shedule(0);
+            function shedule(t) {
+                DK.fullCalendar('removeEvents');
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Cashier/LoadScheduleSchool",
+                    data: '{month: "' + m + '", type: ' + t + ', schoolid:' + $('#ddl-school').val() + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Notification!',
+                                text: 'Data empty',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                        }
+                        else {
+                            m = msg.m;
+                            var events = [];
+                            for (var i = 0; i < msg.l.length; i++) {
+                                var startDate = $.fullCalendar.moment(msg.l[i].start).format();
+                                var endDate = $.fullCalendar.moment(msg.l[i].end).format();
+                                var title = "";
+                                var course = msg.l[i].title;
+                                var allDate = msg.l[i].allDate;
+                                var url = msg.l[i].url;
+                                var borderColor = msg.l[i].borderColor;
+                                var subject = msg.l[i].subject;
+                                //var room = msg.l[i].room;
+                                var room = '';
+
+                                var event = {
+                                    title: title,
+                                    start: startDate,
+                                    end: endDate,
+                                    allDay: allDate,
+                                    url: url,
+                                    borderColor: borderColor,
+                                    subject: subject,
+                                    course: course,
+                                    room: room
+                                }
+                                events.push(event);
+                            }
+                            calendarEvents.events = events;
+                            DK.fullCalendar('addEventSource', calendarEvents);
+                        }
+
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e: shedule :) ");
+                    }
+                });
+            }
+
+            var calendar = $('#schedule-calendar').fullCalendar('getCalendar');
+            // change view to week when in tablet
+            if (window.matchMedia('(min-width: 576px)').matches) {
+                calendar.changeView('agendaWeek');
+            }
+
+            // change view to month when in desktop
+            if (window.matchMedia('(min-width: 992px)').matches) {
+                calendar.changeView('month');
+            }
+
+            // change view based in viewport width when resize is detected
+            calendar.option('windowResize', function (view) {
+                if (view.name === 'listWeek') {
+                    if (window.matchMedia('(min-width: 992px)').matches) {
+                        calendar.changeView('month');
+                    } else {
+                        calendar.changeView('listWeek');
+                    }
+                }
+            });
+            $('.fc-prev-button').click(function () {
+                shedule(1);
+            })
+            $('.fc-next-button').click(function () {
+                shedule(2);
+            })
+            $('#ddl-school').change(function () {
+                shedule(0);
+            });
+        });
+
+        function CheckJoinRoom(id) {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/ZoomMeeting/CheckJoinRoom",
+                data: '{id:  ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.m,
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2000
+                        })
+                    }
+                    else {
+                        //console.log(msg.url);
+                        window.open(msg.url, "_blank");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: error");
+                }
+            });
+        }
+    </script>
+}

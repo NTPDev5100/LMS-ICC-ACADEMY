@@ -1,0 +1,104 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_NotificationSingle>
+@{
+    ViewBag.Title = "Notification";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+@section myStyles{
+
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item"><a href="#">Danh sách thông báo</a></li>
+    </ol>
+</nav>
+<div class="notification__wrap">
+    <div class="tab-content bd-gray-300 bd-t-0 pd-y-20" id="tab-notification">
+        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Tiêu đề</th>
+                            <th>Nội dung</th>
+                            <th>Thời gian</th>
+                            <th>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input checkbox-all check-view" id="checkbox-all-1" data-id="0">
+                                    <label class="custom-control-label" for="checkbox-all-1">Đã xem tất cả</label>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.NotificationTitle</td>
+                                    <td>@Html.Raw(item.NotificationContent)</td>
+                                    <td>@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="checkbox-field">
+                                        <div class="custom-control custom-checkbox">
+                                            @{
+                                                if (item.Status == 1)
+                                                {
+                                                    <input type="checkbox" data-id="@item.ID" class="custom-control-input check-view" id="cb-id-@item.ID">
+                                                    <label class="custom-control-label" for="cb-id-@item.ID">Đã xem</label>
+                                                }
+                                                else
+                                                {
+                                                    <input type="checkbox" checked disabled class="custom-control-input" id="readed">
+                                                    <label class="custom-control-label" for="readed">Đã xem</label>
+                                                }
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <nav aria-label="Page navigation" class="mg-t-10">
+                @Html.PagedListPager(Model, page => Url.Action("Notification", "Notification", new { page }),
+               new PagedListRenderOptions
+                    {
+                   MaximumPageNumbersToDisplay = 5,
+                   DisplayLinkToFirstPage = PagedListDisplayMode.Never,
+                   DisplayLinkToLastPage = PagedListDisplayMode.Never,
+                   UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+                   LiElementClasses = new[] { "page-item" },
+               })
+            </nav>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.checkbox-all').on('change', checkAllCb);
+            function checkAllCb() {
+                var $table = $(this).closest('.table');
+                $table.find('tbody input[type="checkbox"].check-view').prop('checked', $(this).prop('checked'));
+            }
+        });
+        $('.check-view').click(function () {
+            var id = $(this).attr('data-id');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/viewnoti",
+                data: '{ID: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log('error: viewnoti');
+                }
+            });
+        })
+    </script>
+}

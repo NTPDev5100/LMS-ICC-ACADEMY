@@ -1,0 +1,286 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_StudyTime>
+@{
+    ViewBag.Title = "Shift";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var cahoc = StudyTimeTable.getall();
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách ca học</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="d-xl-flex align-items-center justify-content-between">
+    <div><a href="#div-add-room" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a></div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("Shift", "Option", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form">
+                    <input type="search" name="search" list="browsers" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search" autocomplete="off">
+                    <datalist id="browsers">
+                        @{
+                            foreach (var i in cahoc)
+                            {
+                                <option value="@i.StudyTimeName">@i.StudyTimeName</option>
+                            }
+                        }
+                    </datalist>
+                    <button class="btn btn-search" type="submit"><i data-feather="search"></i></button>
+                </div>
+                <div class="mg-l-5">
+                    <select class="form-control select2" name="search-time" onchange="Search()">
+                        <option value="">---Chọn buổi---</option>
+                        <option value="1" @(ViewBag.SearchTime == 1 ? "selected" : "")> Sáng</option>
+                        <option value="2" @(ViewBag.SearchTime == 2 ? "selected" : "")> Chiều</option>
+                        <option value="3" @(ViewBag.SearchTime == 3 ? "selected" : "")> Tối</option>
+                    </select>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Buổi học</th>
+                    <th>Ca học</th>
+                    <th class="text-center">Thời lượng(Phút)</th>
+                    <th class="text-center">Bắt đầu</th>
+                    <th class="text-center">Kết thúc</th>
+                    <th class="text-center">Ẩn/Hiện</th>
+                    <th>Người sửa</th>
+                    <th>Thời gian sửa</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @{
+                                if (item.TimeOfDay == 1)
+                                {
+                                    <span>Sáng</span>
+                                }
+                                if (item.TimeOfDay == 2)
+                                {
+                                    <span>Chiều</span>
+                                }
+                                if (item.TimeOfDay == 3)
+                                {
+                                    <span>Tối</span>
+                                }
+                            }
+                        </td>
+                        <td>@item.StudyTimeName</td>
+                        <td class="text-center">@item.StyleLesson</td>
+                        <td class="text-center">@item.sTime</td>
+                        <td class="text-center">@item.eTime</td>
+                        <td class="text-center">
+                            @{
+                                if (item.isHide.Value)
+                                {
+                                    <i data-feather="check-circle"></i>
+                                }
+                            }
+                        </td>
+                        <td>@item.ModifiedBy</td>
+                        <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-center">
+                            <a href="#edit-roomcenter" data-toggle="modal" data-id="@item.ID" data-timeofday="@item.TimeOfDay" data-ishide="@item.isHide" data-name="@item.StudyTimeName" data-lesson="@item.StyleLesson" data-stime="@item.sTime" data-etime="@item.eTime" class="btn btn-primary edit-study">
+                                <i data-feather="rotate-ccw"></i> Cập nhật
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @Html.PagedListPager(Model, page => Url.Action("Shift", new
+    {
+        page,
+        search = ViewBag.Search,
+    }),
+    new PagedListRenderOptions
+    {
+        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+    })
+</nav>
+
+<div class="modal fade" id="div-add-room" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddStudyTime", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo mới ca học</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-lesson">Buổi trong ngày:</label>
+                                    <select class="form-control" name="time-of-day" required>
+                                        <option value="">----Chọn buổi----</option>
+                                        <option value="1">Sáng</option>
+                                        <option value="2">Chiều</option>
+                                        <option value="3">Tối</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-lesson">Tên ca:</label>
+                                    <input id="txt-lesson" name="txt-lesson" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Thời lượng(Số phút)<i></i>:</label>
+                                    <input data-type="number" name="ddl-lesson" class="form-control" required placeholder="120" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Bắt đầu:</label>
+                                    <select name="ddl-stime" class="form-control select2" required>
+                                        @for (int i = 0; i <= 23; i++)
+                                        {
+                                            var h = i < 10 ? "0" + i.ToString() : i.ToString();
+                                            for (int j = 0; j <= 55; j += 5)
+                                            {
+                                                var m = j < 10 ? "0" + j.ToString() : j.ToString();
+                                                <option value="@h:@m">@h:@m</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="edit-roomcenter" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditStudyTime", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Cập nhật</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-lesson">Buổi trong ngày:</label>
+                                    <select class="form-control" name="edit-time-of-day" required>
+                                        <option value="">----Chọn buổi----</option>
+                                        <option value="1">Sáng</option>
+                                        <option value="2">Chiều</option>
+                                        <option value="3">Tối</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-lesson">Tên ca:</label>
+                                    <input id="txt-edit-lesson" name="txt-edit-lesson" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Thời lượng(Số phút)<i></i>:</label>
+                                    <input data-type="number" name="ddl-edit-lesson" class="form-control" required placeholder="120" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Bắt đầu:</label>
+                                    <select name="ddl-edit-stime" class="form-control select2" required>
+                                        @for (int i = 0; i <= 23; i++)
+                                        {
+                                            var h = i < 10 ? "0" + i.ToString() : i.ToString();
+                                            for (int j = 0; j <= 55; j += 5)
+                                            {
+                                                var m = j < 10 ? "0" + j.ToString() : j.ToString();
+                                                <option value="@h:@m">@h:@m</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="chk-hide" name="chk-hide">
+                                        <label class="custom-control-label" for="chk-hide">Tạm ẩn</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        $(document).on("click", ".edit-study", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=txt-edit-lesson]').val($(this).attr('data-name'));
+            $('input[name=ddl-edit-lesson]').val($(this).attr('data-lesson'));
+            $('select[name=ddl-edit-stime]').val($(this).attr('data-stime'));
+            $('select[name=ddl-edit-stime]').trigger("change");
+            $('select[name=edit-time-of-day]').val($(this).attr('data-timeofday'));
+            $('select[name=edit-time-of-day]').trigger('change');
+            if ($(this).attr('data-ishide') == 'True') {
+                $('#chk-hide').prop("checked", true);
+            }
+            else {
+                $('#chk-hide').prop("checked", false);
+            }
+        });
+        function Search() {
+            $('.btn-search').trigger('click');
+        }
+    </script>
+}

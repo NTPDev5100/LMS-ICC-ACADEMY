@@ -1,0 +1,2 @@
+PageError: SetPackageController    FunctionError: AddExerciseChoice    loginUID: 1    MessageError: Object reference not set to an instance of an object.    24/05/2021 13:52
+PageError: SetPackageController    FunctionError: AddExerciseChoice    loginUID: 1    MessageError: Object reference not set to an instance of an object.    24/05/2021 13:57

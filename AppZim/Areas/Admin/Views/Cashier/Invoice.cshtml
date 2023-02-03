@@ -1,0 +1,132 @@
+﻿@using AppZim.Models;
+@using AppZim.TableSql;
+@using AppZim.ZIM;
+@using AppZim.Areas.Admin.Controllers;
+@model tbl_Invoices
+@{
+    tbl_StudentAppointment appointment = StudentAppointmentTable.getbyid(ViewBag.Appointment.ID);
+    List<tbl_DesiredStudyTime> dayArray = DesiredStudyTimeTable.getbyStudentAppointmentID(ViewBag.Appointment.ID);
+    string date = "";
+    foreach (var i in dayArray)
+    {
+        if (i == dayArray.Last())
+        {
+            date += i.DayOfWeekName + " - " + i.StudyTimeName;
+        }
+        else
+        {
+            date += i.DayOfWeekName + " - " + i.StudyTimeName + ", ";
+        }
+    }
+    var projectname = BaseController.ProjectName;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu Thu</title>
+    <link href="~/app-assets/Invoice/css/style-invoices.css" rel="stylesheet" />
+    <style>
+    </style>
+</head>
+<body>
+    <div class="phieuthu">
+        <div class="head">
+            <div class="logo">
+                <img src="~/app-assets/Invoice/images/favicon.png" />
+            </div>
+            <div class="school">
+                <h2> Trường Anh Ngữ Quốc Tế @projectname </h2>
+                <p> Địa chỉ: No 12, Hoàng gia Tower, Tô Hiệu, Quang Trung, Hà Đông, Hà Nội. </p>
+                <p> Hotline: 024. 6662.8671  <span> - </span> Website: Iccacademy.edu.vn </p>
+            </div>
+            <div class="empty"></div>
+        </div>
+        <div class="head-title">
+            <div class="left">
+            </div>
+            <div class="center">
+                <h1> Phiếu Thu </h1>
+            </div>
+            <div class="right">
+                <p> Quyển sổ: ................................ </p>
+                <p> Sổ: .............................................. </p>
+            </div>
+        </div>
+        <div class="body-form">
+            <div class="line-form">
+                <p> Họ và tên học viên: .......... <span> @Model.StudentFullName </span> .......... Điện thoại: ............. <span> @Model.StudentPhone </span> ...................... </p>
+                <p> Lịch học mong muốn: .......... <span> @date  </span>........... Mức học phí: <span> @String.Format("{0:0,0}", Model.Price + Model.PriceLeft) đ </span> ........................... </p>
+                <p> Gói cam kết: .......... <span> @appointment.CommitmentName  </span>........... Mức giá: ......................... <span> @String.Format("{0:0,0}", appointment.CommitmentPrice) đ </span> ........................... </p>
+                <p>
+                    Số tiền thu: ......... <span> @String.Format("{0:0,0}", Model.Price + Model.RewardTeachers) đ </span> .............................................. Bằng chữ: .........................................................................
+                    <br> ...................................... <span> @(AssetCRM.MoneyToText(Model.Price.Value + Model.RewardTeachers.Value)) </span>...............................
+                </p>
+            </div>
+        </div>
+        <div class="form-lydo">
+            <div class="left">
+                <p> Lý do thu: </p>
+            </div>
+            <div class="right">
+                <div class="one-col">
+                    <div class="checkbox">
+                        <input type="checkbox" id="1" @(ViewBag.CoefficientID == 1 ? "checked" : "")>
+                        <label for="1"> Tháng </label>
+                    </div>
+                    <div class="checkbox">
+                        <input type="checkbox" id="2" @(ViewBag.CoefficientID == 2 ? "checked" : "")>
+                        <label for="2"> 50% học phí </label>
+                    </div>
+                </div>
+                <div class="one-col">
+                    <div class="checkbox">
+                        <input type="checkbox" id="3" @(ViewBag.CoefficientID == 3 ? "checked" : "")>
+                        <label for="3"> Hoàn tất học phí</label>
+                    </div>
+                    <div class="checkbox">
+                        <input type="checkbox" id="4" @(ViewBag.CoefficientID == 4 ? "checked" : "")>
+                        <label for="4"> Khác:..........<span></span>............. </label>
+                    </div>
+                </div>
+                <div class="one-col">
+                    <div class="checkbox" style="width: 100%;">
+                        <p> Học phí còn lại: ...... <span> @String.Format("{0:0,0}", Model.PriceLeft) ... đ</span>  </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="foot">
+            <div class="left">
+                <b> Chú ý: </b>
+                <p> - Học phí đã nộp sẽ không được hoàn lại. </p>
+                <p> - Học viên chỉ được hưởng ưu đãi học phí khi hoàn thành 50% hoặc 100% học phí trước ngày học chính thức.</p>
+                <p> - Mọi thông tin chi tiết xin liên hệ theo Hotline: 024. 6662.8671 </p>
+            </div>
+            <div class="right">
+                <div class="date">
+                    <p> Hà Nội, ngày @Model.CreatedDate.Value.Day<span></span> tháng @Model.CreatedDate.Value.Month<span></span> năm @Model.CreatedDate.Value.Year </p>
+                </div>
+                <div class="present">
+                    <div class="left">
+                        <p> Đại diện Công ty </p>
+                        <span> (Ký họ tên) </span>
+                        <div class="img-daumoc">
+                            <img src="~/app-assets/Invoice/images/kyten.png" />
+                            <div class="img-kyten">
+                                <img src="~/app-assets/Invoice/images/phuc.png" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <p> Học viên </p>
+                        <span> (Ký họ tên) </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

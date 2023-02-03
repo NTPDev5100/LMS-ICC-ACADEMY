@@ -1,0 +1,486 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "CustomerDebtsDataTable";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_School> schools = SchoolTable.getall();
+    List<tbl_City> citys = LocationTable.getall();
+
+}
+@section myStyles{
+    <style>
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow: hidden;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .dataTables_paginate {
+            height: 25px;
+        }
+
+        .container {
+            max-width: 1440px
+        }
+
+        table.dataTable thead .sorting_asc, table.dataTable thead .sorting_desc {
+            background-image: none;
+            background-color: #e3e7ed;
+            position: relative;
+        }
+
+        table.dataTable tbody td.sorting_1 {
+            background-color: unset;
+        }
+
+        .form-fieldset {
+            background-color: unset;
+            border: 1px solid rgba(72,94,144,.16);
+            padding: 20px 25px 25px;
+            border-radius: .25rem;
+        }
+
+        tbody tr.selected:not(.collapse-row) {
+            background-color: #3461c8 !important;
+            color: white;
+        }
+
+            tbody tr.selected:not(.collapse-row) a {
+                color: white;
+            }
+    </style>
+}
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item active" aria-current="page">Danh sách học viên nợ học phí</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <div class="d-xl-block">
+        <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+            <div class="search-form mg-l-5 mg-r-5">
+                <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="">
+                <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+            </div>
+            <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0 transparent" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                <i data-feather="filter"></i>
+            </a>
+        </div>
+    </div>
+</div>
+<div class="collapse mg-t-10" id="filterCollapse">
+    <div class="card">
+        <div class="card-body">
+            <div class="row flex-wrap">
+                @*<div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Trung tâm:</label>
+                        <select class="form-control select2" name="center">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                foreach (var c in schools)
+                                {
+                                    if (ViewBag.CenterID != null)
+                                    {
+                                        if (ViewBag.CenterID == c.ID)
+                                        {
+                                            <option value="@c.ID" selected>@c.SchoolName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.ID">@c.SchoolName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.ID">@c.SchoolName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>*@
+                <div class="form-group col-md-4 col-6 col-xl-2">
+                    <label class="form-control-label">Ngày hẹn thu:</label>
+                    <input type="text" name="fromleft" class="form-control datetimepicker from-date date-only" value="" placeholder="DD / MM / YYYY" autocomplete="off" />
+                </div>
+                <div class="form-group col-md-4 col-6 col-xl-2">
+                    <label class="form-control-label">Đến:</label>
+                    <input type="text" name="toleft" class="form-control datetimepicker to-date date-only" value="" placeholder="DD / MM / YYYY" autocomplete="off" />
+                </div>
+                <div class="form-group col-md-4 col-6 col-xl-2">
+                    <label class="form-control-label">Ngày nhập học từ:</label>
+                    <input type="text" name="from" class="form-control datetimepicker date-only" value="" placeholder="DD / MM / YYYY" autocomplete="off" />
+                </div>
+                <div class="form-group col-md-4 col-6 col-xl-2">
+                    <label class="form-control-label">Đến:</label>
+                    <input type="text" name="to" class="form-control datetimepicker date-only" value="" placeholder="DD / MM / YYYY" autocomplete="off" />
+                </div>
+                <div class="form-group col-md-4 col-6 col-xl-2 text-center">
+                    <label class="form-control-label">Thao tác:</label>
+                    <div>
+                        <button type="button" class="btn btn-primary mg-r-10 btn-search"><i data-feather="search"></i></button>
+                        @if (aclog.RoleID == 1)
+                        {
+                            <a href="javascript:;" class="btn btn-success export-excel"><i data-feather="file-text"></i> Xuất Excel</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter" id="CustomerDebtsDataTable">
+            <thead class="thead-light">
+                <tr>
+                    <th>Học viên</th>
+                    <th>Số điện thoại</th>
+                    <th class="no-wrap">Khóa học</th>
+                    @*<th class="no-wrap">Trung tâm</th>*@
+                    <th class="no-wrap">Số tiền</th>
+                    <th class="no-wrap">Ngày hẹn thu</th>
+                    <th class="no-wrap">Ngày nhập học</th>
+                    @*<th class="no-wrap text-center">@ViewBag.Total</th>*@
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade show" id="div-modal-paid" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("PaidDebts", "Customer", FormMethod.Post, new { id = "form-paid" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="hdfID" name="hdfID" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Hoàn thành học phí</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-name" class="">Học viên:</label>
+                                <input type="text" class="form-control" id="txt-name" disabled>
+                            </div>
+                            <div class="col-sm-9 form-group">
+                                <label for="txt-course" class="">Khóa học:</label>
+                                <input type="text" class="form-control" id="txt-course" disabled>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-price-left" class="">Số tiền còn lại:</label>
+                                <input type="text" class="form-control" id="txt-price-left" disabled>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-refund" class="">Thanh toán:</label>
+                                <input id="txt-paid" name="txt-paid" type="text" class="form-control" required placeholder="0" oninput="moneyfm(this)" />
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-bao-luu-name" class="">Trung tâm:</label>
+                                <select id="ddl-school" required name="ddl-school" class="form-control select2">
+                                    <option value="">---Trung tâm---</option>
+                                    @{
+                                        foreach (var item in schools)
+                                        {
+                                            <option value="@item.ID"> @item.SchoolName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-bao-luu-name" class="">Phương thức thanh toán:</label>
+                                <select name="ddl-payment" id="ddl-payment" class="form-control">
+                                    <option value="">Phương thức</option>
+                                    <option value="1">Tiền mặt</option>
+                                    <option value="2">Thanh toán online</option>
+                                    <option value="4">Quẹt thẻ</option>
+                                    <option value="5">Chuyển khoản</option>
+                                    <option value="3">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-deposit-refund" class="">Ngày thu tiếp theo:</label>
+                                <input id="txt-date-left" name="txt-date-left" type="text" class="form-control datetimepicker from-date date-only" placeholder="DD / MM / YYYY">
+                            </div>
+                            <div class="col-sm-9 form-group">
+                                <label for="role" class="">Ghi chú:</label>
+                                <textarea id="txt-ghi-chu" name="txt-ghi-chu" required class="form-control" rows="1"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="button" id="btn-check" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+@section myScripts{
+    <script src="~/app-assets/js/accounting.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script>
+        $('#btn-check').click(function () {
+            var pleft = $('#txt-price-left').val();
+            var paid = $('#txt-paid').val();
+            if (ckstring(paid)) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập số tiền thanh toán',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                $('#txt-paid').focus();
+                return false;
+            }
+
+            if (ckstring($('#ddl-school').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn trung tâm',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                return false;
+            }
+            if (ckstring($('#ddl-payment').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn phương thức thanh toán',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                return false;
+            }
+            var conlai = parseInt(pleft.replace(/,/g, ''));
+            var dongthem = parseInt(paid.replace(/,/g, ''));
+
+            if (dongthem < conlai) {
+                if (ckstring($('#txt-date-left').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng nhập số tiền và ngày thanh toán kế tiếp',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    return false;
+                }
+            }
+            $('#form-paid').submit();
+            $(this).attr('disabled', true);
+        })
+        
+        var getParams = function (url) {
+            var params = {};
+            var parser = document.createElement('a');
+            parser.href = url;
+            var query = parser.search.substring(1);
+            var vars = query.split('&');
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split('=');
+                if (pair[1] != undefined) { params[pair[0]] = decodeURIComponent(pair[1]); }
+            }
+            return params;
+        };
+        var filterValues = {};
+         $(document).ready(function () {
+             var url = window.location;
+             let params = getParams(url.href);
+             let startIndex = 0;
+             let start = 0;
+             let length = 10;
+             let defaultOrder = 0;
+             let defaultDir = "desc";
+             if (params.length > 0) {
+                 start = params.start;
+                 length = params.length;
+                 startIndex = start;
+                 defaultOrder = params.order;
+                 defaultDir = params.dir;
+             }
+             var refDataTable = $("#CustomerDebtsDataTable").dataTable({
+                 "order": [[defaultOrder, defaultDir]],
+                 serverSide: true,
+                 bFilter: false,
+                 pageLength: 20,
+                 lengthChange: false,
+                 bInfo: false,
+                 bAutoWidth: false,
+                 displayStart: startIndex,
+                 processing: true,
+
+                 language: {
+                     paginate: {
+                         previous: "Prev"
+                     },
+                     processing: `<div class="loader" >
+                                                            <div class= "strip-holder">
+                                                                <img src="/app-assets/loading.gif" style="width:unset;" />
+                                            </div>
+                                        </div>`
+                 },
+                 columns: [
+                     {
+                         data: null,
+                         render: function (data, type, row) {
+                             return `<a class="pd-5" href="/Admin/Customer/CustomerDetai/${row.StudentUID}">${row.StudentName}</a>`;
+                         }
+                     },
+                     { data: "Phone" },
+                     { data: "CourseName" },
+                     {
+                         data: "PriceLeft", render: function (data, type, full, meta) {
+                             return data.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                         }
+                     },
+                     { data: "DatePriceLeft" },
+                     { data: "CreatedDate" }
+
+
+                 ],
+                 ajax: function (data, callback, settings) {
+                     filterValues.draw = data.draw;
+                     if (params.search != undefined && data.draw == "1") {
+                         filterValues.search = params.search;
+                         $('input[name="search"]').val(params.search);
+                     }
+                     if (params.schoolID != undefined && data.draw == "1") {
+                         filterValues.schoolID = params.schoolID;
+                         $("select[name='schoolID']").val(params.schoolID);
+                     }
+                     if (params.fHenthu != undefined && data.draw == "1") {
+                         filterValues.fHenthu = params.fHenthu;
+                         $("input[name='fromleft']").val(params.fHenthu);
+                     }
+                     if (params.tHenthu != undefined && data.draw == "1") {
+                         filterValues.tHenthu = params.tHenthu;
+                         $('select[name="toleft"]').val(params.tHenthu);
+                     }
+                     if (params.fNhaphoc != undefined && data.draw == "1") {
+                         filterValues.fNhaphoc = params.fNhaphoc;
+                         $('select[name="from"]').val(params.fNhaphoc);
+                     }
+                     if (params.tNhaphoc != undefined && data.draw == "1") {
+                         filterValues.tNhaphoc = params.tNhaphoc;
+                         $('select[name="to"]').val(params.tNhaphoc);
+                     }
+
+                     if (params.length > 0 && data.draw == "1") {
+                         filterValues.start = data.start = params.start;
+                         filterValues.length = data.length = params.length;
+                         filterValues.order = data.order[0].column = params.order;
+                         filterValues.dir = data.order[0].dir = params.dir;
+                     }
+                     else {
+                         filterValues.start = data.start;
+                         filterValues.length = data.length;
+                         filterValues.order = data.order[0].column;
+                         filterValues.dir = data.order[0].dir;
+                     }
+                     $.ajax({
+                         url: 'LoadCustomerDebtsDataTable',
+                         method: 'GET',
+                         data: filterValues,
+                         success: function (msg) {
+                             let ajaxprams = getParams(this.url);
+                             if (ajaxprams.draw != 1) {
+                                 let queryString = "?";
+                                 for (var key in ajaxprams) {
+                                     if (key != "draw") {
+                                         queryString += "&" + key + "=" + ajaxprams[key];
+                                     }
+                                 }
+                                 let state = ajaxprams;
+                                 let title = 'state' + filterValues.draw;
+                                 let query = queryString;
+                                 history.pushState(state, title, query)
+                             }
+                         },
+                     }).done(callback, (data) => {
+                         feather.replace();
+                     });
+                 },
+                 fnCreatedRow: function (nRow, data, iDataIndex) {
+                     $(nRow).attr('data-id', data.ID);
+                     $(nRow).attr('data-name', data.StudentName);
+                     $(nRow).attr('data-course', data.CourseName);
+                     $(nRow).attr('data-price', data.PriceLeft);
+                 },
+             });
+
+             async function pagesearch() {
+                 filterValues.search = $('input[name="search"]').val();
+                 filterValues.schoolID = $('select[name=center]').val();
+                 filterValues.fHenthu = $('input[name=fromleft]').val();
+                filterValues.tHenthu = $('input[name=toleft]').val();
+                filterValues.fNhaphoc = $('input[name=from]').val();
+                 filterValues.tNhaphoc = $('input[name=to]').val();
+                 refDataTable.fnDraw();
+             }
+             $('input[name=search]').keyup(function (event) {
+                 if (event.keyCode === 13) {
+                     pagesearch();
+                 }
+             });
+             $('#btn-search').click(function () {
+                 pagesearch();
+             })
+             $('.btn-search').click(function () {
+                 pagesearch();
+             })
+
+             $("#CustomerDebtsDataTable").on('click', 'tr:not(.collapse-row)', function () {
+                 $("#CustomerDebtsDataTable tr").removeClass('selected');
+                 $(this).addClass('selected')
+             });
+
+             $("#CustomerDebtsDataTable tbody").on('dblclick', 'tr:not(.collapse-row)', function () {
+                 $("#CustomerDebtsDataTable tbody tr").removeClass('selected');
+                 $(this).addClass('selected');
+
+                 var id = $(this).attr('data-id');
+                 $('#hdfID').val(id);
+                 var paid = $(this).attr('data-price');
+                 $('#txt-price-left').val(accounting.formatNumber(paid));
+                 $('#txt-name').val($(this).attr('data-name'));
+                 $('#txt-course').val($(this).attr('data-course'));
+                 $('#div-modal-paid').modal('show');
+             });
+
+             $('.export-excel').click(async function () {
+                 await pagesearch();
+
+                 let link = window.location.origin;
+                 link = link + "/Admin/Customer/ExportCustomerDebtsDataTable?search=" + filterValues.search + "&order=" + filterValues.order + "&dir=" + filterValues.dir + "&fHenthu=" + filterValues.fHenthu + "&tHenthu=" + filterValues.tHenthu + "&fNhaphoc=" + filterValues.fNhaphoc + "&tNhaphoc=" + filterValues.tNhaphoc;
+                 window.open(link);
+             });
+        });
+    </script>
+}
+

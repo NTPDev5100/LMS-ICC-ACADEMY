@@ -1,0 +1,1166 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using System.Linq
+@model List<Admin_Target_LoadByCampaignId_Result>
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Convert.ToInt32(Session["UID"].ToString()));
+    tbl_CampaignSale period = ViewBag.Campaign;
+    List<Admin_Target_LoadByCampaignId_Result> companyTargets = Model.Where(x => x.TargetType == 1).ToList();
+    List<Admin_Target_LoadByCampaignId_Result> departmentTargets = Model.Where(x => x.TargetType == 2).ToList();
+    List<Admin_Target_LoadByCampaignId_Result> teamTargets = Model.Where(x => x.TargetType == 3).ToList();
+    List<Admin_Target_LoadByCampaignId_Result> personalTargets = Model.Where(x => x.TargetType == 4).ToList();
+    double status0 = Model.Where(x => x.Status == 0).ToList().Count;
+    double status1 = Model.Where(x => x.Status == 1).ToList().Count;
+    double status2 = Model.Where(x => x.Status == 2).ToList().Count;
+    double status3 = Model.Where(x => x.Status == 3).ToList().Count;
+    double status4 = Model.Where(x => x.Status == 4).ToList().Count;
+    double finished = Model.Where(x => x.FinishedPercent >= 100).ToList().Count;
+    // ngày 1 => hiện tại
+    int currentDays = DateTime.Now.Day;
+    // tổng ngày trong tháng
+    int totalDays = (period.eTime - period.sTime).Value.Days + 1;
+    int totalTargets = Model.Count;
+    double targetDivide = totalTargets;
+    if (targetDivide == 0)
+    {
+        targetDivide = 1;
+    }
+    var targetbonus = new List<Admin_TargetBonus_GetList_Result>();
+    var managers = new List<tbl_Account>();
+    var yeartargets = new List<Admin_Target_GetByYearCampaign_Result>();
+
+    using (var db = new ZimEntities())
+    {
+        managers = db.tbl_Account.Where(x => (x.RoleID == 1 || x.RoleID == 2 || x.RoleID == 3 || x.RoleID == 6) && x.Status == 2).ToList();
+        targetbonus = db.Admin_TargetBonus_GetList(period.ID, 0, 0, int.MaxValue).ToList();
+        if (period.CampaignType == 1)
+        {
+            yeartargets = db.Admin_Target_GetByYearCampaign(period.sTime.Value.ToString("yyyy-MM-dd"), period.eTime.Value.ToString("yyyy-MM-dd")).ToList();
+        }
+    }
+}
+<style>
+    .zoom {
+        transition: transform .2s;
+        width: 30px;
+        height: 30px;
+        margin: 0 auto;
+        object-fit: contain;
+    }
+
+        .zoom:hover {
+            -ms-transform: scale(10); /* IE 9 */
+            -webkit-transform: scale(10); /* Safari 3-8 */
+            transform: scale(10);
+            z-index: 999;
+            position: relative;
+        }
+</style>
+<div class="targetpage">
+    <div class="row d-flex jt-s-between ali-c">
+        <div class="month-head">
+            <p id="CampaignName" value="@period.CampaignName"> @period.CampaignName </p>
+            <input type="hidden" name="hdId" value="@period.ID" />
+        </div>
+
+        <div class="do-custom d-flex ali-c">
+            @using (Html.BeginForm("PeriodDetail", "CampaignSale", FormMethod.Get, new { area = "Admin", id = period.ID }))
+            {
+                <div class="search-head mr-15">
+                    <input type="text" name="txt-search" placeholder="Lọc theo tên..." value="@ViewBag.Search">
+                    <div class="btn-search">
+                        <button type="submit">
+                            <img src="~/app-assets/images/icon/search-ic.svg" alt="">
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <div class="select-head mr-15">
+                <select id="slPeriodOption" class="br-5px" onchange="PeriodOption()">
+                    <option value="0"> Tuỳ chọn </option>
+                    <option value="1"> Sửa chiến dịch </option>
+                    <option value="2"> Xoá chiến dịch </option>
+                    <option value="3"> Quản lý chi phí </option>
+                </select>
+                <div class="icon-dropdown">
+                    <img src="~/app-assets/images/icon/dropdown-ic.svg" alt="">
+                </div>
+            </div>
+            <div class="btn-main-f create-new">
+                <button type="button" class="btn-click br-5px">
+                    + Tạo mới
+                </button>
+                <div class="menu-custom-create-new">
+                    <div class="link-create">
+                        @if (aclog.RoleID < 4)
+                        {
+                            <button type="button" id="btn-company" class="btn-click br-5px" onclick="OpenPopup(1)">Tạo mục tiêu công ty</button>
+                            <button type="button" id="btn-department" class="btn-click br-5px" onclick="OpenPopup(2)">Tạo mục tiêu phòng ban</button>
+                            <button type="button" id="btn-team" class="btn-click br-5px" onclick="OpenPopup(3)">Tạo mục tiêu của nhóm</button>
+                        }
+                        <button type="button" id="btn-person" class="btn-click br-5px" onclick="OpenPopup(4)">Tạo mục tiêu cá nhân</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-15">
+        <div class="tag-list">
+            <ul>
+                <li class="active"> <a href="@Url.Action("PeriodDetail","CampaignSale",new { area = "Admin", id = ViewBag.Campaign.ID })"> Tổng Quan </a> </li>
+                <li> <a href="@Url.Action("RevenueRank","CampaignSale",new { area = "Admin", id = ViewBag.Campaign.ID })"> Xếp hạng </a> </li>
+            </ul>
+        </div>
+    </div>
+    <div class="row mt-30">
+        <div class="review-target d-flex">
+            <div class="left-review">
+                <div class="title-section">
+                    <h3> Mục tiêu </h3>
+                </div>
+                <div class="total-target d-flex jt-s-between">
+                    <div class="number">
+                        <span> @totalTargets </span>
+                    </div>
+                    <div class="circle">
+                        <svg class="circle-chart" viewbox="0 0 40 40" width="83" height="83">
+                            <circle class="circle-chart__background" stroke="#E6E6E6" stroke-width="5" fill="none" cx="20" cy="20" r="15.91549431" />
+                            <circle class="circle-chart__circle" stroke="#00A42E" stroke-width="5" stroke-dasharray="@(Math.Round(((finished/targetDivide) * 100), 1)),100" fill="none" cx="20" cy="20" r="15.91549431" />
+                            <g class="circle-chart__info">
+                                <text class="circle-chart__percent" x="21.5" y="19" alignment-baseline="central" text-anchor="middle" font-size="8">@(Math.Round(((finished/targetDivide) * 100), 1))%</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-target mt-15">
+                    <div class="line">
+                        <div class="icon">
+                            <i class="fa fa-bullseye" aria-hidden="true"></i>
+                        </div>
+                        <div class="text mg-l-5">
+                            <p> @personalTargets.Count MT cá nhân - @(totalTargets - personalTargets.Count) MT gián tiếp </p>
+                        </div>
+                    </div>
+                    <div class="line">
+                        <div class="icon">
+                            <i class="fa fa-clock-o" aria-hidden="true"></i>
+                        </div>
+                        <div class="text">
+                            <p> Day @currentDays of @totalDays</p>
+                        </div>
+                    </div>
+                    <div class="line">
+                        <div class="icon">
+                            <i class="fa fa-check" aria-hidden="true"></i>
+                        </div>
+                        <div class="text">
+                            <p> @(period.sTime.Value.ToString("dd-MMM")) - @(period.eTime.Value.ToString("dd-MMM"))</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="right-review">
+                <div class="title-section">
+                    <h3> Các giai đoạn mục tiêu </h3>
+                </div>
+                <div class="progess-bar mt-15">
+                    <div class="number-goal">
+                        <p> @totalTargets Goal </p>
+                    </div>
+                    <div class="box-progess-bar mt-15">
+                        <div class="progess-bar cod-1 bg-main" style="width: @((status2/targetDivide) * 100)%;z-index: 1;border-radius: 0;"></div>
+                        <div class="progess-bar cod-2 bg-blue" style="width: @((status1/targetDivide) * 100)%;z-index: 2;border-radius: 0;margin-left:@((status2/targetDivide) * 100)%"></div>
+                        <div class="progess-bar cod-3 bg-yellow" style="width: @( (status3/targetDivide) * 100 )%;z-index: 3;border-radius: 0;margin-left:@(((status1/targetDivide) * 100) + ((status2/targetDivide) * 100))%"></div>
+                        <div class="progess-bar cod-4 bg-red" style="width: @((status4/targetDivide) * 100)%;z-index: 4;border-radius: 0;margin-left:@(((status3/targetDivide) * 100) + ((status1/targetDivide) * 100) + ((status2/targetDivide) * 100))%"></div>
+                    </div>
+                </div>
+                <div class="view-progess mt-30">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="progess-view-box">
+                                <div class="vu-progess bg-main"></div>
+                                <div class="vu-text-progess">
+                                    <p class="mg-b-0"> @status2 Xuất sắc </p>
+                                </div>
+                            </div>
+                            <div class="progess-view-box">
+                                <div class="vu-progess bg-blue"></div>
+                                <div class="vu-text-progess">
+                                    <p class="mg-b-0"> @status1 Đúng tiến độ </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="progess-view-box">
+                                <div class="vu-progess bg-yellow"></div>
+                                <div class="vu-text-progess">
+                                    <p class="mg-b-0"> @status3 Chậm tiến độ </p>
+                                </div>
+                            </div>
+                            <div class="progess-view-box">
+                                <div class="vu-progess bg-red"></div>
+                                <div class="vu-text-progess">
+                                    <p class="mg-b-0"> @status4 Rủi ro </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="progess-view-box">
+                                <div class="vu-progess bg-gray-f"></div>
+                                <div class="vu-text-progess">
+                                    <p class="mg-b-0"> @status0 Chưa thực hiện </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-30">
+        <div class="review-target-detail">
+            @foreach (var i in companyTargets)
+            {
+                <div class="header-rv click-0">
+                    <div class="d-flex">
+                        <div class="icon-click mr-10">
+                            <i class="fa fa-caret-right" aria-hidden="true"></i>
+                        </div>
+                        <div class="icon-review-target-detail mr-15">
+                            <svg class="circle-chart" viewbox="0 0 30 30" width="30 " height="30">
+                                <circle class="circle-chart__background" stroke="#C4C4C4" stroke-width="3" fill="none" cx="15" cy="15" r="10" />
+                                <circle class="circle-chart__circle" stroke="#00A42E" stroke-width="3" stroke-dasharray="@i.FinishedPercent, 100" fill="none" cx="15" cy="15" r="10" />
+                            </svg>
+                        </div>
+                        <div class="title-section">
+                            <h3> Revenues: @String.Format("{0:0,0}", i.TargetValue) (vnd) </h3>
+                            <span> Hiện tại: @String.Format("{0:0,0}", i.CurrentValue) - @(Math.Round(((i.CurrentValue / i.TargetValue) * 100)??0, 2))% </span>
+                        </div>
+                    </div>
+                    <div class="ceo-user mt-15 d-flex jt-s-between">
+                        <div class="name">
+                            <p> @i.FullName </p>
+                        </div>
+                        <div class="right-ceo-user">
+                            <div class="d-flex">
+                                <div class="progess-bar-user-bg">
+                                    <div class="number-bar-user mg-r-20">
+                                        <p> @(Math.Round(((i.CurrentValue / i.TargetValue) * 100) ?? 0, 2))% </p>
+                                    </div>
+                                    <div class="progess-bar-user @(i.Status == 1 ? "bg-blue" : i.Status == 2 ? "bg-main" : i.Status == 3 ? "bg-yellow" : "bg-red")" style="width: @(((i.CurrentValue / i.TargetValue) * 100) > 100 ? 100:((i.CurrentValue / i.TargetValue) * 100))%;z-index: 1;"></div>
+                                </div>
+                                <div class="btn-custom-more d-flex flex-end">
+                                    <a href=""> <img src="~/app-assets/images/icon/3dot.svg" alt=""> </a>
+                                    <div class="menu-custom">
+                                        <div class="instace-once">
+                                            <div class="link-instace">
+                                                <a href="javascript:;" data-toggle="modal" data-target="#exampleModal" onclick="LoadEmail('@i.FullName','@i.Email')" id="btnview"> Gửi mail </a>
+                                            </div>
+                                        </div>
+                                        <div class="instace-once">
+                                            <div class="link-instace">
+                                                <a href="#" onclick="EditTarget(@i.ID, '@String.Format("{0:0,0}", i.TargetValue)', '@i.Note')"> Chỉnh sửa mục tiêu </a>
+                                            </div>
+                                        </div>
+                                        <div class="instace-once">
+                                            <div class="link-instace">
+                                                <a href="#" onclick="EditRevenue(@i.ID, '@String.Format("{0:0,0}", i.TargetValue)', '@String.Format("{0:0,0}", i.CurrentValue)')"> Chỉnh sửa doanh thu </a>
+                                            </div>
+                                        </div>
+                                        <div class="instace-once">
+                                            <div class="link-instace">
+                                                <a href="#" onclick="DeleteTarget(@i.ID)"> Xoá mục tiêu </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="progess-view-box mt-15">
+                                <div class="line mr-45">
+                                    <div class="vu-progess bg-main mr-10"></div>
+                                    <div class="vu-text-progess"> <p class="mg-b-0"> Xuất sắc </p> </div>
+                                </div>
+                                <div class="line mr-45">
+                                    <div class="vu-progess bg-blue mr-10"></div>
+                                    <div class="vu-text-progess"> <p class="mg-b-0"> Đúng tiến độ </p> </div>
+                                </div>
+                                <div class="line mr-45">
+                                    <div class="vu-progess bg-yellow mr-10"></div>
+                                    <div class="vu-text-progess"> <p class="mg-b-0"> Chậm tiến độ </p> </div>
+                                </div>
+                                <div class="line mr-45">
+                                    <div class="vu-progess bg-red mr-10"></div>
+                                    <div class="vu-text-progess"> <p class="mg-b-0"> Rủi ro </p> </div>
+                                </div>
+                                <div class="line">
+                                    <div class="vu-progess bg-gray-f mr-10"></div>
+                                    <div class="vu-text-progess"> <p class="mg-b-0"> Chưa bắt đầu </p> </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                if (period.CampaignType == 1)
+                {
+                    foreach (var y in yeartargets)
+                    {
+                        <div class="body-rv mt-20">
+                            <div class="div-content">
+                                <div class="preview-name hover-change-color">
+                                    <div class="row d-flex">
+                                        <div class="w-25-cer">
+                                            <div class="name-reven d-flex click-1">
+                                                <span class="mr-8"> <i class="fa fa-caret-right" aria-hidden="true"></i> </span>
+                                                <p class="mg-b-0"> » Revenues: @String.Format("{0:0,0}", y.TargetValue) (vnd) </p>
+                                            </div>
+                                        </div>
+                                        <div class="w-25-cer">
+                                            <div class="name">
+                                                <p class="mg-b-0"> @y.FullName </p>
+                                            </div>
+                                        </div>
+                                        <div class="w-20-cer">
+                                            <div class="date">
+                                                @{
+                                                    switch (y.RoleID)
+                                                    {
+                                                        case 1:
+                                                            <img class="zoom" src="@y.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                            <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@y.RoleName"><i class="fas fa-user-secret"></i></span>
+                                                            break;
+                                                        case 2:
+                                                            <img class="zoom" src="@y.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                            <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@y.RoleName"><i class="fas fa-user-tie"></i></span>
+                                                            break;
+                                                        case 3:
+                                                            <img class="zoom" src="@y.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                            <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@y.RoleName"><i class="fas fa-user-astronaut"></i></span>
+                                                            break;
+                                                        case 6:
+                                                            <img class="zoom" src="@y.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                            <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@y.RoleName"><i class="fas fa-user-alt"></i></span>
+                                                            break;
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="w-25-cer">
+                                            <div class="progess">
+                                                <div class="number-progess mg-r-25">
+                                                    <p class="mg-b-0"> @(Math.Round(((y.CurrentValue / y.TargetValue) * 100)?? 0, 2))% </p>
+                                                </div>
+                                                <div class="progess-bar-bg">
+                                                    <div class="progess-bar @(y.Status == 1 ? "bg-blue" : y.Status == 2 ? "bg-main" : y.Status == 3 ? "bg-yellow" : "bg-red")" style="width: @(((y.CurrentValue / y.TargetValue) * 100) > 100 ? 100:((y.CurrentValue / y.TargetValue) * 100))%;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="w-5-cer">
+                                            <div class="btn-custom-more d-flex flex-end">
+                                                <a href=""> <img src="~/app-assets/images/icon/3dot.svg" alt=""> </a>
+                                                <div class="menu-custom">
+                                                    <div class="instace-once">
+                                                        <div class="link-instace">
+                                                            <a href="javascript:;" data-toggle="modal" data-target="#exampleModal" onclick="LoadEmail('@y.FullName','@y.Email')" id="btnview"> Gửi mail </a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="instace-once">
+                                                        <div class="link-instace">
+                                                            <a href="#" onclick="EditTarget(@y.ID, '@String.Format("{0:0,0}", y.TargetValue)', '@y.Note')"> Chỉnh sửa mục tiêu </a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="instace-once">
+                                                        <div class="link-instace">
+                                                            <a href="#" onclick="EditRevenue(@y.ID, '@String.Format("{0:0,0}", y.TargetValue)', '@String.Format("{0:0,0}", y.CurrentValue)')"> Chỉnh sửa doanh thu </a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="instace-once">
+                                                        <div class="link-instace">
+                                                            <a href="#" onclick="DeleteTarget(@y.ID)"> Xoá mục tiêu </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    foreach (var j in departmentTargets)
+                    {
+                        if (j.MainTargetID == i.ID)
+                        {
+                            <div class="body-rv mt-20">
+                                <div class="div-content">
+                                    <div class="preview-name hover-change-color">
+                                        <div class="row d-flex">
+                                            <div class="w-20-cer">
+                                                <div class="name-reven d-flex click-1">
+                                                    <span class="mr-8"> <i class="fa fa-caret-right" aria-hidden="true"></i> </span>
+                                                    <p class="mg-b-0"> » Revenues: @String.Format("{0:0,0}", j.TargetValue) (vnd) </p>
+                                                </div>
+                                            </div>
+                                            <div class="w-25-cer">
+                                                <div class="name">
+                                                    <p class="mg-b-0"> @j.FullName </p>
+                                                </div>
+                                            </div>
+                                            <div class="w-25-cer row">
+                                                <div class="date">
+                                                    @{
+                                                        switch (j.RoleID)
+                                                        {
+                                                            case 1:
+                                                                <img class="zoom" src="@j.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@j.RoleName"><i class="fas fa-user-secret"></i></span>
+                                                                break;
+                                                            case 2:
+                                                                <img class="zoom" src="@j.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@j.RoleName"><i class="fas fa-user-tie"></i></span>
+                                                                break;
+                                                            case 3:
+                                                                <img class="zoom" src="@j.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@j.RoleName"><i class="fas fa-user-astronaut"></i></span>
+                                                                break;
+                                                            case 6:
+                                                                <img class="zoom" src="@j.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@j.RoleName"><i class="fas fa-user-alt"></i></span>
+                                                                break;
+                                                        }
+                                                    }
+                                                </div>
+                                                <div class="mg-l-30">
+                                                    <span>@String.Format("{0:0,0}", j.CurrentValue) / @String.Format("{0:0,0}", j.TargetValue)</span>
+                                                </div>
+                                            </div>
+                                            <div class="w-25-cer">
+                                                <div class="progess">
+                                                    <div class="number-progess mg-r-25">
+                                                        <p class="mg-b-0"> @(Math.Round(((j.CurrentValue / j.TargetValue) * 100) ?? 0, 2))% </p>
+                                                    </div>
+                                                    <div class="progess-bar-bg">
+                                                        <div class="progess-bar @(j.Status == 1 ? "bg-blue" : j.Status == 2 ? "bg-main" : j.Status == 3 ? "bg-yellow" : "bg-red")" style="width: @(((j.CurrentValue / j.TargetValue) * 100) > 100 ? 100:((j.CurrentValue / j.TargetValue) * 100))%;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="w-5-cer">
+                                                <div class="btn-custom-more d-flex flex-end">
+                                                    <a href=""> <img src="~/app-assets/images/icon/3dot.svg" alt=""> </a>
+                                                    <div class="menu-custom">
+                                                        <div class="instace-once">
+                                                            <div class="link-instace">
+                                                                <a href="javascript:;" data-toggle="modal" data-target="#exampleModal" onclick="LoadEmail('@j.FullName','@j.Email')" id="btnview"> Gửi mail </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="instace-once">
+                                                            <div class="link-instace">
+                                                                <a href="#" onclick="EditTarget(@j.ID, '@String.Format("{0:0,0}", j.TargetValue)', '@j.Note')"> Chỉnh sửa mục tiêu </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="instace-once">
+                                                            <div class="link-instace">
+                                                                <a href="#" onclick="EditRevenue(@j.ID, '@String.Format("{0:0,0}", j.TargetValue)', '@String.Format("{0:0,0}", j.CurrentValue)')"> Chỉnh sửa doanh thu </a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="instace-once">
+                                                            <div class="link-instace">
+                                                                <a href="#" onclick="DeleteTarget(@j.ID)"> Xoá mục tiêu </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @foreach (var k in teamTargets)
+                                    {
+                                        if (k.MainTargetID == j.ID)
+                                        {
+                                            <div class="sub-detail-name mt-10 active">
+                                                <div class="row d-flex mb-10 hover-change-color">
+                                                    <div class="w-20-cer">
+                                                        <div class="name-reven d-flex click-2">
+                                                            <span class="mr-8"> <i class="fa fa-caret-right" aria-hidden="true"></i> </span>
+                                                            <p class="mg-b-0"> » Revenues: @String.Format("{0:0,0}", k.TargetValue) (vnd) </p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="w-25-cer">
+                                                        <div class="name">
+                                                            @if (k.ManagerID == j.ManagerID)
+                                                            {
+                                                                <p class="mg-b-0"><ins>@k.FullName </ins></p>
+                                                            }
+                                                            else
+                                                            {
+                                                                <p class="mg-b-0"> @k.FullName </p>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="w-25-cer row">
+                                                        <div class="date">
+                                                            @{
+                                                                switch (k.RoleID)
+                                                                {
+                                                                    case 1:
+                                                                        <img class="zoom" src="@k.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                        <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@k.RoleName"><i class="fas fa-user-secret"></i></span>
+                                                                        break;
+                                                                    case 2:
+                                                                        <img class="zoom" src="@k.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                        <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@k.RoleName"><i class="fas fa-user-tie"></i></span>
+                                                                        break;
+                                                                    case 3:
+                                                                        <img class="zoom" src="@k.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                        <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@k.RoleName"><i class="fas fa-user-astronaut"></i></span>
+                                                                        break;
+                                                                    case 6:
+                                                                        <img class="zoom" src="@k.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                        <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@k.RoleName"><i class="fas fa-user-alt"></i></span>
+                                                                        break;
+                                                                }
+                                                            }
+                                                        </div>
+                                                        <div class="mg-l-30">
+                                                            <span>@String.Format("{0:0,0}", k.CurrentValue) / @String.Format("{0:0,0}", k.TargetValue)</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="w-25-cer">
+                                                        <div class="progess">
+                                                            <div class="number-progess mg-r-25">
+                                                                <p class="mg-b-0"> @(Math.Round(((k.CurrentValue / k.TargetValue) * 100) ?? 0, 2))% </p>
+                                                            </div>
+                                                            <div class="progess-bar-bg">
+                                                                <div class="progess-bar @(k.Status == 1 ? "bg-blue" : k.Status == 2 ? "bg-main" : k.Status == 3 ? "bg-yellow" : "bg-red")" style="width: @(((k.CurrentValue / k.TargetValue) * 100) > 100 ? 100:((k.CurrentValue / k.TargetValue) * 100))%;"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="w-5-cer">
+                                                        <div class="btn-custom-more d-flex flex-end">
+                                                            <a href=""> <img src="~/app-assets/images/icon/3dot.svg" alt=""> </a>
+                                                            <div class="menu-custom">
+                                                                <div class="instace-once">
+                                                                    <div class="link-instace">
+                                                                        <a href="javascript:;" data-toggle="modal" data-target="#exampleModal" onclick="LoadEmail('@k.FullName','@k.Email')" id="btnview"> Gửi mail </a>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="instace-once">
+                                                                    <div class="link-instace">
+                                                                        <a href="#" onclick="EditTarget(@k.ID, '@String.Format("{0:0,0}", k.TargetValue)', '@k.Note')"> Chỉnh sửa mục tiêu </a>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="instace-once">
+                                                                    <div class="link-instace">
+                                                                        <a href="#" onclick="EditRevenue(@k.ID, '@String.Format("{0:0,0}", k.TargetValue)', '@String.Format("{0:0,0}", k.CurrentValue)')"> Chỉnh sửa doanh thu </a>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="instace-once">
+                                                                    <div class="link-instace">
+                                                                        <a href="#" onclick="DeleteTarget(@k.ID)"> Xoá mục tiêu </a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="sub-2-detail-name mt-10 active">
+                                                    @foreach (var l in personalTargets)
+                                                    {
+                                                        if (l.MainTargetID == k.ID && l.TargetType == 4)
+                                                        {
+                                                            <div class="row d-flex mb-10 hover-change-color">
+                                                                <div class="w-20-cer">
+                                                                    <div class="name-reven d-flex">
+                                                                        <span class="mr-8"> <i class="fa fa-bullseye" aria-hidden="true"></i> </span>
+                                                                        <p class="mg-b-0"> Revenues: @String.Format("{0:0,0}", l.TargetValue) (vnd) </p>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="w-25-cer">
+                                                                    <div class="name">
+                                                                        @if (l.ManagerID == k.ManagerID)
+                                                                        {
+                                                                            <p class="mg-b-0"> <ins>@l.FullName </ins></p>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <p class="mg-b-0"> @l.FullName </p>
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                                <div class="w-25-cer row">
+                                                                    <div class="date">
+                                                                        @{
+                                                                            switch (l.RoleID)
+                                                                            {
+                                                                                case 1:
+                                                                                    <img class="zoom" src="@l.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                                    <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@l.RoleName"><i class="fas fa-user-secret"></i></span>
+                                                                                    break;
+                                                                                case 2:
+                                                                                    <img class="zoom" src="@l.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                                    <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@l.RoleName"><i class="fas fa-user-tie"></i></span>
+                                                                                    break;
+                                                                                case 3:
+                                                                                    <img class="zoom" src="@l.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                                    <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@l.RoleName"><i class="fas fa-user-astronaut"></i></span>
+                                                                                    break;
+                                                                                case 6:
+                                                                                    <img class="zoom" src="@l.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" />
+                                                                                    <span class="mg-l-10" data-toggle="tooltip" data-placement="left" title="@l.RoleName"><i class="fas fa-user-alt"></i></span>
+                                                                                    break;
+                                                                            }
+                                                                        }
+                                                                    </div>
+                                                                    <div class="mg-l-30">
+                                                                        <span>@String.Format("{0:0,0}", l.CurrentValue) / @String.Format("{0:0,0}", l.TargetValue)</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="w-25-cer">
+                                                                    <div class="progess">
+                                                                        <div class="number-progess mg-r-25">
+                                                                            <p class="mg-b-0"> @(Math.Round(((l.CurrentValue / l.TargetValue ) * 100) ?? 0, 2))% </p>
+                                                                        </div>
+                                                                        <div class="progess-bar-bg">
+                                                                            <div class="progess-bar @(l.Status == 1 ? "bg-blue" : l.Status == 2 ? "bg-main" : l.Status == 3 ? "bg-yellow" : "bg-red")" style="width: @(((l.CurrentValue / l.TargetValue) * 100) > 100 ? 100:((l.CurrentValue / l.TargetValue) * 100))%;"></div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="w-5-cer">
+                                                                    <div class="btn-custom-more d-flex flex-end">
+                                                                        <a href=""> <img src="~/app-assets/images/icon/3dot.svg" alt=""> </a>
+                                                                        <div class="menu-custom">
+                                                                            <div class="instace-once">
+                                                                                <div class="link-instace">
+                                                                                    <a href="javascript:;" data-toggle="modal" data-target="#exampleModal" onclick="LoadEmail('@l.FullName','@l.Email')" id="btnview"> Gửi mail </a>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="instace-once">
+                                                                                <div class="link-instace">
+                                                                                    <a href="#" onclick="EditTarget(@l.ID, '@String.Format("{0:0,0}", l.TargetValue)', '@l.Note')"> Chỉnh sửa mục tiêu </a>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="instace-once">
+                                                                                <div class="link-instace">
+                                                                                    <a href="#" onclick="EditRevenue(@l.ID, '@String.Format("{0:0,0}", l.CurrentValue) / @String.Format("{0:0,0}", l.TargetValue)', '@String.Format("{0:0,0}", l.CurrentValue)')"> Chỉnh sửa doanh thu </a>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="instace-once">
+                                                                                <div class="link-instace">
+                                                                                    <a href="#" onclick="DeleteTarget(@l.ID)"> Xoá mục tiêu </a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            }
+        </div>
+    </div>
+</div>
+<div class="customer-table mg-t-30 pd-15">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Loại mục tiêu</th>
+                    <th>Điều kiện đạt thưởng</th>
+                    <th>Phần thưởng</th>
+                    <th>Thông tin thêm</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in targetbonus)
+                {
+                    <tr>
+                        <td>
+                            @{
+                                if (item.TargetType == 1)
+                                {
+                                    <span>Mục tiêu công ty</span>
+                                }
+                                else if (item.TargetType == 2)
+                                {
+                                    <span>Mục tiêu phòng ban</span>
+                                }
+                                else if (item.TargetType == 3)
+                                {
+                                    <span>Mục tiêu nhóm</span>
+                                }
+                                else
+                                {
+                                    <span>Mục tiêu cá nhân</span>
+                                }
+                            }
+                        </td>
+                        <td>Đạt @item.TargetFinishPercent %</td>
+                        <td><img class="zoom" src="@item.ImageLink" onerror="this.onerror = null; this.src = '/app-assets/images/randomgifbox.png';" alt="avatar" /></td>
+                        <td>@item.DescriptionBonus</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="modal fade" id="div-target" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-500" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddTarget", "CampaignSale", FormMethod.Post))
+            {
+                <input type="hidden" name="hdfReserveID" id="hdfReserveID" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2" id="title">Thêm mục tiêu</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label class="required">Chiến dịch:</label>
+                                <input type="hidden" name="hdtype" />
+                                <select class="select2 custom-select" name="slPeriod">
+                                    <option value="@period.ID">@period.CampaignName</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label>Người chịu trách nhiệm:</label>
+                                <select class="select2 custom-select" name="slManager">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="txt-targetvalue" class="required">Chỉ tiêu:</label>
+                                <input data-type="currency" placeholder="20,000,000" id="txt-targetvalue" name="txt-targetvalue" class="form-control" value="0" required autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label>Mô tả:</label>
+                                <textarea class="form-control" name="txt-description" placeholder="Mô tả chi tiết"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="div-edit-target" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-500" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditTarget", "CampaignSale", FormMethod.Post))
+            {
+                <input type="hidden" name="hdTarget" id="hdTarget" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2" id="title">Chỉnh sửa mục tiêu</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="txt-targetvalue-edit" class="required">Chỉ tiêu:</label>
+                                <input data-type="currency" placeholder="20,000,000" id="txt-targetvalue-edit" name="txt-targetvalue-edit" class="form-control" value="0" required autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label>Mô tả:</label>
+                                <textarea class="form-control" name="txt-description-edit" placeholder="Mô tả chi tiết"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+<div class="modal fade" id="div-edit-revenue" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-500" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditRevenue", "CampaignSale", FormMethod.Post))
+            {
+                <input type="hidden" name="hdfid" id="hdfid" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2" id="title">Chỉnh sửa doanh thu</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="txt-targetvalue-edit" class="required">Doanh thu hiện tại:</label>
+                                <input data-type="currency" name="txt-currentrevenue" class="form-control" value="0" disabled />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label>Doanh thu mới:</label>
+                                <input type="text" name="txt-revenue" class="form-control" oninput="moneyfm(this)" />
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Hủy</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="div-edit-period" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-500" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditPeriod", "CampaignSale", FormMethod.Post))
+            {
+                <input type="hidden" name="hdPeriodId" required value="@period.ID" />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2" id="title">Chỉnh sửa chiến dịch</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label class="required" for="txt-period-edit">Tên chiến dịch:</label>
+                                <input type="text" name="txt-period-edit" id="txt-period-edit" class="form-control" value="@period.CampaignName" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label class="">Quản lý chiến dịch:</label>
+                                <select class="select2 custom-select" name="slManager-edit">
+                                    <option value="0">---</option>
+                                    @{
+                                        foreach (var i in managers)
+                                        {
+                                            <option value="@i.ID">@i.FullName - @i.RoleName</option>
+                                        }
+                                    }
+                                </select>
+                                <script>$('select[name=slManager-edit]').val(@period.ManagerID)</script>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label>Mô tả:</label>
+                                <textarea id="txt-description-edit" name="txt-description-edit" class="form-control">@period.Note</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+<!-- Modal Gửi mail -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gửi email</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="/Admin/CampaignSale/GuiMail" method="post">
+                    <label>Địa chỉ mail:</label>
+                    <input class="form-control" id="txt-emails" name="txt-emails" />
+                    <label>Tiêu đề:</label>
+                    <input class="form-control" id="txt-title" name="txt-title" />
+                    <label>Nội dung:</label>
+                    <textarea class="form-control" id="txt-content" name="txt-content" placeholder="Nội dung mail"></textarea>
+                    <input hidden id="submit" type="submit" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                <button type="button" class="btn btn-primary" onclick="Gui();">Gửi Mail</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+    <script>
+
+
+        $(document).ready(function () {
+            $('.aside.aside-fixed').addClass('minimize');
+
+            $(".click-1").on("click", function () {
+                $(this).parents(".content").find(".sub-detail-name").toggleClass("active");
+            });
+            $(".click-2").on("click", function () {
+                $(this)
+                    .parents(".sub-detail-name")
+                    .find(".sub-2-detail-name")
+                    .toggleClass("active");
+            });
+            $(".click-0").on("click", function () {
+                $(".ceo-user").toggleClass("active");
+            });
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#txt-content',
+                height: 450,
+                width: '100%',
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            });
+        });
+
+
+        function OpenPopup(type) {
+            $('input[name=hdtype]').val(type);
+            $('input[name=txt-targetvalue]').val('');
+            $('input[name=txt-description]').val('');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CampaignSale/GetMangers",
+                data: '{type: ' + type + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('select[name=slManager]').html(msg.data);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+            switch (type) {
+                case 1:
+                    $('#title').html('Thêm mới mục tiêu công ty');
+                    break;
+                case 2:
+                    $('#title').html('Thêm mới mục tiêu phòng ban');
+                    break;
+                case 3:
+                    $('#title').html('Thêm mới mục tiêu nhóm');
+                    break;
+                default:
+                    $('#title').html('Thêm mới mục tiêu cá nhân');
+                    break;
+            }
+            $('#div-target').modal('toggle');
+        }
+        function PeriodOption() {
+            var o = $('#slPeriodOption').val();
+            if (o == "1") {
+                $('#div-edit-period').modal('toggle');
+            } else if (o == "2") {
+                var c = confirm("Bạn có chắc muốn xoá chiến dịch này ?");
+                if (c) {
+                    var id = $('input[name=hdId]').val();
+                    $.ajax({
+                        type: "POST",
+                        url: "/Admin/CampaignSale/DeletePeriod",
+                        data: '{id: ' + id + '}',
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (msg) {
+                            window.location.href = window.location.origin + '/Admin/Home/DashBoard';
+                        },
+                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                            console.log(xmlhttprequest);
+                        }
+                    });
+                }
+                else {
+                    $('#slPeriodOption').val(0);
+                    $('#slPeriodOption').trigger('change');
+                }
+            } else if (o == "3") {
+                var id = $('input[name=hdId]').val();
+                window.location.href = window.location.origin + '/Admin/CampaignSale/CostOfCampaign/' + id;
+            }
+        }
+
+        function DeleteTarget(e) {
+            var c = confirm("Bạn có chắc muốn xoá mục tiêu này ?");
+            if (c) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/CampaignSale/DeleteTarget",
+                    data: '{id: ' + e + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        window.location.reload();
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(xmlhttprequest);
+                    }
+                });
+            }
+        }
+
+        function EditTarget(e, t, n) {
+            $('#hdTarget').val(e);
+            $('textarea[name=txt-description-edit]').val(n);
+            $('input[name=txt-targetvalue-edit]').val(t);
+            $('#div-edit-target').modal('toggle');
+        }
+
+        function EditRevenue(e, t, n) {
+            $('#hdfid').val(e);
+            $('input[name=txt-currentrevenue]').val(t);
+            $('input[name=txt-revenue]').val(n);
+            $('#div-edit-revenue').modal('toggle');
+        }
+        function LoadEmail(fullName, email) {
+            $('#txt-emails').val(email);
+            var campaignName = '@period.CampaignName';
+            console.log = campaignName;
+            console.log = fullName;
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CampaignSale/LoadEmailWarrningRevenues",
+                data: '{campaignName: "' + campaignName + '", fullName: "' + fullName + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title').val(msg.tt);
+                        tinymce.get('txt-content').getBody().innerHTML = msg.ct;
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        function Gui() {
+            var tieude = $("#txt-title").val();
+            var email = $("#txt-emails").val();
+            var noidung = tinymce.get('txt-content').getBody().innerHTML;
+            if (tieude == "" || noidung == "") {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập đủ tiêu đề + nội dung',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                });
+                return false;
+            }
+            if (email == "") {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập email',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                });
+                return false;
+            }
+            $("#submit").click();
+        }
+
+
+    </script>
+}

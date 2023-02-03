@@ -1,0 +1,196 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_ContractCustomer>
+@{
+    ViewBag.Title = "CensorshipContract";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+<link href="~/app-assets/zimv2/assets/dev/contractcss.css" rel="stylesheet" />
+@using (Html.BeginForm("CensorshipContract", "Contract", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <span class="to">Duyệt hợp đồng</span>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" id="ddl-sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Mới</option>
+                            }
+                            else
+                            {
+                                <option value="1">Mới</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Đã duyệt</option>
+                            }
+                            else
+                            {
+                                <option value="2">Đã duyệt</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th>Học viên</th>
+                    <th>Chương trình</th>
+                    <th>Trạng thái</th>
+                    <th>Ký hợp đồng</th>
+                    <th>Thời gian tạo</th>
+                    <th>Người tạo</th>
+                    <th class="no-wrap tx-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        //tbl_CoursesStudent cs = CoursesStudentTable.getbyid(item.CourseStudentID.Value);
+                        tbl_StudentAppointment st = StudentAppointmentTable.getbyid(item.StudentAppointmentID.Value);
+                        var ac = AccountTable.getbyusername(item.CreatedBy);
+                                <tr class="tr-row">
+                                    <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                                    <td class="no-wrap">@st.StudentName</td>
+                                    <td>@st.ClassName</td>
+                                    <td>
+                                        @{
+                                            if (item.Status == 1)
+                                            {
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input chk-show" data-id="@item.ID" id="chk-@item.ID">
+                                                    <label class="custom-control-label" for="chk-@item.ID">Duyệt</label>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input chk-show" checked data-id="@item.ID" id="chk-@item.ID">
+                                                    <label class="custom-control-label" for="chk-@item.ID">Duyệt</label>
+                                                </div>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.Signed == true)
+                                        {
+                                            <span class="badge-success badge">Đã ký</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-warning badge">Chưa ký</span>
+                                        }
+                                    </td>
+                                    <td class="no-wrap">@item.CreatedDate.Value.ToString("dd/MM/yyyy")</td>
+                                    <td class="no-wrap">
+                                        @if (ac == null)
+                                        {
+                                        }
+                                        else
+                                        {
+                                            <span>@ac.FullName</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (aclog.RoleID == 1 && item.Status == 1)
+                                        {
+                                            <a href="@Url.Action("EditContractCustomer", "Contract", new { area = "Admin", id = item.StudentAppointmentID })" class="btn btn-info mg-2"><i data-feather="edit"></i> Sửa</a>
+                                        }
+                                        @if (item.Status == 2)
+                                        {
+                                            <a href="@Url.Action("PrintContract", "Contract", new { area = "Admin", code = item.CodeCheck })" class="btn btn-dark mg-2"><i data-feather="printer"></i> In</a>
+                                        }
+                                    </td>
+                                </tr>
+                        <tr class="collapse-row">
+                            <td colspan="9">
+                                <div class="collapse-content" style="margin: 0 auto;">
+                                    @Html.Raw(item.ContractContent)
+                                    <div class="page-invoice-wrap">
+                                        <h5>Ghi chú</h5>
+                                        <p>@item.Note</p>
+                                    </div>
+                                </div>
+
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        @Html.PagedListPager(Model, page => Url.Action("CensorshipContract", new { page, search = ViewBag.Search, sort = ViewBag.Sort, from = ViewBag.From, to = ViewBag.To }),
+        new PagedListRenderOptions
+        {
+            UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+        })
+    </nav>
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).on("click", ".chk-show", function () {
+            var id = $(this).attr('data-id');
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Contract/AcceptContract",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    toast.create({
+                        title: 'Notification!',
+                        text: 'Thành công!',
+                        icon: 'check',
+                        classBackground: 'noti-success',
+                        timeout: 2500
+                    });
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error :) ");
+                }
+            });
+        })
+    </script>
+}
+

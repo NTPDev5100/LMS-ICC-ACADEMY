@@ -1,0 +1,158 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@{
+    ViewBag.Title = "ScheduleStudyTime";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var lschool = SchoolTable.getall().OrderBy(n => n.SchoolName).ToList();
+    var studys = StudyTimeTable.getall().OrderBy(n => n.sTime).ToList();
+    tbl_Account aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+
+<style>
+    .study-time table td:not(.sticky-col) {
+        min-width: 120px;
+    }
+
+    .study-time table {
+        table-layout: unset;
+    }
+
+        .study-time table td:not(.sticky-col) {
+            height: 120px;
+        }
+</style>
+<div class="row">
+    <div class="col-12">
+        <div class="top-filter mg-b-10">
+            <div class="d-md-flex align-items-center justify-content-between">
+                <div class="row">
+                    <div class="col-12">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                                <li class="breadcrumb-item active" aria-current="page">Kiểm tra nhiều ca học</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-center">
+                    <div class="mg-r-10 select-class">
+                        <select id="ddl-trungtam" onchange="loaddata(0)" class="form-control">
+                            <option value="0" selected>---Chọn trung tâm---</option>
+                            @{
+                                foreach (var item in lschool)
+                                {
+                                    if (aclog.RoleID == 8)
+                                    {
+                                        var check = AssignManagerSpecializeToSchoolTable.getbyuid(aclog.ID).Where(n => n.SchoolID == item.ID && n.isHide != true).FirstOrDefault();
+                                        if (check != null)
+                                        {
+                                            <option value="@item.ID">@item.SchoolName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.ID">@item.SchoolName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="mg-r-10">
+                        <input id="txt-date" type="text" class="form-control datetimepicker date-only" value="@GetDateTime.Now.ToString("dd/MM/yyyy")" placeholder="DD / MM / YYYY">
+                    </div>
+                    <div class="">
+                        <a href="javascript:;" onclick="loaddata(0)" class="btn btn-primary btn-block">Xem</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 colsm-12 col-md-12">
+        <div class="study-time list-student-course">
+            <div class="table-responsive">
+                <table id="col-left-fixed" class="table table-bordered centered table-vcenter">
+                    <thead>
+                        <tr>
+                            <th class="sticky-col text-center">Phòng/Ca</th>
+                            @{
+                                foreach (var item in studys)
+                                {
+                                    <th class="no-wrap">@item.sTime - @item.eTime</th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+
+        //mặc định cho load theo trung tâm đầu tiên luôn
+        //$(window).on('load', function () {
+        //    let t = 0;
+        //    let schoolID = 1;
+        //    $('#ddl-trungtam').val(schoolID);
+        //    if (!ckstring($('#txt-date').val())) {
+        //        $.ajax({
+        //            type: "POST",
+        //            url: "/Admin/Course/CheckViewStudyTime",
+        //            data: '{schoolid: ' + schoolID + ', type:' + t + ', date:"' + $('#txt-date').val() + '"}',
+        //            contentType: "application/json; charset=utf-8",
+        //            dataType: "json",
+        //            success: function (msg) {
+        //                $('#txt-date').val(msg.day);
+        //                $('#table-body').empty();
+        //                $('#table-body').append(msg.l);
+        //            },
+        //            error: function (xmlhttprequest, textstatus, errorthrow) {
+        //                console.log("e: loaddata");
+        //            }
+        //        });
+        //    }
+        //});
+
+        //function loaddata(t) {
+        //    //t = 0 load ngày hiện tại, 1 trừ, 2 cộng
+        //    if (!ckstring($('#txt-date').val())) {
+        //        $.ajax({
+        //            type: "POST",
+        //            url: "/Admin/Course/CheckViewStudyTime",
+        //            data: '{schoolid: ' + $('#ddl-trungtam').val() + ', type:' + t + ', date:"' + $('#txt-date').val() + '"}',
+        //            contentType: "application/json; charset=utf-8",
+        //            dataType: "json",
+        //            success: function (msg) {
+        //                $('#txt-date').val(msg.day);
+        //                $('#table-body').empty();
+        //                $('#table-body').append(msg.l);
+        //            },
+        //            error: function (xmlhttprequest, textstatus, errorthrow) {
+        //                console.log("e: loaddata");
+        //            }
+        //        });
+        //    }
+        //    else {
+        //        toast.create({
+        //            title: 'Thông báo!',
+        //            text: 'Vui lòng nhập ngày cần xem',
+        //            icon: 'notifications_active',
+        //            classBackground: 'noti-warning',
+        //            timeout: 2500
+        //        })
+        //    }
+        //}
+    </script>
+}

@@ -1,0 +1,346 @@
+﻿@using AppZim.Models
+@using PagedList.Mvc;
+@using AppZim.TableSql
+@using System.Text;
+@model List<ASW_Services_List_Result>
+@{
+    ViewBag.Title = "Services";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var Lncc = SupplierServicesTable.getall().Where(x => x.StatusID == 2);
+    var gv = AccountTable.getbyrole(4).Where(x => x.Status == 2);
+    StringBuilder listNCC = new StringBuilder();
+    foreach (var item in Lncc)
+    {
+        listNCC.Append("<option value=\"" + item.ID + "\">" + item.SupplierName + "</option>");
+    }
+    StringBuilder listGV = new StringBuilder();
+    foreach (var item in gv)
+    {
+        listGV.Append("<option value=\"" + item.ID + "\">" + item.FullName + "</option>");
+    }
+    var ser = ServicesTable.getall();
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách dịch vụ</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("Services", "Option", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="#div-add-district" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" list="browsers" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <datalist id="browsers">
+                        @{
+                            foreach (var i in ser)
+                            {
+                                <option value="@i.ServiceName">@i.ServiceName</option>
+                            }
+                        }
+                    </datalist>
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+                <div>
+                    <select name="status" class="custom-select" id="statusID" onchange="pagesearch()">
+                        <option value="0">-- Tất cả --</option>
+                        <option value="1">Sắp hoạt động</option>
+                        <option value="2">Hoạt động</option>
+                        <option value="3">Hết hoạt động</option>
+                    </select>
+                    <script>
+                        $('#statusID').val(@ViewBag.Status)
+                    </script>
+                </div>
+                <div class="sort-by">
+                    <select name="sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>NCC a -> z</option>
+                            }
+                            else
+                            {
+                                <option value="1">NCC a -> z</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>NCC z -> a</option>
+                            }
+                            else
+                            {
+                                <option value="2">NCC z -> a</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Phụ trách a -> z</option>
+                            }
+                            else
+                            {
+                                <option value="3">Phụ trách a -> z</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Phụ trách z -> a</option>
+                            }
+                            else
+                            {
+                                <option value="4">Phụ trách z -> a</option>
+                            }
+                            if (ViewBag.Sort == 5)
+                            {
+                                <option value="4" selected>Dịch vụ a -> z</option>
+                            }
+                            else
+                            {
+                                <option value="4">Dịch vụ a -> z</option>
+                            }
+                            if (ViewBag.Sort == 6)
+                            {
+                                <option value="4" selected>Dịch vụ z -> a</option>
+                            }
+                            else
+                            {
+                                <option value="4">Dịch vụ z -> a</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <a href="javascript:;" class="btn btn-success export-excel"><i data-feather="file-text"></i> Xuất Excel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Dịch vụ</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Phụ trách</th>
+                    <th>Trạng thái</th>
+                    <th>Mô tả</th>
+                    <th>Chỉnh sửa</th>
+                    <th>Thời gian sửa</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ServiceName</td>
+                        <td>@item.SupplierName</td>
+                        <td>@item.CuratorFullName</td>
+                        <td>
+                            @{
+                                switch (item.StatusID.Value)
+                                {
+                                    case 1: <span class="text-warning">@item.StatusName</span>
+                                    break;
+                                case 2: <span class="text-success">@item.StatusName</span>
+                                break;
+                            case 3: <span class="text-danger">@item.StatusName</span>
+                            break;
+                    }
+                            }
+                        </td>
+                        <td>@item.DescribeService</td>
+                        <td>@item.ModifiedBy</td>
+                        <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">
+                            <a href="#edit-provincial" data-toggle="modal" data-id="@item.ID" data-name="@item.ServiceName" data-des="@item.DescribeService" data-ncc="@item.SupplierID" data-phutrach="@item.CuratorUID" data-status="@item.StatusID" class="btn btn-primary btn-icon btn-sm edit-service">
+                                <i data-feather="rotate-ccw"></i> Cập nhật
+                            </a>
+                            <a href="/Admin/Option/ServicesDetail?serviceID=@item.ID" class="btn btn-info btn-icon btn-sm">
+                                <i data-feather="rotate-ccw"></i> Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 mg-t-10 justify-content-end">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </ul>
+</nav>
+
+<div class="modal" id="div-add-district" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddService", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Tạo mới</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-job">Dịch vụ:</label>
+                                    <input id="txt-service" name="txt-service" required class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-job">Nhà cung cấp:</label>
+                                    <select id="txt-service-ncc" name="txt-service-ncc" class="form-control" required>
+                                        @Html.Raw(listNCC.ToString())
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-job">Phụ trách:</label>
+                                    <select id="txt-service-phutrach" name="txt-service-phutrach" class="form-control select2" required>
+                                        @Html.Raw(listGV.ToString())
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-job">Mô tả:</label>
+                                    <textarea id="txt-service-des" name="txt-service-des" class="form-control" rows="1" placeholder="..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div id="edit-provincial" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditService", "Option", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="hdfID" name="hdfID" required />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Cập nhật</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-service">Dịch vụ:</label>
+                                    <input id="txt-edit-service" name="txt-edit-service" required class="form-control" placeholder="..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-job">Nhà cung cấp:</label>
+                                    <select id="txt-edit-service-ncc" name="txt-edit-service-ncc" class="form-control" required>
+                                        @Html.Raw(listNCC.ToString())
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-job">Phụ trách:</label>
+                                    <select id="txt-edit-service-phutrach" name="txt-edit-service-phutrach" class="form-control select2" required>
+                                        @Html.Raw(listGV.ToString())
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-job">Trạng thái:</label>
+                                    <select id="txt-edit-service-status" name="txt-edit-service-status" class="form-control" required>
+                                        <option value="1">Sắp hoạt động</option>
+                                        <option value="2">Hoạt động</option>
+                                        <option value="3">Hết hoạt động</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-service-des">Mô tả:</label>
+                                    <textarea id="txt-edit-service-des" name="txt-edit-service-des" class="form-control" rows="1" placeholder="..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).on("click", ".edit-service", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=txt-edit-service]').val($(this).attr('data-name'));
+            $('select[name=txt-edit-service-ncc]').val($(this).attr('data-ncc'));
+            $('select[name=txt-edit-service-phutrach]').val($(this).attr('data-phutrach'));
+            $("#txt-edit-service-phutrach").select2({
+                dropdownParent: $("#edit-provincial")
+            });
+            $('select[name=txt-edit-service-status]').val($(this).attr('data-status'));
+            $('textarea[name=txt-edit-service-des]').val($(this).attr('data-des'));
+        });
+        //Xuất excel
+        $('.export-excel').click(function () {
+            let search = $('input[name=search]').val();
+            let sort = $('select[name=sort]').val();
+            let status = $('select[name=status]').val();
+            $.ajax({
+                type: "POST",
+                url: "/Option/ExportExcelService",
+                data: '{search: "' + search + '",sort:"' + sort + '",status:"' + status + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        fnExcelReport(msg.data, msg.f); //hàm này ở layout
+                    }
+                    else {
+                        alert(msg.noti);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        });
+    </script>
+}

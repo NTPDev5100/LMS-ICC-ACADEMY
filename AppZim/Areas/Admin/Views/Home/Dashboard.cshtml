@@ -1,0 +1,1566 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@using AppZim.Areas.Admin.Controllers
+@using AppZim.ZIM
+
+@{
+    ViewBag.Title = "Thống kê";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var school = SchoolTable.getall();
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    //var RateExercise = Json.Decode(ViewBag.RateExercise);
+
+    //var Top5RateExercise = ViewBag.Top5RateExercise;
+
+    var RateTVV = Json.Decode(ViewBag.RateTVV);
+    var Top5RateTVV = ViewBag.Top5RateTVV;
+    var Circle = ViewBag.Circle;
+    var PercentCircle1 = Math.Round((Convert.ToDouble(Circle[1]) / Circle[0]) * 100, 1);
+    var PercentCircle2 = Math.Round((Convert.ToDouble(Circle[2]) / Circle[0]) * 100, 1);
+    var lteam = AccountTable.getbyrole(3).ToList();
+}
+
+@section myStyles{
+    <link href="~/app-assets/zimv2/lib/jqvmap/jqvmap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/app-assets/zimv2/assets/css/dashforge.dashboard.css">
+    <style>
+        .select2 {
+            width: 100% !important;
+        }
+    </style>
+}
+
+<div class="d-md-flex align-items-center justify-content-between mg-b-20 mg-lg-b-25 mg-xl-b-30">
+    <div class="d-md-block ml-auto">
+        @using (Html.BeginForm("Dashboard", "Home", FormMethod.Get, new { id = "form-dashboard" }))
+        {
+            <div class="date-filter d-flex justify-content-center mg-t-20 mg-md-t-0 row">
+                @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 3)
+                {
+                    <div class="col-md-2 mg-r-5 pd-0">
+                        <select class="select2" name="slTeam" id="slTeam" onchange="LoadMember()">
+                            <option value="0">-- Tất cả nhóm--</option>
+                            @foreach (var i in lteam)
+                            {
+                                <option value="@i.ID" @(i.ID == ViewBag.TeamID ? "selected" : "")>@i.FullName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 mg-r-5 pd-0">
+                        <select class="form-control select2 custom-select" name="slMember" id="slMember">
+                            <option value="0">---</option>
+                        </select>
+                    </div>
+                }
+                <input type="text" name="from" class="col-md-2 form-control datetimepicker date-only" placeholder="DD / MM / YYYY" value="@ViewBag.startdate">
+                <input type="text" style="margin: 0px 5px;" name="to" class="col-md-2 form-control datetimepicker date-only" placeholder="DD / MM / YYYY" value="@ViewBag.enddate">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        }
+    </div>
+</div>
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" style="margin-bottom:-10px">
+    <ol class="breadcrumb-style1">
+        <li class="breadcrumb-item active" aria-current="page">Kinh doanh</li>
+    </ol>
+</nav>
+<div class="row row-xs">
+    <div class="col-sm-6 col-lg-2">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Hẹn test</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end new-course">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.Statistical.AppointmentTest</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Học viên</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.Statistical.AppointmentTest, ViewBag.Statistical.PreAppointmentTest))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart3" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-sm-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Đã test</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end new-customer">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.Statistical.TestDone</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Học viên</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.Statistical.TestDone, ViewBag.Statistical.PreTestDone))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart4" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">HV đăng ký học</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end new-service-customer">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.Statistical.Register</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Học viên</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.Statistical.Register, ViewBag.Statistical.PreRegister))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart5" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">HV đi học</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end new-appointment-customer">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.Statistical.Study</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Học viên</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.Statistical.Study, ViewBag.Statistical.PreStudy))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart6" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">HV chờ xếp lớp</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end new-appointment-customer">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@(ViewBag.Statistical.Waiting)</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Học viên</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.Statistical.Waiting, ViewBag.Statistical.PreWaiting))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart6" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">HV đã truy thu được</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.Statistical.CompleteTuition</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Học viên</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.Statistical.CompleteTuition, ViewBag.Statistical.PreCompleteTuition))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart7" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-4 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Lý do không học</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <canvas id="myChartStudyFail" width="30" height="30"></canvas>
+            </div>
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-4 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Lý do đk học</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <canvas id="myChartStudy" width="30" height="30"></canvas>
+            </div>
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-4 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Ngôn ngữ HV</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <canvas id="myChart" width="30" height="30"></canvas>
+            </div>
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-4 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Đóng tiền lần đầu</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <canvas id="myChartDongTien" width="30" height="30"></canvas>
+            </div>
+        </div>
+    </div><!-- col -->
+
+</div>
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" style="margin-bottom:-10px">
+    <ol class="breadcrumb-style1">
+        <li class="breadcrumb-item active" aria-current="page">Sản phẩm</li>
+    </ol>
+</nav>
+<div class="row row-xs">
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">HV hoàn thành khóa học</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.HVHoanThanh</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Học viên</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.HVHoanThanh, ViewBag.HVHoanThanhPre))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart8" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-sm-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Tổng số buổi phải học</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end new-customer">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.TongSoBuoi</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Ca</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.TongSoBuoi, ViewBag.TongSoBuoiPre))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart9" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Tổng số buổi đã học</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end new-service-customer">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.SoBuoiDaHoc</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Ca</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.SoBuoiDaHoc, ViewBag.SoBuoiDaHocPre))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart10" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Số GV dạy thử</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end new-appointment-customer">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.GiaoVienDayThu</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">GV</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.GiaoVienDayThu, ViewBag.GiaoVienDayThuPre))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart6" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+    <div class="col-sm-6 col-lg-2 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Số lượng khóa học</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <h3 class="tx-rubik mg-b-0 mg-r-5 lh-1">@ViewBag.SoKhoaHoc</h3>
+                <p class="tx-11 tx-color-03 mg-b-0">Khóa</p>
+                <h3 class="mg-b-0 text-danger" style="margin-left:30px; font-size:17px">@Html.Raw(AssetCRM.CalcPersent(ViewBag.SoKhoaHoc, ViewBag.SoKhoaHocPre))</h3>
+            </div>
+            <div class="chart-three">
+                <div id="flotChart8" class="flot-chart ht-30"></div>
+            </div><!-- chart-three -->
+        </div>
+    </div><!-- col -->
+
+    <div class="col-sm-6 col-lg-4 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Ngôn ngữ GV</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <canvas id="myChart-NNGV" width="30" height="10"></canvas>
+            </div>
+        </div>
+    </div><!-- col -->
+    @if (aclog.RoleID == 1)
+    {
+        <div class="col-sm-6 col-lg-4 mg-t-10 mg-lg-t-0">
+            <div class="card card-body">
+                <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Lương theo ngôn ngữ</h6>
+                <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                    <canvas id="luongtheongonngu" width="30" height="30"></canvas>
+                </div>
+            </div>
+        </div><!-- col -->
+    }
+
+    <div class="col-sm-6 col-lg-4 mg-t-10 mg-lg-t-0">
+        <div class="card card-body">
+            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-02 tx-semibold mg-b-8">Lớp theo ngôn ngữ</h6>
+            <div class="d-flex d-lg-block d-xl-flex align-items-end">
+                <canvas id="myChart-CourseOfLanguage" width="30" height="30"></canvas>
+            </div>
+        </div>
+    </div><!-- col -->
+</div>
+<div class="row row-xs">
+
+</div>
+<div class="row row-xs">
+
+    <div class="col-lg-8 col-xl-7 mg-t-10">
+        <div class="card ht-100p">
+            <div class="card-header pd-y-20 d-md-flex align-items-center justify-content-between">
+                <h6 class="mg-b-0">Doanh thu</h6>
+                <ul class="list-inline d-flex mg-t-20 mg-sm-t-10 mg-md-t-0 mg-b-0">
+                    <li class="list-inline-item d-flex align-items-center mg-l-5 filter-time active" data-time="month">
+                        <span class="d-block wd-10 ht-10 bg-df-3 rounded mg-r-5"></span>
+                        <span class="tx-sans tx-uppercase tx-12 tx-medium tx-color-03">Tháng</span>
+                    </li>
+                    <li class="list-inline-item d-flex align-items-center mg-l-5 filter-time" data-time="year">
+                        <span class="d-block wd-10 ht-10 bg-df-3 rounded mg-r-5"></span>
+                        <span class="tx-sans tx-uppercase tx-12 tx-medium tx-color-03">Năm</span>
+                    </li>
+                </ul>
+            </div><!-- card-header -->
+            <div class="card-body pos-relative pd-0">
+                <div class="pos-static pd-t-20 pd-l-20 pd-b-20 wd-xl-100p z-index-10">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h3 class="tx-normal tx-rubik tx-spacing--2 mg-b-5 chart-revenue-total">0 VNĐ </h3>
+                            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-04 tx-semibold mg-b-10">Tổng doanh thu</h6>
+                        </div><!-- col -->
+                        <div class="col-sm-6">
+                            <h3 class="Evolution tx-normal tx-rubik tx-spacing--2 mg-b-5">
+                                <span class="tx-medium tx-success">15% <i class="icon ion-md-arrow-up"></i></span>
+                            </h3>
+                            <h6 class="tx-uppercase tx-11 tx-spacing-1 tx-color-04 tx-semibold mg-b-10">Tăng trưởng</h6>
+                        </div><!-- col -->
+                    </div><!-- row -->
+                </div>
+
+                <div class="revenue-chart pd-r-20 pd-l-20 pd-b-20 ">
+                    <canvas id="revenueChart" class="" height="230"></canvas>
+                </div><!-- chart-one -->
+            </div><!-- card-body -->
+        </div><!-- card -->
+    </div>
+    <div class="col-12 col-md-12 col-xl-4">
+        <div class="card mg-t-10">
+            <div class="card-header pd-t-10 pd-b-10">
+                <h6 class="lh-5 mg-b-5">Đánh giá TVV</h6>
+                <p class="tx-12 tx-color-03 mg-b-0">Thống kê đánh giá TVV của học viên.</p>
+            </div><!-- card-header -->
+            <div class="card-body pd-0">
+
+                <div class="pd-t-10 pd-b-15 pd-x-20 d-flex align-items-baseline">
+                    <h1 class="tx-normal tx-rubik mg-b-0 mg-r-5">@RateTVV.TotalRateTVV.ToString()</h1>
+                    <div class="tx-18">
+                        @for (int i = 0; i < RateTVV.TotalRateTVV; i++)
+                        {
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                        }
+                        @for (int j = 0; j < 5 - RateTVV.TotalRateTVV; j++)
+                        {
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                        }
+                    </div>
+                </div>
+                <div class="list-group list-group-flush tx-13">
+                    <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                        <strong class="tx-12 tx-rubik">5.0</strong>
+                        <div class="tx-16 mg-l-10">
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                        </div>
+                        <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV5[0]</div>
+                        <div class="mg-l-20 tx-rubik tx-color-03 wd-15p text-right">@RateTVV.RateTVV5[1]%</div>
+                    </div>
+                    <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                        <strong class="tx-12 tx-rubik">4.0</strong>
+                        <div class="tx-16 mg-l-10">
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                        </div>
+                        <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV4[0]</div>
+                        <div class="mg-l-20 tx-rubik tx-color-03 wd-15p text-right">@RateTVV.RateTVV4[1]%</div>
+                    </div>
+                    <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                        <strong class="tx-12 tx-rubik">3.0</strong>
+                        <div class="tx-16 mg-l-10">
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                        </div>
+                        <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV3[0]</div>
+                        <div class="mg-l-20 tx-rubik tx-color-03 wd-15p text-right">@RateTVV.RateTVV3[1]%</div>
+                    </div>
+                    <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center">
+                        <strong class="tx-12 tx-rubik">2.0</strong>
+                        <div class="tx-16 mg-l-10">
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                        </div>
+                        <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV2[0]</div>
+                        <div class="mg-l-20 tx-rubik tx-color-03 wd-15p text-right">@RateTVV.RateTVV2[1]%</div>
+                    </div>
+                    <div class="list-group-item pd-y-5 pd-x-20 d-flex align-items-center bg-transparent">
+                        <strong class="tx-12 tx-rubik">1.0</strong>
+                        <div class="tx-16 mg-l-10">
+                            <i class="icon ion-md-star lh-0 tx-orange"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                            <i class="icon ion-md-star lh-0 tx-gray-300"></i>
+                        </div>
+                        <div class="mg-l-auto tx-rubik tx-color-02">@RateTVV.RateTVV1[0]</div>
+                        <div class="mg-l-20 tx-rubik tx-color-03 wd-15p text-right">@RateTVV.RateTVV1[1]%</div>
+                    </div>
+                </div><!-- list-group -->
+            </div><!-- card-body -->
+        </div><!-- card -->
+
+
+        <div class="card mg-t-10 rate-block">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6 class="mg-b-0">Đánh giá TVV gần đây</h6>
+
+            </div>
+            <ul class="list-group list-group-flush tx-13">
+                @foreach (var item in Top5RateTVV)
+                {
+                    <li class="list-group-item d-flex pd-sm-x-20">
+                        <div class="avatar d-none d-sm-block icon-rate"><span class="avatar-initial rounded-circle bg-teal"><i class="icon ion-md-checkmark"></i></span></div>
+                        <div class="pd-sm-l-10 left-rate">
+                            <p class="tx-medium mg-b-0"><a href="/Admin/FeedBack/FeedBackDetail/@item.ID" target="_blank">@item.FullName đã gửi phản hồi #@item.ID</a></p>
+                            <small class="tx-12 tx-color-03 mg-b-0">@Convert.ToDateTime(item.RateDate).ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                        <div class="mg-l-auto text-right right-rate">
+                            <p class="tx-medium mg-b-0">@item.Rate@(".0")</p>
+                            @if (item.Rate == 1)
+                            {
+                                <small class="tx-12 tx-danger mg-b-0">Rất tệ</small>
+                            }
+                            @if (item.Rate == 2)
+                            {
+                                <small class="tx-12 tx-pink mg-b-0">Chưa tốt</small>
+                            }
+                            @if (item.Rate == 3)
+                            {
+                                <small class="tx-12 tx-warning mg-b-0">Bình thường</small>
+                            }
+                            @if (item.Rate == 4)
+                            {
+                                <small class="tx-12 tx-success mg-b-0">Tốt</small>
+                            }
+                            @if (item.Rate == 5)
+                            {
+                                <small class="tx-12 tx-success mg-b-0">Rất tốt</small>
+                            }
+                        </div>
+                    </li>
+                }
+
+            </ul>
+        </div><!-- card -->
+    </div>
+</div>
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/jquery.flot/jquery.flot.js"></script>
+    <script src="~/app-assets/zimv2/lib/jquery.flot/jquery.flot.stack.js"></script>
+    <script src="~/app-assets/zimv2/lib/jquery.flot/jquery.flot.resize.js"></script>
+    <script src="~/app-assets/zimv2/lib/chart.js/Chart.bundle.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/peity/jquery.peity.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/jqvmap/jquery.vmap.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/jqvmap/maps/jquery.vmap.usa.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/dashforge.sampledata.js"></script>
+
+
+    <script>
+
+        @*var RateExercise =@Html.Raw(ViewBag.RateExercise);*@
+        var RateTVV =@Html.Raw(ViewBag.RateTVV);
+        @*var DataDistricts = @Html.Raw(ViewBag.DataDistrict);
+        var DataExamReport = @Html.Raw(ViewBag.DataExamReport);*@
+
+
+        //$(document)
+        //    .ajaxStart(function () {
+        //        $('#AjaxLoader').show();
+        //    })
+        //    .ajaxStop(function () {
+        //        $('#AjaxLoader').hide();
+        //    });
+    // Màu cơ sở
+    //var color = {
+    //    'thaiha': '#D84315',
+    //    'yenlang': '#FFC107',
+    //    'vooanh': '#4CAF50',
+    //    'huynhlankhanh': '#2196F3',
+    //    'tranphu': '#E91E63'
+    //}
+    function getDaysInMonth(month, year) {
+         var date = new Date(Date.UTC(year, month, 1));
+         var days = [];
+         while (date.getMonth() === month) {
+            var d = new Date(date);
+            days.push(d.getDate() + '/' + (d.getMonth() + 1));
+            date.setDate(date.getDate() + 1);
+         }
+         return days;
+    }
+    // Chart.defaults.global.defaultFontFamily = 'Roboto';
+     var filterTime = document.querySelectorAll('.filter-time');
+    var totalRevenue = document.getElementsByClassName('chart-revenue-total');
+
+     //Trending line chart
+    var revenueLineChartCTX = $("#revenueChart");
+    var revenueLineChart;
+    var dataPercentTop = @Html.Raw(ViewBag.DataTopPercent);
+    var NewCourse = dataPercentTop.NewCourse;
+        //if (NewCourse[1] >= 0) {
+
+        //    $('.new-course').html("<h3 class=\"tx-normal tx-rubik mg-b-0 mg-r-5 lh-1\">" + NewCourse[0] + "</h3><p class=\"tx-11 tx-color-03 mg-b-0\"><span class=\"tx-medium tx-success\">" + Math.abs(NewCourse[1]) + "% <i class=\"icon ion-md-arrow-up\"></i></span>Tháng trước</p>");
+        //}
+        //else {
+
+        //    $('.new-course').html("<h3 class=\"tx-normal tx-rubik mg-b-0 mg-r-5 lh-1\">" + NewCourse[0] + "</h3><p class=\"tx-11 tx-color-03 mg-b-0\"><span class=\"tx-medium tx-danger\">" + Math.abs(NewCourse[1]) + "%<i class=\"icon ion-md-arrow-down\"></i></span>Tháng trước</p>");
+        //}
+        var NewStudent = dataPercentTop.NewCustomer;
+        //if (NewStudent[1] >= 0) {
+
+        //    $('.new-customer').html("<h3 class=\"tx-normal tx-rubik mg-b-0 mg-r-5 lh-1\">" + NewStudent[0] + "</h3><p class=\"tx-11 tx-color-03 mg-b-0\"><span class=\"tx-medium tx-success\">" + Math.abs(NewStudent[1]) + "% <i class=\"icon ion-md-arrow-up\"></i></span>Tháng trước</p>");
+        //}
+        //else {
+
+        //    $('.new-customer').html("<h3 class=\"tx-normal tx-rubik mg-b-0 mg-r-5 lh-1\">" + NewStudent[0] + "</h3><p class=\"tx-11 tx-color-03 mg-b-0\"><span class=\"tx-medium tx-danger\">" + Math.abs(NewStudent[1]) + "%<i class=\"icon ion-md-arrow-down\"></i></span>Tháng trước</p>");
+        //}
+        var NewServiceCustomer = dataPercentTop.NewServicesCustomer;
+        //if (NewServiceCustomer[1] >= 0) {
+
+        //    $('.new-service-customer').html("<h3 class=\"tx-normal tx-rubik mg-b-0 mg-r-5 lh-1\">" + NewServiceCustomer[0] + "</h3><p class=\"tx-11 tx-color-03 mg-b-0\"><span class=\"tx-medium tx-success\">" + Math.abs(NewServiceCustomer[1]) + "% <i class=\"icon ion-md-arrow-up\"></i></span>Tháng trước</p>");
+        //}
+        //else {
+
+        //    $('.new-service-customer').html("<h3 class=\"tx-normal tx-rubik mg-b-0 mg-r-5 lh-1\">" + NewServiceCustomer[0] + "</h3><p class=\"tx-11 tx-color-03 mg-b-0\"><span class=\"tx-medium tx-danger\">" + Math.abs(NewServiceCustomer[1]) + "%<i class=\"icon ion-md-arrow-down\"></i></span>Tháng trước</p>");
+        //}
+        var NewAppointmentCustomer = dataPercentTop.NewAppointment;
+        //if (NewAppointmentCustomer[1] >= 0) {
+
+        //    $('.new-appointment-customer').html("<h3 class=\"tx-normal tx-rubik mg-b-0 mg-r-5 lh-1\">" + NewAppointmentCustomer[0] + "</h3><p class=\"tx-11 tx-color-03 mg-b-0\"><span class=\"tx-medium tx-success\">" + Math.abs(NewAppointmentCustomer[1]) + "% <i class=\"icon ion-md-arrow-up\"></i></span>Tháng trước</p>");
+        //}
+        //else {
+
+        //    $('.new-appointment-customer').html("<h3 class=\"tx-normal tx-rubik mg-b-0 mg-r-5 lh-1\">" + NewAppointmentCustomer[0] + "</h3><p class=\"tx-11 tx-color-03 mg-b-0\"><span class=\"tx-medium tx-danger\">" + Math.abs(NewAppointmentCustomer[1]) + "%<i class=\"icon ion-md-arrow-down\"></i></span>Tháng trước</p>");
+        //}
+
+
+
+
+    var monthRevenueDataset = [
+       {
+            label: "Doanh thu",
+            data: [4023712, 7002037, 6720802, 7355786, 6788766, 7169305, 2665626, 5536176, 6901654, 2328586, 5284641, 6214662, 7657952, 8451341, 7504499, 4373241, 7659185, 2994734, 5521773, 5696381, 9508417, 6094465, 8483373, 6567850, 2326744, 2470435, 8346597, 4783175, 4512745, 3376172],
+            backgroundColor: 'rgb(105,178,248,.25)',
+            borderColor:'rgb(105,178,248,.8)',
+            fill: true,
+            lineTension:0.1,
+            pointHoverBorderColor:'rgb(105,178,248,1)',
+            pointBackgroundColor:'#fff',
+            pointBorderColor:'#0168fa'
+       }
+    ];
+
+    var yearRevenueDataset = [
+        {
+            label: "Doanh thu",
+            data: [2000000000, 3500000000, 277000000, 7100000000, 2000000000, 3500000000, 2770000000, 7100000000, 2000000000, 3500000000, 2770000000, 710000000],
+            backgroundColor: 'rgb(105,178,248,.25)',
+            borderColor: 'rgb(105,178,248,.8)',
+            fill: true,
+            lineTension: 0.1,
+            pointHoverBorderColor: 'rgb(105,178,248,1)',
+            pointBackgroundColor: '#fff',
+            pointBorderColor: '#0168fa'
+        }
+    ];
+        var DataRevenueChart = { "month": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "year": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "percentMonth": 0, "percentYear": 0 };
+        monthRevenueDataset[0].data = DataRevenueChart.month;
+        yearRevenueDataset[0].data = DataRevenueChart.year;
+        var PercentMonth = DataRevenueChart.percentMonth;
+        var PercentYear = DataRevenueChart.percentYear;
+        if (DataRevenueChart.percentMonth >= 0) {
+            $('.Evolution').html("<span class=\"tx-medium tx-success\">" + Math.abs(PercentMonth)+"% <i class=\"icon ion-md-arrow-up\"></i></span>");
+        }
+        else {
+            $('.Evolution').html("<span class=\"tx-medium tx-danger\">" + Math.abs(PercentMonth)+"% <i class=\"icon ion-md-arrow-down\"></i></span>");
+        }
+        function ChangPercent(m, y, time) {
+
+            switch (time) {
+                case 'month': {
+                    if (m >= 0) {
+
+                        $('.Evolution').html("<span class=\"tx-medium tx-success\">" + Math.abs(m) + "% <i class=\"icon ion-md-arrow-up\"></i></span>");
+                    }
+                    else {
+
+                        $('.Evolution').html("<span class=\"tx-medium tx-danger\">" + Math.abs(m)+"% <i class=\"icon ion-md-arrow-down\"></i></span>");
+                    }
+                    break;
+                }
+                case 'year': {
+                    if (y >= 0) {
+
+                        $('.Evolution').html("<span class=\"tx-medium tx-success\">" + Math.abs(y)+"% <i class=\"icon ion-md-arrow-up\"></i></span>");
+                    }
+                    else {
+
+                        $('.Evolution').html("<span class=\"tx-medium tx-danger\">" + Math.abs(y)+"% <i class=\"icon ion-md-arrow-down\"></i></span>");
+                    }
+                    break;
+                }
+            }
+        }
+
+        var Filter = $('.filter-time');
+
+        $('.chart-on-table').on('click', '.toggle-collapse', function (e) {
+            e.preventDefault();
+            var $this = $(this);
+            var $collapse = $this.closest('.row-info').next();
+            $this.toggleClass('active');
+            $collapse.toggleClass('expanded');
+            $collapse.find('content-table').toggle();
+        });
+        var dataDemo = {
+            labels: [],
+            datasets: [{
+                label: "Doanh thu",
+                data: [],
+                backgroundColor: 'rgba(0,136,204, 0.35)',
+                borderColor: 'rgba(0,136,204, 0.83)',
+                fill: true,
+                lineTension: .2,
+                pointBorderColor: "#fff",
+                pointBackgroundColor: "#3e3e3e",
+                pointBorderColor: '#fff',
+                borderWidth: 2,
+                pointBorderWidth: 2,
+                pointHoverBorderWidth: 4,
+            }]
+        }
+        function initChart(rowid, data) {
+            var ctx = document.getElementById('chart-id-' + rowid);
+            var chartOptions = {
+                title: {
+                    text: 'Thống kê doanh thu',
+                    display: true,
+                },
+                plugins: {
+                    datalabels: {
+                        clip: false,
+                        color: "#000",
+                        clamp: false,
+                        anchor: "end",
+                        align: "top",
+                        offset: 1,
+                        formatter: (value, ctx) => {
+                            return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        },
+                        fontSize: 14
+                    }
+                },
+
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    display: false
+                },
+                hover: {
+                    mode: "label"
+                },
+                scales: {
+                    xAxes: [{
+                        display: true,
+
+                        gridLines: {
+                            display: false
+                        },
+                        ticks: {
+                            fontColor: "#000",
+                            beginAtZero: false,
+                            //  max: Math.max(...data.datasets[0].data) * 1.2,
+
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        fontColor: "#000",
+                        gridLines: {
+                            display: false
+                        },
+                        ticks: {
+                            beginAtZero: false,
+                            fontColor: "#000",
+                            padding: 15,
+                            //   max: Math.max(...data.datasets[0].data) * 1.2,
+                            callback: function (value, index, values) {
+                                if (parseInt(value) >= 1000000 && parseInt(value) < 1000000000) {
+                                    return (value / 1000000).toString().replace(
+                                        /\B(?=(\d{3})+(?!\d))/g,
+                                        ",") + ' Triệu';
+                                } else if ((parseInt(value) >= 1000000000)) {
+                                    return (value / 1000000000).toString().replace(
+                                        /\B(?=(\d{3})+(?!\d))/g, ",") + ' Tỉ';
+                                }
+                                return value;
+                            }
+                        }
+                    }]
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                }
+            };
+
+
+            var chart = new Chart(ctx, {
+                type: 'line',
+                data: dataDemo,
+                options: chartOptions
+            });
+        }
+        $('.chart-element').each(function (index, chart) {
+            initChart($(chart).attr('data-chart-id'), dataDemo);
+        });
+        function updateChartType(rowid, data) {
+
+            var chartId = 'chart-id-' + rowid;
+            Chart.helpers.each(Chart.instances, function (instance) {
+
+                var chartJs = instance.chart;
+                if (chartJs.canvas.id === chartId) {
+                    chartJs.config.data = data;
+                    chartJs.update();
+                    return false;
+                }
+
+            });
+
+            };
+
+        function loaddataschool(zimid) {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Home/GetDataRevenue",
+                data: '{zimID: ' + zimid + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        })
+                    }
+                    else {
+                        if (msg.dataChart != null) {
+                            var a = JSON.parse(msg.dataChart);
+                            
+                            monthRevenueDataset[0].data = a.month;
+                            yearRevenueDataset[0].data = a.year;
+                            PercentMonth = a.percentMonth;
+                            PercentYear = a.percentYear;
+
+                            changeDataset('month');
+                            Filter[0].classList.remove('active')
+                            Filter[0].classList.add('active')
+                            Filter[1].classList.remove('active')
+                            ChangPercent(PercentMonth, PercentMonth, 'month');
+
+                        }
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: getrate");
+                }
+            });
+        }
+
+    var revenueLineChartOptions = {
+
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 10,
+                right:10,
+
+            }
+        },
+        legend: {
+            display: false,
+            labels: {
+                fontColor: '#fff',
+                padding: 20
+
+            },
+        },
+        hover: {
+            mode: "label"
+        },
+        scales: {
+            xAxes: [
+                {
+                    beginAtZero: true,
+                    display: true,
+
+                    gridLines: {
+                        display: false
+                    },
+                    ticks: {
+                        beginAtZero: true,
+                        fontColor: "#000",
+                    }
+                }
+            ],
+            yAxes: [
+                {
+                    display: true,
+                    beginAtZero: true,
+                    fontColor: "#000",
+                    gridLines: {
+                        display: true,
+                        color:"#fff"
+                    },
+                    ticks: {
+                        beginAtZero: true,
+                        fontColor: "#000",
+                        callback: function (value, index, values) {
+                            if (parseInt(value) >= 1000000 && parseInt(value) < 1000000000) {
+                                return (value/1000000).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' Triệu';
+                            } else if((parseInt(value) >= 1000000000)){
+                                return (value/1000000000).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' Tỷ';
+                            }
+                            return value;
+                        }
+                    }
+                }
+            ]
+        },
+        tooltips: {
+            titleFontSize: 0,
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+                label: function (tooltipItem, data) {
+                    if (parseInt(tooltipItem.yLabel) >= 1000) {
+                        return tooltipItem.xLabel + ': ' + tooltipItem.yLabel.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' VNĐ';
+                    } else {
+                        return tooltipItem.xLabel + ': ' + tooltipItem.yLabel + ' VNĐ';
+                    }
+                }
+            }
+        }
+    };
+
+    var revenueLineChartData = {
+        labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+        datasets:yearRevenueDataset
+    };
+    var revenueLineChartConfig = {
+        type: "line",
+        options: revenueLineChartOptions,
+        data: revenueLineChartData
+    };
+     //Update total Revenue from data[0]  -- Month and year
+     function updateTotalRevenue(data) {
+         const reducer = (accumulator, currentValue) => accumulator + currentValue;
+         var totalData = data.reduce(reducer).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+         return totalData + ' VNĐ';
+     };
+
+    function updateTotalRevenueAll(listData) {
+        var total = 0;
+        listData.forEach(dataset => {
+            var reducer = (acc, cur) => acc + cur;
+            var totalData = dataset.data.reduce(reducer);
+            total += totalData;
+        });
+        return total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' VNĐ';
+    }
+
+    //Update dataset by toggle checkbox
+    function changeDataset(time) {
+        switch (time){
+            case 'month':{
+                revenueLineChartData.datasets = monthRevenueDataset;
+                revenueLineChartData.labels = getDaysInMonth((new Date()).getMonth(),(new Date()).getFullYear());
+                revenueLineChart.update();
+                break;
+            }
+            case 'year':{
+                revenueLineChartData.datasets = yearRevenueDataset;
+                revenueLineChartData.labels =  ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                revenueLineChart.update();
+                break;
+            }
+        }
+        totalRevenue[0].innerText = updateTotalRevenueAll(revenueLineChartData.datasets);
+    }
+
+        $.plot('#flotChart3', [{
+            data: df4,
+            color: '#9db2c6'
+          }], {
+    			series: {
+    				shadowSize: 0,
+            lines: {
+              show: true,
+              lineWidth: 2,
+              fill: true,
+              fillColor: { colors: [ { opacity: 0 }, { opacity: .5 } ] }
+            }
+    			},
+          grid: {
+            borderWidth: 0,
+            labelMargin: 0
+          },
+    			yaxis: {
+            show: false,
+            min: 0,
+            max: 60
+          },
+    			xaxis: { show: false }
+    		});
+
+        $.plot('#flotChart4', [{
+            data: df5,
+            color: '#9db2c6'
+          }], {
+    			series: {
+    				shadowSize: 0,
+            lines: {
+              show: true,
+              lineWidth: 2,
+              fill: true,
+              fillColor: { colors: [ { opacity: 0 }, { opacity: .5 } ] }
+            }
+    			},
+          grid: {
+            borderWidth: 0,
+            labelMargin: 0
+          },
+    			yaxis: {
+            show: false,
+            min: 0,
+            max: 80
+          },
+    			xaxis: { show: false }
+    		});
+
+        $.plot('#flotChart5', [{
+            data: df6,
+            color: '#9db2c6'
+          }], {
+    			series: {
+    				shadowSize: 0,
+            lines: {
+              show: true,
+              lineWidth: 2,
+              fill: true,
+              fillColor: { colors: [ { opacity: 0 }, { opacity: .5 } ] }
+            }
+    			},
+          grid: {
+            borderWidth: 0,
+            labelMargin: 0
+          },
+    			yaxis: {
+            show: false,
+            min: 0,
+            max: 80
+          },
+    			xaxis: { show: false }
+    		});
+
+        $.plot('#flotChart6', [{
+            data: df4,
+            color: '#9db2c6'
+          }], {
+    		    series: {
+    			    shadowSize: 0,
+                    lines: {
+                        show: true,
+                        lineWidth: 2,
+                        fill: true,
+                        fillColor: { colors: [ { opacity: 0 }, { opacity: .5 } ] }
+                    }
+    		    },
+                grid: {
+                    borderWidth: 0,
+                    labelMargin: 0
+                },
+    			yaxis: {
+                    show: false,
+                    min: 0,
+                    max: 60
+                },
+    			xaxis: { show: false }
+            });
+        $.plot('#flotChart7', [{
+            data: df4,
+            color: '#9db2c6'
+        }], {
+                series: {
+                    shadowSize: 0,
+                    lines: {
+                        show: true,
+                        lineWidth: 2,
+                        fill: true,
+                        fillColor: { colors: [{ opacity: 0 }, { opacity: .5 }] }
+                    }
+                },
+                grid: {
+                    borderWidth: 0,
+                    labelMargin: 0
+                },
+                yaxis: {
+                    show: false,
+                    min: 0,
+                    max: 70
+                },
+                xaxis: { show: false }
+            });
+        $.plot('#flotChart8', [{
+            data: df4,
+            color: '#9db2c6'
+        }], {
+                series: {
+                    shadowSize: 0,
+                    lines: {
+                        show: true,
+                        lineWidth: 2,
+                        fill: true,
+                        fillColor: { colors: [{ opacity: 0 }, { opacity: .5 }] }
+                    }
+                },
+                grid: {
+                    borderWidth: 0,
+                    labelMargin: 0
+                },
+                yaxis: {
+                    show: false,
+                    min: 0,
+                    max: 90
+                },
+                xaxis: { show: false }
+            });
+
+        $.plot('#flotChart9', [{
+            data: df4,
+            color: '#9db2c6'
+        }], {
+            series: {
+                shadowSize: 0,
+                lines: {
+                    show: true,
+                    lineWidth: 2,
+                    fill: true,
+                    fillColor: { colors: [{ opacity: 0 }, { opacity: .5 }] }
+                }
+            },
+            grid: {
+                borderWidth: 0,
+                labelMargin: 0
+            },
+            yaxis: {
+                show: false,
+                min: 0,
+                max: 90
+            },
+            xaxis: { show: false }
+        });
+        $.plot('#flotChart10', [{
+            data: df4,
+            color: '#9db2c6'
+        }], {
+            series: {
+                shadowSize: 0,
+                lines: {
+                    show: true,
+                    lineWidth: 2,
+                    fill: true,
+                    fillColor: { colors: [{ opacity: 0 }, { opacity: .5 }] }
+                }
+            },
+            grid: {
+                borderWidth: 0,
+                labelMargin: 0
+            },
+            yaxis: {
+                show: false,
+                min: 0,
+                max: 90
+            },
+            xaxis: { show: false }
+        });
+
+        window.onload = function () {
+            var filterItem = $('.filter-time').on('click',function(){
+                $(this).addClass('active');
+                filterItem.not($(this)).removeClass('active');
+                changeDataset($(this).data('time'));
+                ChangPercent(PercentMonth, PercentYear, $(this).data('time'));
+            });
+        };
+        function nonAccentVietnamese(str) {
+            str = str.toLowerCase();
+            //     We can also use this instead of from line 11 to line 17
+            str = str.replace(/\u00E0|\u00E1|\u1EA1|\u1EA3|\u00E3|\u00E2|\u1EA7|\u1EA5|\u1EAD|\u1EA9|\u1EAB|\u0103|\u1EB1|\u1EAF|\u1EB7|\u1EB3|\u1EB5/g, "a");
+            str = str.replace(/\u00E8|\u00E9|\u1EB9|\u1EBB|\u1EBD|\u00EA|\u1EC1|\u1EBF|\u1EC7|\u1EC3|\u1EC5/g, "e");
+            str = str.replace(/\u00EC|\u00ED|\u1ECB|\u1EC9|\u0129/g, "i");
+            str = str.replace(/\u00F2|\u00F3|\u1ECD|\u1ECF|\u00F5|\u00F4|\u1ED3|\u1ED1|\u1ED9|\u1ED5|\u1ED7|\u01A1|\u1EDD|\u1EDB|\u1EE3|\u1EDF|\u1EE1/g, "o");
+            str = str.replace(/\u00F9|\u00FA|\u1EE5|\u1EE7|\u0169|\u01B0|\u1EEB|\u1EE9|\u1EF1|\u1EED|\u1EEF/g, "u");
+            str = str.replace(/\u1EF3|\u00FD|\u1EF5|\u1EF7|\u1EF9/g, "y");
+            str = str.replace(/\u0111/g, "d");
+            // str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            // str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            // str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            // str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            // str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            // str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            // str = str.replace(/đ/g, "d");
+            // Some system encode vietnamese combining accent as individual utf-8 characters
+            str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng
+            str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
+            return str;
+        }
+        function searchName(inputEle, tableId) {
+            //  debugger;
+            var input, filter, table, tr, td, i, txtValue;
+            input = inputEle;
+            filter = nonAccentVietnamese(input.value).toUpperCase();
+            table = document.getElementById(tableId);
+            tr = table.getElementsByTagName("tr");
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[1];
+                if (td) {
+                    txtValue = nonAccentVietnamese(td.textContent) || nonAccentVietnamese(td.innerText);
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                        tr[i + 1].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                        tr[i + 1].style.display = "none";
+                    }
+                }
+            }
+        }
+        $('#search-saler').on('keyup', function () {
+            searchName($('#search-saler').get(0), 'sale-viewer');
+        });
+
+
+    $(document).ready(function(){
+        // Donut chart
+        $('.peity-donut').peity('donut');
+        //load
+        revenueLineChart = new Chart(revenueLineChartCTX, revenueLineChartConfig);
+        loaddataschool(0);
+    });
+    </script>
+
+    <script>
+        var lNN = @Html.Raw(Json.Encode(ViewBag.NgonNgu));
+        var _lNN = @Html.Raw(Json.Encode(ViewBag.NgonNguPre));
+        var NgonNguCTX = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(NgonNguCTX, {
+            type: 'bar',
+            data: {
+                labels: ['Tháng trước', 'Hiện tại'],
+                datasets: [{
+                    label: lNN[0].Name,
+                    data: [_lNN[0].Count, lNN[0].Count],
+                    backgroundColor: [
+                        '#ff3385',
+                        '#ff3385'
+                    ],
+                    borderWidth: 1
+                },
+                    {
+                        label: lNN[1].Name,
+                        data: [_lNN[1].Count, lNN[1].Count],
+                        backgroundColor: [
+                            '#ff8533',
+                            '#ff8533'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: lNN[2].Name,
+                        data: [_lNN[2].Count, lNN[2].Count],
+                        backgroundColor: [
+                            '#ffdb4d',
+                            '#ffdb4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: lNN[3].Name,
+                        data: [_lNN[3].Count, lNN[3].Count],
+                        backgroundColor: [
+                            '#a6ff4d',
+                            '#a6ff4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: lNN[4].Name,
+                        data: [_lNN[4].Count, lNN[4].Count],
+                        backgroundColor: [
+                            '#4dffff',
+                            '#4dffff'
+                        ],
+                        borderWidth: 1
+                    }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            },
+        });
+        var lTIEN = @Html.Raw(Json.Encode(ViewBag.DongTienLanDau));
+        var _lTIEN = @Html.Raw(Json.Encode(ViewBag.DongTienLanDauPre));
+        var DongTienCTX = document.getElementById('myChartDongTien').getContext('2d');
+        var myChartDongTien = new Chart(DongTienCTX, {
+            type: 'bar',
+            data: {
+                labels: ['Tháng trước', 'Hiện tại'],
+                datasets: [{
+                    label: lTIEN[0].Name,
+                    data: [_lTIEN[0].Count, lTIEN[0].Count],
+                    backgroundColor: [
+                        '#ff3385',
+                        '#ff3385'
+                    ],
+                    borderWidth: 1
+                },
+                    {
+                        label: lTIEN[1].Name,
+                        data: [_lTIEN[1].Count, lTIEN[1].Count],
+                        backgroundColor: [
+                            '#ff8533',
+                            '#ff8533'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: lTIEN[2].Name,
+                        data: [_lTIEN[2].Count, lTIEN[2].Count],
+                        backgroundColor: [
+                            '#ffdb4d',
+                            '#ffdb4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: lTIEN[3].Name,
+                        data: [_lTIEN[3].Count, lTIEN[3].Count],
+                        backgroundColor: [
+                            '#a6ff4d',
+                            '#a6ff4d'
+                        ],
+                        borderWidth: 1
+                    }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            },
+        });
+        var lNNGV = @Html.Raw(Json.Encode(ViewBag.NgonNguGV));
+        console.log(lNNGV);
+        var NgonNguGV = document.getElementById('myChart-NNGV').getContext('2d');
+        var myChartNNGV = new Chart(NgonNguGV, {
+            type: 'pie',
+            data: {
+                labels: [lNNGV[0].Name, lNNGV[1].Name, lNNGV[2].Name, lNNGV[3].Name, lNNGV[4].Name],
+                datasets: [{
+                    label: '# of Votes',
+                    data: [lNNGV[0].Count, lNNGV[1].Count, lNNGV[2].Count, lNNGV[3].Count, lNNGV[4].Count],
+                    backgroundColor: [
+                        '#ff3385',
+                        '#ff8533',
+                        '#ffdb4d',
+                        '#a6ff4d',
+                        '#4dffff'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        });
+        var CourseOfLanguage = @Html.Raw(Json.Encode(ViewBag.CourseOfLanguage));
+        var _CourseOfLanguage = @Html.Raw(Json.Encode(ViewBag.CourseOfLanguagePre));
+        var myCourseOfLanguage = document.getElementById('myChart-CourseOfLanguage').getContext('2d');
+        var myChartCourseOfLanguage = new Chart(myCourseOfLanguage, {
+            type: 'bar',
+            data: {
+                labels: ['Tháng trước', 'Hiện tại'],
+                datasets: [{
+                    label: CourseOfLanguage[0].Name,
+                    data: [_CourseOfLanguage[0].Count, CourseOfLanguage[0].Count],
+                    backgroundColor: [
+                        '#ff3385',
+                        '#ff3385'
+                    ],
+                    borderWidth: 1
+                },
+                    {
+                        label: CourseOfLanguage[1].Name,
+                        data: [_CourseOfLanguage[1].Count, CourseOfLanguage[1].Count],
+                        backgroundColor: [
+                            '#ff8533',
+                            '#ff8533'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: CourseOfLanguage[2].Name,
+                        data: [_CourseOfLanguage[2].Count, CourseOfLanguage[2].Count],
+                        backgroundColor: [
+                            '#ffdb4d',
+                            '#ffdb4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: CourseOfLanguage[3].Name,
+                        data: [_CourseOfLanguage[3].Count, CourseOfLanguage[3].Count],
+                        backgroundColor: [
+                            '#a6ff4d',
+                            '#a6ff4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: CourseOfLanguage[4].Name,
+                        data: [_CourseOfLanguage[4].Count, CourseOfLanguage[4].Count],
+                        backgroundColor: [
+                            '#4dffff',
+                            '#4dffff'
+                        ],
+                        borderWidth: 1
+                    }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            },
+        });
+        // THONG KE LY DO HOC VIEN KHONG HOC
+        var stydyfail = @Html.Raw(Json.Encode(ViewBag.StudyFail));
+        var _stydyfail = @Html.Raw(Json.Encode(ViewBag.StudyFailPre));
+        const config = {
+            type: 'bar',
+            data: {
+                labels: ['Tháng trước', 'Hiện tại'],
+                datasets: [{
+                    label: stydyfail[0].Name,
+                    data: [_stydyfail[0].Count, stydyfail[0].Count],
+                    backgroundColor: [
+                        '#ff3385',
+                        '#ff3385'
+                    ],
+                    borderWidth: 1
+                }, {
+                    label: stydyfail[1].Name,
+                    data: [_stydyfail[1].Count, stydyfail[1].Count],
+                    backgroundColor: [
+                        '#ff8533',
+                        '#ff8533'
+                    ],
+                    borderWidth: 1
+                    },
+                    {
+                        label: stydyfail[2].Name,
+                        data: [_stydyfail[2].Count, stydyfail[2].Count],
+                        backgroundColor: [
+                            '#ffdb4d',
+                            '#ffdb4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: stydyfail[3].Name,
+                        data: [_stydyfail[3].Count, stydyfail[3].Count],
+                        backgroundColor: [
+                            '#a6ff4d',
+                            '#a6ff4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: stydyfail[4].Name,
+                        data: [_stydyfail[4].Count, stydyfail[4].Count],
+                        backgroundColor: [
+                            '#4dffff',
+                            '#4dffff'
+                        ],
+                        borderWidth: 1
+                    }]
+            },
+            options: {
+                responsive: true,
+            }
+        };
+        var myChartStudyFail = new Chart(
+            document.getElementById('myChartStudyFail'),
+            config
+        );
+        // THONG KE LY DO HOC VIEN DK HOC
+        var study = @Html.Raw(Json.Encode(ViewBag.Study));
+        var _study = @Html.Raw(Json.Encode(ViewBag.StudyPre));
+        const config1 = {
+            type: 'bar',
+            data: {
+                labels: ['Tháng trước', 'Hiện tại'],
+                datasets: [{
+                    label: study[0].Name,
+                    data: [_study[0].Count, study[0].Count],
+                    backgroundColor: [
+                        '#ff3385',
+                        '#ff3385'
+                    ],
+                    borderWidth: 1
+                }, {
+                    label: study[1].Name,
+                    data: [_study[1].Count, study[1].Count],
+                    backgroundColor: [
+                        '#ff8533',
+                        '#ff8533'
+                    ],
+                    borderWidth: 1
+                    },
+                    {
+                        label: study[2].Name,
+                        data: [_study[2].Count, study[2].Count],
+                        backgroundColor: [
+                            '#ffdb4d',
+                            '#ffdb4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: study[3].Name,
+                        data: [_study[3].Count, study[3].Count],
+                        backgroundColor: [
+                            '#a6ff4d',
+                            '#a6ff4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: study[4].Name,
+                        data: [_study[4].Count, study[4].Count],
+                        backgroundColor: [
+                            '#4dffff',
+                            '#4dffff'
+                        ],
+                        borderWidth: 1
+                    }]
+            },
+            options: {
+                responsive: true,
+            }
+        };
+        var myChartStudy = new Chart(
+            document.getElementById('myChartStudy'),
+            config1
+        );
+        // THONG KE LUONG GIAO VIEN THEO NGON NGU
+        var Salary = @Html.Raw(Json.Encode(ViewBag.Salary));
+        var _Salary = @Html.Raw(Json.Encode(ViewBag.SalaryPre));
+        const config2 = {
+            type: 'horizontalBar',
+            data: {
+                labels: ['Tháng trước', 'Hiện tại'],
+                datasets: [{
+                    label: Salary[0].Name,
+                    data: [_Salary[0].Count, Salary[0].Count],
+                    backgroundColor: [
+                        '#ff3385',
+                        '#ff3385'
+                    ],
+                    borderWidth: 1
+                }, {
+                        label: Salary[1].Name,
+                        data: [_Salary[1].Count, Salary[1].Count],
+                    backgroundColor: [
+                        '#ff8533',
+                        '#ff8533'
+                    ],
+                    borderWidth: 1
+                    },
+                    {
+                        label: Salary[2].Name,
+                        data: [_Salary[2].Count, Salary[2].Count],
+                        backgroundColor: [
+                            '#ffdb4d',
+                            '#ffdb4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: Salary[3].Name,
+                        data: [_Salary[3].Count, Salary[3].Count],
+                        backgroundColor: [
+                            '#a6ff4d',
+                            '#a6ff4d'
+                        ],
+                        borderWidth: 1
+                    },
+                    {
+                        label: Salary[4].Name,
+                        data: [_Salary[4].Count, Salary[4].Count],
+                        backgroundColor: [
+                            '#4dffff',
+                            '#4dffff'
+                        ],
+                        borderWidth: 1
+                    }]
+            },
+            options: {
+                responsive: true,
+            }
+        };
+        var myLuongtheongonngu = new Chart(
+            document.getElementById('luongtheongonngu'),
+            config2
+        );
+        function LoadMember() {
+            let teamid = $('#slTeam').val();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Home/LoadMember",
+                data: '{teamID: ' + teamid + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#slMember').html(msg.data);
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: LoadMember", textstatus + ': ' + errorthrow );
+                }
+            });
+        }
+    </script>
+}

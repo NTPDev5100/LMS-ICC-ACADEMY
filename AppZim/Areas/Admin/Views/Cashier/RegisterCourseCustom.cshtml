@@ -1,0 +1,1343 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@using System.Text;
+@using System.Collections.Generic;
+@{
+    ViewBag.Title = "RegisterCourseCustom";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var jobs = JobTable.getall();
+    List<tbl_Courses> course = new List<tbl_Courses>();
+    if (aclog.SchoolID == null)
+    {
+        course = CoursesTable.getall().Where(n => (n.Status == 1 || n.Status == 2) && n.CourseSelfStudy != true).OrderBy(n => n.OpeningDate).ToList();
+    }
+    else
+    {
+        if (aclog.SchoolID != 0)
+        {
+            course = CoursesTable.getall().Where(n => (n.Status == 1 || n.Status == 2) && n.SchoolID == aclog.SchoolID && n.CourseSelfStudy != true).OrderBy(n => n.OpeningDate).ToList();
+        }
+        else
+        {
+            course = CoursesTable.getall().Where(n => (n.Status == 1 || n.Status == 2) && n.CourseSelfStudy != true).OrderBy(n => n.OpeningDate).ToList();
+        }
+    }
+    var schools = SchoolTable.getall();
+    var studys = StudyTimeTable.getall().OrderBy(x => x.sTime).ToList();
+
+    var mucdich = AcademicPurposesTable.getall();
+    var supplier = SupplierServicesTable.getall();
+    List<tbl_Discount> ldiscount = DiscountTable.getall().Where(n => n.Status == 1 && n.QuantityLeft > 0).OrderByDescending(n => n.ID).ToList();
+    var teachers = AccountTable.getbyrole(4);
+    string schoo = "";
+    foreach (var item in schools)
+    {
+        schoo += "<option value=\"" + item.ID + "\">" + item.SchoolName + "</option>";
+    }
+    var commitmentPackage = ClassTable.GetByType(3).OrderBy(x => x.PriceClass).ToList();
+    //var classList = ClassTable.GetByType(2);
+    var moneyexchange = MoneyExchangeRateTable.GetAll();
+    var languages = Language.GetAll();
+    var moneyReceiverList = MoneyReceiverTable.GetAll();
+    StringBuilder moneyReceiverListString = new StringBuilder();
+    foreach (var item in moneyReceiverList)
+    {
+        tbl_Account jtem = AccountTable.getbyID(item.UserReceiverId ?? 0);
+        if(jtem != null)
+        {
+            moneyReceiverListString.Append("<option value=\"" + item.ID + "\">" + jtem.FullName+"/"+item.BankInfomation + "</option>");
+        }
+        else
+        {
+            moneyReceiverListString.Append("<option value=\"" + item.ID + "\">" + item.BankInfomation + "</option>");
+        }
+    }
+}
+<style>
+    .hidden {
+        display: none
+    }
+</style>
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Đăng ký học</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="schedule-test-form mg-t-30">
+    @using (Html.BeginForm("AssignCourceNew", "Cashier", FormMethod.Post, new { id = "f-submit" }))
+    {
+        @Html.AntiForgeryToken()
+        <input type="hidden" id="hdfContract" name="hdfContract" value="0" />
+        <input type="hidden" id="hdfRegister" name="hdfRegister" value="1" />
+        <input type="hidden" name="hdtt" value="" />
+        <input type="hidden" name="hdct" value="" />
+        <input type="hidden" name="hdfslLanguage" />
+        <div class="row" id="test-register">
+            <div class="col-12 col-md-6">
+                <fieldset class="form-fieldset">
+                    <legend>Thông tin cá nhân</legend>
+                    <div class="form-row">
+                        <div class="col-sm-6 form-group">
+                            <label for="sc_reservator" class="required">Loại đăng ký:</label>
+                            <select name="Reservator" id="form-type" class="form-control select2">
+                                <option value="#reg-course" data-id="0" selected="selected">Đăng ký học</option>
+                                @*<option value="#reg-service" data-id="2">Mua dịch vụ</option>*@
+                            </select>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <div class="custom-control custom-switch" style="padding-top: 35px; padding-left: 60px;" hidden>
+                                <input type="checkbox" class="custom-control-input" id="chk-contract">
+                                <label class="custom-control-label" for="chk-contract">Có hợp đồng</label>
+                            </div>
+                            <div>
+                                <label class="required">Ngôn ngữ</label>
+                                <select class="custom-select select2" name="slLanguage" onchange="LoadInOutPut()">
+                                    <option value="0">---</option>
+                                    @{
+                                        foreach (var i in languages)
+                                        {
+                                            <option value="@i.ID">@i.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-6 form-group">
+                            <label for="txt-email" class="">Tài khoản: <i class="far fa-question-circle" style="color:#2eb934;" data-toggle="tooltip" data-placement="bottom" title="Nhập mail học viên và nhấn tìm kiếm"></i></label>
+                            <input id="txt-email" name="txt-email" type="email" class="validate form-control" required placeholder="demo@gmail.com" value="@ViewBag.Phone">
+                            <a href="javascript:;" class="search-number" id="check-phone"><i data-feather="search"></i></a>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label for="txt-full-name" class="required">Họ và tên:</label>
+                            <input id="full-name" name="txt-full-name" type="text" class="validate form-control" required placeholder="...">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-6 form-group">
+                            <label for="txt-phone" class="required">Phone:</label>
+                            <input id="txt-phone" name="txt-phone" type="text" class="form-control" placeholder="0123456789">
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label for="dateofbirth" class="required">Ngày sinh:</label>
+                            <input type="text" name="txt-birth-day" class="form-control datetimepicker date-only" id="dateofbirth" placeholder="DD / MM / YYYY">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-6 form-group">
+                            <label for="txt-work-place" class="">Nơi công tác:</label>
+                            <input id="txt-work-place" name="txt-work-place" type="text" class="validate form-control" placeholder="Nơi công tác">
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label for="home_contact" class="">Người nhà, liên hệ:</label>
+                            <input id="txt-note-home" name="txt-note-home" type="text" class="validate form-control" placeholder="Người nhà">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="col-sm-6 form-group">
+                            <label for="txt-in" class="required">Đầu vào dự kiến:</label>
+                            <input id="txt-in" name="txt-in" type="text" class="form-control" hidden placeholder="Đầu vào">
+                            <select class="custom-select select2" name="in-point-hope">
+                                <option>---</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label for="txt-out" class="required">Đầu ra dự kiến:</label>
+                            <input id="txt-out" name="txt-out" type="text" class="form-control" hidden placeholder="Mục tiêu">
+                            <select class="custom-select select2" name="out-point-hope">
+                                <option>---</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-6 form-group">
+                            <label for="ddl-job" class="">Công việc:</label>
+                            <select name="ddl-job" id="ddl-job" class="form-control select2">
+                                <option value="">---Công việc---</option>
+                                @{
+                                    foreach (var item in jobs)
+                                    {
+                                        <option value="@item.ID">@item.JobName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label>Mục đích học:</label>
+                            <select name="ddl-academic-purpose" id="ddl-academic-purpose" class="form-control select2">
+                                <option value="">---Mục đích học---</option>
+                                @{
+                                    foreach (var item in mucdich)
+                                    {
+                                        <option value="@item.ID">@item.AcademicPurposesName</option>
+                                    }
+                                }
+                            </select>
+
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="col-12 col-md-6 mg-t-15 mg-md-t-0">
+                <fieldset class="form-fieldset">
+                    <legend>Thông tin đăng ký</legend>
+                    <div id="reg-course" class="form-template">
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label class="required">Đăng ký chương trình học:</label>
+                                <select name="ddl-class-course" id="ddl-class-course" class="select2 form-control" multiple>
+                                    <option value="0">---</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label class="col-form-label col-form-label">Hệ số đóng</label>
+                                <div class="d-flex align-items-center">
+                                    <div class="custom-control custom-radio" style="margin:auto;">
+                                        <input type="radio" name="coefficient" class="custom-control-input" id="r-100" value="3">
+                                        <label class="custom-control-label" for="r-100">100% học phí</label>
+                                    </div>
+                                    <div class="custom-control custom-radio" style="margin:auto;">
+                                        <input type="radio" name="coefficient" class="custom-control-input" id="r-50" value="2">
+                                        <label class="custom-control-label" for="r-50">50% học phí</label>
+                                    </div>
+                                    <div class="custom-control custom-radio" style="margin:auto;">
+                                        <input type="radio" name="coefficient" class="custom-control-input" id="r-month" value="1">
+                                        <label class="custom-control-label" for="r-month">Tháng</label>
+                                    </div>
+                                    <div class="custom-control custom-radio" style="margin:auto;">
+                                        <input type="radio" name="coefficient" class="custom-control-input" id="r-other" value="4">
+                                        <label class="custom-control-label" for="r-other">Khác</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label class="required">Trung tâm mong muốn:</label>
+                                <select name="ddl-school-combo" id="ddl-school-combo" class="form-control select2">
+                                    @Html.Raw(schoo)
+                                </select>
+                            </div>
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-cam-ket" class="required">Gói cam kết:</label>
+                                <select name="commitmentpackage" class="form-control select2">
+                                    @{
+                                        foreach (var i in commitmentPackage)
+                                        {
+                                            <option value="@i.ID" data-price="@i.PriceClass">@i.ClassName : @String.Format("{0:0,0}", i.PriceClass)</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div id="div_timeDesrire">
+                            <div class="form-row">
+                                <div class="form-group col-sm-6">
+                                    <label class="required">Ngày học mong muốn:</label>
+                                    <select id="want-to-day" name="want-to-day" class="form-control select2">
+                                        <option value="1">Thứ 2</option>
+                                        <option value="2">Thứ 3</option>
+                                        <option value="3">Thứ 4</option>
+                                        <option value="4">Thứ 5</option>
+                                        <option value="5">Thứ 6</option>
+                                        <option value="6">Thứ 7</option>
+                                        <option value="0">Chủ nhật</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-6 form-group">
+                                    <label class="required">Ca học mong muốn:</label>
+                                    <select name="ddl-study-combo" id="ddl-study-combo" class="form-control select2 listTimeDerise">
+                                        @{
+                                            studys = studys.OrderBy(n => n.sTime).ToList();
+                                            foreach (var item in studys)
+                                            {
+                                                <option value="@item.ID">@item.StudyTimeName</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <a href="javascript:;" onclick="add_div_timeDesrire()" style="font-size:20px;margin-top:20px;margin-left:48.5%"><i class="fas fa-plus-circle"></i></a>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label for="promotion_code" class="">Mã khuyến mãi:</label>
+                                <input type="hidden" name="hdDiscountID" value="" />
+                                <input id="txt-code" name="txt-code" type="text" list="browsers" class="form-control" placeholder="CODE" autocomplete="off">
+                                <a href="javascript:;" class="search-number" id="check-code"><i data-feather="search"></i></a>
+                            </div>
+
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-discount-price">Số tiền được giảm:</label>
+                                <input id="txt-discount-price" name="txt-discount-price" type="text" class="validate form-control" readonly value="0">
+                            </div>
+
+                            <div class="col-sm-6 form-group">
+                                <label class="required" for="totalcourse">Tổng tiền phải đóng <i class="fas fa-question" data-toggle="tooltip" data-placement="left" title="Vui lòng chọn gói cam kết và mã khuyến mãi trước khi điền"></i></label>
+                                <input id="totalcourse" name="totalcourse" type="text" class="validate form-control" value="0">
+                            </div>
+
+                            <div class="form-group col-sm-6">
+                                <label class="required">Tỷ giá:</label>
+                                <select name="MoneyExchangeRate" class="form-control select2" onchange="LoadPrice()">
+                                    <option value="0">Chọn tỷ giá</option>
+                                    @foreach (var item in moneyexchange)
+                                    {
+                                        <option value="@item.ExchangeRate">@item.Code - @String.Format("{0:0,0}", item.ExchangeRate)</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group col-sm-6">
+                                <label for="txt-cam-ket" class="required">Tiền đóng thêm(VNĐ):</label>
+                                <input id="txt-rewardteachers" name="txt-rewardteachers" type="text" class="validate form-control" placeholder="0" value="0">
+                            </div>
+
+                            <div class="form-group col-sm-6">
+                                <label for="txt-lesson" class="required">Số buổi học thực tế:</label>
+                                <input id="txt-lesson" name="txt-lesson" type="text" data-type="number" class="validate form-control" @*oninput="paid(this)"*@ placeholder="0" value="0">
+                            </div>
+                        </div>
+                        <div class="checkout-form mg-b-20">
+                            <div class="form-row">
+                                <div class="col-sm-6 form-group">
+                                    <label for="txt-thu-no">Ngày đóng học phí:</label>
+                                    <input type="text" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY" id="txt-thu-no" name="txt-thu-no">
+                                </div>
+
+                                <div class="form-group col-sm-6">
+                                    <label class="required">Trung tâm thu tiền:</label>
+                                    <select name="ddl-payment-school" id="ddl-payment-school" class="form-control select2">
+                                        @Html.Raw(schoo)
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-sm-6">
+                                    <label class="required">Phương thức thanh toán:</label>
+                                    <select name="ddl-payment-register" id="ddl-payment-register" class="form-control select2" onchange="SetTeacherReceive(this);">
+                                        <option value="1">Tiền mặt</option>
+                                        <option value="5">Chuyển khoản</option>
+                                        <option value="3">Khác</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-sm-6">
+                                    <label>Thông tin nhận hộ(Nếu có):</label>
+                                    <select name="ddl-payment-receive" id="ddl-payment-receive" class="form-control select2" disabled>
+                                        <option value="0">*Không chọn*</option>
+                                        @*@Html.Raw(moneyReceiverListString.ToString())*@
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row" hidden>
+                                <div class="col-sm-12 form-group">
+                                    <label for="txt-cam-ket" class="required">Nội dung cam kết:</label>
+                                    <textarea id="txt-cam-ket" name="txt-cam-ket" rows="1" class="materialize-textarea form-control">Không cam kết</textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-sm-12 form-group">
+                                    <label for="txt-ghi-chu" class="required">Ghi chú/Lý do nộp:</label>
+                                    <textarea id="txt-ghi-chu" placeholder="Mã lớp/ Tên nick fb sales/ tên nick fb HV + tên thật HV/ Yêu cầu đặc biệt của HV cho lớp" name="txt-ghi-chu" rows="1" class="materialize-textarea form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--<div id="reg-service" class="form-template">
+                        <div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label>Nhà cung cấp</label>
+                                <select name="ddl-supp" onchange="ChangeSupplier(this)" class="form-control" required>
+                                    <option value="0">---</option>
+                                    @{
+                                        foreach (var item in supplier)
+                                        {
+                                            <option value="@item.ID">@item.SupplierName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-6 form-group">
+                                <label>Chọn dịch vụ:</label>
+                                <select name="ddl-service" onchange="ChangeService(this)" class="form-control select2 dll-service"></select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label>Đợt thi:</label>
+                                <select name="ddl-exams" class="form-control select2 ddl-exam"></select>
+                            </div>
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-date-service">Ngày đặt dịch vụ:</label>
+                                <input id="txt-date-service" name="txt-date-service" type="text" class="datetimepicker date-only form-control" placeholder="DD / MM / YYYY">
+                            </div>
+                        </div>-->
+                    <!--Phần bổ sung mã khuyễn mãi-->
+                    <!--<div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-price-service">Giá bán:</label>
+                                <input id="txt-price-service" name="txt-price-service" readonly placeholder="0" type="text" class="validate form-control" oninput="moneyfm(this)" />
+
+                            </div>
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-code-service" class="">Mã khuyến mãi:</label>
+                                <input id="txt-code-service" name="txt-code-service" type="text" list="browsers" class="form-control" placeholder="CODE">
+                                <datalist id="browsers">
+                                    @{
+                                        foreach (var item in ldiscount)
+                                        {
+                                            if (item.DiscountType == null)
+                                            {
+                                                <option value="@item.DiscountCode">@String.Format("{0:0,0}", item.DiscountPrice) - @item.Note</option>
+                                            }
+                                            else
+                                            {
+                                                if (item.DiscountType.Value)
+                                                {
+                                                    <option value="@item.DiscountCode">@item.DiscountPercent% - @item.Note</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@item.DiscountCode">@String.Format("{0:0,0}", item.DiscountPrice) - @item.Note</option>
+                                                }
+                                            }
+                                        }
+                                    }
+                                </datalist>
+                                <a href="javascript:;" class="search-number" id="check-code-service"><i data-feather="search"></i></a>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-discount-price-service">Số tiền được giảm:</label>
+                                <input id="txt-discount-price-service" name="txt-discount-price-service" type="text" class="validate form-control" readonly value="0">
+                            </div>
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-price-thanhtoan-service">Thanh toán:</label>
+                                <input id="txt-price-thanhtoan-service" name="txt-price-thanhtoan-service" readonly placeholder="0" type="text" class="validate form-control" oninput="moneyfm(this)" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label>Phương thức thanh toán:</label>
+                                <select name="ddl-payment-service" id="ddl-payment-service" class="form-control">
+                                    <option value="">---Phương thức---</option>
+                                    <option value="1">Tiền mặt</option>
+                                    <option value="2">Thanh toán online</option>
+                                    <option hid value="4">Quẹt thẻ</option>
+                                    <option value="5">Chuyển khoản</option>
+                                    <option value="3">Khác</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 form-group">
+                                <label>Trung tâm nhập phiếu:</label>
+                                <select id="ddl-school-invoice-service" name="ddl-school-invoice-service" class="form-control">
+                                    <option value="">---Trung tâm---</option>
+                                    @Html.Raw(schoo)
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="txt-note-service">Ghi chú</label>
+                                <textarea id="txt-note-service" name="txt-note-service" rows="1" class="materialize-textarea form-control"></textarea>
+
+                            </div>
+                        </div>
+                    </div>-->
+                    <div class="form-row">
+                        <div class="col-sm-12 pd-b-0">
+                            <span class="text-info">(Lưu ý: Vui lòng kiểm tra tổng tiền trước khi bấm Xác nhận)</span>
+                            <button type="button" id="btn-check" class="float-right btn btn-primary waves-light">Xác nhận</button>
+                            <button type="submit" id="btn-submit" class="float-right btn btn-primary waves-light hidden">Xác nhận</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="modal fade show" id="div-mail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Mẫu Email</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Tiêu đề:</label>
+                            <input type="text" name="txt-title" id="txt-title" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Nội dung:</label>
+                            <textarea id="txt-content" name="txt-content" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary update-done">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts
+{
+    <script src="~/app-assets/js/accounting.min.js"></script>
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            });
+
+            $('input[name=txt-email]').val('@ViewBag.StudentEmail');
+            /*$('#check-phone').trigger('click');*/
+        });
+
+        $('#reg-course').css('display', 'block');
+        function ChangeService(obj) {
+            var serviceID = $(obj).val();
+
+            $('#txt-code-service').val('');
+            $('#txt-discount-price-service').val(0);
+            $('#txt-price-service').val(0);
+            $('#txt-price-thanhtoan-service').val(0);
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Cashier/GetExams",
+                data: '{serviceID: ' + serviceID+'}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    var data = [];
+                    data = msg.l;
+                    $(".ddl-exam").children().remove();
+                    $(".ddl-exam").append('<option data-price="0" value="">---</option>');
+                    for (var i = 0; i < data.length; i++) {
+                        if (data[i].ExamReal == true) {
+                            $(".ddl-exam").append('<option data-price="' + data[i].ExamPrice + '" data-discountCode="' + data[i].DiscountCode + '" data-discountType="' + data[i].DiscountType + '" data-discountValue="' + data[i].DiscountValue + '" value="' + data[i].ID + '">' + data[i].ExamService + '- Thi thật</option>');
+                        }
+                        else {
+                            $(".ddl-exam").append('<option data-price="' + data[i].ExamPrice + '" data-discountCode="' + data[i].DiscountCode + '" data-discountType="' + data[i].DiscountType + '" data-discountValue="' + data[i].DiscountValue + '" value="' + data[i].ID + '">' + data[i].ExamService + ' - Thi thử</option>');
+                        }
+
+                    }
+                    $(".ddl-exam").trigger('change');
+
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e :) ");
+                    $(".ddl-exam").children().remove();
+                    $(".ddl-exam").append('<option data-price="0" value="">---</option>');
+                }
+            });
+        }
+
+        function ChangeSupplier(obj) {
+            var supplierID = $(obj).val();
+
+            $('#txt-code-service').val('');
+            $('#txt-discount-price-service').val(0);
+            $('#txt-price-service').val(0);
+            $('#txt-price-thanhtoan-service').val(0);
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Option/GetService",
+                data: '{supplierID: ' + supplierID + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    var data = [];
+                    data = msg.l;
+                    $(".dll-service").children().remove();
+                    $(".dll-service").append('<option data-price="0" value="">---</option>');
+                    for (var i = 0; i < data.length; i++) {
+                        $(".dll-service").append('<option value="' + data[i].ID + '">' + data[i].ServiceName + '</option>');
+                    }
+                    $(".dll-service").trigger('change');
+
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e :) ");
+                    $(".dll-service").children().remove();
+                    $(".dll-service").append('<option data-price="0" value="">---</option>');
+                }
+            });
+        }
+
+        $(document).ready(function () {
+            $('#form-type').on('change', function () {
+                let value = $(this).val();
+                var $target = $(value).addClass('show');
+                $('.form-template').not($target).removeClass('show');
+                console.log(value);
+                switch (value) {
+                    case "#reg-course":
+                        $('#reg-course').css('display', 'block');
+                        $('#reg-service').css('display', 'none');
+                        $('#hdfRegister').val('1');
+                        $('#btn-check').removeClass('hidden');
+                        break;
+                    case "#reg-service":
+                        $('#reg-service').css('display', 'block');
+                        $('#reg-course').css('display', 'none');
+                        $('#hdfRegister').val('2');
+                        $('#btn-check').removeClass('hidden');
+                        break;
+                }
+            });
+        });
+
+        $(document).ready(function () {
+            //chan submit khi enter
+            $(window).keydown(function (event) {
+                if (event.keyCode == 13) {
+                    event.preventDefault();
+                    return false;
+                }
+            });
+
+            $('#payedmoney').keyup(function () {
+                this.value = this.value.replace(/[^0-9\.]/g, '');
+            });
+            $('#totalcourse').on('keydown keyup', function () {
+                this.oldValue = this.value.replace(/[^0-9\.]/g, '');
+                if (this.oldValue.split('.').length > 2)
+                    this.oldValue = this.oldValue.replace(/\.+$/, "");
+                //this.value = this.oldValue.replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+                this.value = this.oldValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            });
+            $('#txt-rewardteachers').on('keydown keyup', function () {
+                const config = { style: 'currency', currency: 'VND', maximumFractionDigits: 9 }
+                this.oldVal = this.value.replace(/\D/g, '')
+                this.value = Number(this.oldVal).toLocaleString(config);
+            });
+
+
+            $('#full-name').prop("readonly", true);
+            $('#txt-email').prop("readonly", false);
+            $('#txt-phone').prop("readonly", true);
+            $('#dateofbirth').prop("readonly", true);
+
+            $('#txt-identity-card').prop("readonly", true);
+            $('#txt-identity-date').prop("readonly", true);
+
+            $('#txt-work-place').prop("readonly", true);
+            $('#txt-note-home').prop("readonly", true);
+
+            $('#txt-in').prop("readonly", true);
+            $('#txt-out').prop("readonly", true);
+
+            $('select[name=out-point-hope]').prop("disabled", true);
+            $('select[name=in-point-hope]').prop("disabled", true);
+            $('select[name=ddl-identity-city]').prop("disabled", true);
+            $('select[name=ddl-job]').prop("disabled", true);
+            $('select[name=ddl-academic-purpose]').prop("disabled", true);
+
+            $('select[name=ddl-city]').prop("disabled", true);
+            $('input[name=txt-home-number]').prop("readonly", true);
+
+            if (!ckstring('@TempData["InvoiceURL"]')) {
+                // invoice
+                window.open('@TempData["InvoiceURL"]');
+            }
+        });
+
+        var countchange = 0;
+        $('#check-phone').click(function () {
+            var language = $("select[name='slLanguage']").val();
+            $("input[name='hdfslLanguage']").val(language);
+
+            $('#full-name').val('');
+            $('#txt-phone').val('');
+            $('#dateofbirth').val('');
+
+            $('#txt-identity-card').val('');
+            $('#txt-identity-date').val('');
+
+            $('#txt-work-place').val('');
+            $('#txt-note-home').val('');
+
+            $('#txt-in').val('');
+            $('#txt-out').val('');
+
+            $('select[name=out-point-hope]').val('');
+            $('select[name=in-point-hope]').val('');
+            $('select[name=ddl-identity-city]').val('');
+            $('select[name=ddl-job]').val('');
+            $('select[name=ddl-academic-purpose]').val('');
+
+            $('select[name=ddl-city]').val(0);
+            $('input[name=txt-home-number]').empty();
+
+            $('#full-name').prop("readonly", true);
+            $('#txt-phone').prop("readonly", true);
+            $('#dateofbirth').prop("readonly", true);
+
+            $('#txt-identity-card').prop("readonly", true);
+            $('#txt-identity-date').prop("readonly", true);
+
+            $('#txt-work-place').prop("readonly", true);
+            $('#txt-note-home').prop("readonly", true);
+
+            $('#txt-in').prop("readonly", true);
+            $('#txt-out').prop("readonly", true);
+
+            $('select[name=out-point-hope]').prop("disabled", true);
+            $('select[name=in-point-hope]').prop("disabled", true);
+            $('select[name=ddl-identity-city]').prop("disabled", true);
+            $('select[name=ddl-job]').prop("disabled", true);
+            $('select[name=ddl-academic-purpose]').prop("disabled", true);
+
+            $('select[name=ddl-city]').prop("disabled", true);
+            $('input[name=txt-home-number]').prop("readonly", true);
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/SearchPhone",
+                data: '{phone: "' + $('#txt-email').val() + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#full-name').prop("readonly", false);
+                    $('#txt-phone').prop("readonly", false);
+                    $('#dateofbirth').prop("readonly", false);
+
+                    $('#txt-identity-card').prop("readonly", false);
+                    $('#txt-identity-date').prop("readonly", false);
+
+                    $('#txt-work-place').prop("readonly", false);
+                    $('#txt-note-home').prop("readonly", false);
+
+                    $('#txt-in').prop("readonly", false);
+                    $('#txt-out').prop("readonly", false);
+
+                    $('select[name=out-point-hope]').prop("disabled", false);
+                    $('select[name=in-point-hope]').prop("disabled", false);
+                    $('select[name=ddl-identity-city]').prop("disabled", false);
+                    $('select[name=ddl-job]').prop("disabled", false);
+                    $('select[name=ddl-academic-purpose]').prop("disabled", false);
+
+                    $('select[name=ddl-city]').prop("disabled", false);
+                    $('input[name=txt-home-number]').prop("readonly", false);
+
+                    if (msg.rs == false) {
+                        $('#ddl-city-1').attr('data-id', 1);
+                        if (msg.rolename.length > 0) {
+                            $('#txt-email').val('');
+                            $('#txt-email').focus();
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Đây là tài khoản ' + msg.rolename,
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            });
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Chưa có dữ liệu',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 3000
+                            });
+                        }
+                        countchange++;
+                    }
+                    else {
+                        countchange = 0;
+                        $('input[name="hdfAccountID"]').val(msg.acc.ID);
+                        $('#hdfID').val(msg.acc.ID);
+                        $('#full-name').val(msg.acc.FullName);
+                        $('#txt-phone').val(msg.acc.Phone);
+                        $('#dateofbirth').val(moment(msg.acc.Birthday).format("DD / MM / YYYY"));
+
+                        if (msg.acc.LocationID != 0) {
+                            $('select[name=ddl-city]').val(msg.acc.LocationID).trigger('change');
+                        }
+                        $('input[name=txt-home-number]').val(msg.acc.HomeNumber);
+                        $('select[name=ddl-city]').attr('data-id', 1);
+
+                        $('#txt-identity-card').val(msg.acc.IdentityCard);
+                        $('#txt-identity-date').val(moment(msg.acc.IdentityCardDate).format("DD / MM / YYYY"));
+
+                        $('#txt-work-place').val(msg.acc.WorkPlace);
+                        $('#txt-note-home').val(msg.acc.NoteHome);
+
+                        $('#txt-in').val(msg.acc.ScoreIn);
+                        $('#txt-out').val(msg.acc.ScoreOut);
+
+                        $('select[name=out-point-hope]').html(msg.outputhtml);
+                        $('select[name=in-point-hope]').html(msg.inputhtml);
+                        $('select[name=ddl-identity-city]').val(msg.acc.IdentityCardCityID);
+                        $('select[name=ddl-job]').val(msg.acc.JobID);
+                        $('select[name=ddl-academic-purpose]').val(msg.acc.AcademicPurposesID);
+                        $('select[name=slLanguage]').val(msg.acc.Language);
+
+                        $('select[name=slLanguage]').trigger("change");
+                        $('select[name=out-point-hope]').trigger("change");
+                        $('select[name=in-point-hope]').trigger("change");
+                        $('select[name=ddl-identity-city]').trigger("change");
+                        $('select[name=ddl-job]').trigger("change");
+                        $('select[name=ddl-academic-purpose]').trigger("change");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e :) ");
+                }
+            });
+        })
+
+        $('#check-code').click(function () {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/SearchCodeDiscoutNewCustom",
+                data: '{code: "' + $('#txt-code').val() + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Mã khuyến mãi không tồn tại hoặc đã được sử dụng',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        });
+                    }
+                    else {
+                        $('input[name=txt-discount-price]').val(msg.d);
+                        $('#txt-totalcourse').val(0);
+                        $('input[name=hdDiscountID]').val(msg.id);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e :) ");
+                }
+            });
+        })
+
+
+        $('#chk-contract').on('change', function () {
+            if ($('#chk-contract').prop("checked")) {
+                $('#hdfContract').val(1);
+            }
+            else {
+                $('#hdfContract').val(0);
+            }
+        });
+
+        $('.tab-id').click(function () {
+            $('#hdfRegister').val($(this).attr('data-id'));
+        })
+
+        $('#btn-check').click(function () {
+            var ty = $('#hdfRegister').val();
+            if (ckstring($('#txt-phone').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập số điện thoại',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                $('#txt-phone').focus();
+                return false;
+            }
+            if (ckstring($('#full-name').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập tên người đăng ký',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                $('#full-name').focus();
+                return false;
+            }
+            if ($('#totalcourse').val() <= 0) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Tổng tiền không hợp lệ',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                $('#totalcourse').focus();
+                return false;
+            }
+            if ($('#txt-rewardteachers').val() < 0) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Tiền đóng thêm không hợp lệ',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                $('#totalcourse').focus();
+                return false;
+            }
+            if ($('#txt-lesson').val() < 0) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Số buổi không hợp lệ',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                $('#totalcourse').focus();
+                return false;
+            }
+
+
+            if (ty == 1) {
+                if (ckstring($('#ddl-class-course').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn chương trình học',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#ddl-class-course').focus();
+                    return false;
+                }
+                if (ckstring($('#ddl-school-combo').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn trung tâm mong muốn',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#ddl-school-combo').focus();
+                    return false;
+                }
+                if (ckstring($('#ddl-study-combo').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn ca học mong muốn',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#ddl-study-combo').focus();
+                    return false;
+                }
+                if (ckstring($('#ddl-payment-register').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn phương thức thanh toán',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#ddl-payment-register').focus();
+                    return false;
+                }
+                if ($('#ddl-payment-register').val() == 3 && $('#ddl-payment-receive').val() == 0) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn thông tin nhận hộ',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#ddl-payment-receive').focus();
+                    return false;
+                }
+                if ($("select[name=MoneyExchangeRate]").val() == 0) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn tỷ giá tiền tệ',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $("select[name=MoneyExchangeRate]").focus();
+                    return false;
+                }
+
+                if (ckstring($('#ddl-payment-school').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn trung tâm thu tiền',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#ddl-payment-school').focus();
+                    return false;
+                }
+            }
+            if (ty == 2) {
+                if (ckstring($('#ddl-payment-service').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn phương thức thanh toán',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#ddl-payment-service').focus();
+                    return false;
+                }
+
+                if (ckstring($('#ddl-school-invoice-service').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn trung tâm lập phiếu',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#ddl-school-invoice-service').focus();
+                    return false;
+                }
+                if (ckstring($('#want-to-day').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn ngày muốn học',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    $('#want-to-day').focus();
+                    return false;
+                }
+            }
+
+            LoadEmailDangkyhoc();
+        })
+        $('.update-done').on('click', function () {
+            $('input[name=hdtt]').val($('input[name=txt-title]').val());
+            $('input[name=hdct]').val(tinymce.get('txt-content').contentDocument.activeElement.innerHTML);
+            $('#ddl-payment-receive').prop("disabled", false);
+            $('#btn-submit').click();
+            $(this).attr('disabled', true);
+        });
+        $('select[name=ddl-exams]').on('change', function () {
+            let p = $(this).find(':selected').attr('data-price');
+            let discountCode = $(this).find(':selected').attr('data-discountCode');
+            let discountType = $(this).find(':selected').attr('data-discountType');
+            let discountValue = $(this).find(':selected').attr('data-discountValue');
+
+            let thanhtoan = 0;
+            if (discountCode != null) {
+                $('#txt-code-service').val(discountCode);
+                if (discountType == true) {
+                    thanhtoan = p * discountValue / 100;
+                    $('#txt-discount-price-service').val(dinhdangtien(p - thanhtoan, ','));
+                }
+                else {
+                    thanhtoan = p - discountValue;
+                    $('#txt-discount-price-service').val(dinhdangtien(p - thanhtoan, ','));
+                }
+            }
+            if (discountValue == 0) {
+                $('#txt-code-service').val('');
+            }
+            $('#txt-price-service').val(dinhdangtien(p, ','));
+            $('#txt-price-thanhtoan-service').val(dinhdangtien(thanhtoan, ','));
+        });
+
+
+        //check code phần mua dịch vụ
+        $('#check-code-service').click(function () {
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Account/SearchCodeDiscoutServide",
+                data: '{code: "' + $('#txt-code-service').val() + '", examID:"' + $('select[name=ddl-exams]').val() + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Mã khuyễn mãi không tồn tại hoặc đã được sử dụng',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 2500
+                        })
+                        $('#txt-discount-price-service').val(msg.d);
+                        $('#txt-price-thanhtoan-service').val($('#txt-price-service').val());
+                    }
+                    else {
+                        $('#txt-discount-price-service').val(msg.d);
+                        $('#txt-price-thanhtoan-service').val(msg.pl);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e :) ");
+                }
+            });
+        })
+        function SetTeacherReceive(e) {
+            if (e.value == 3) {
+                $('#ddl-payment-receive').prop("disabled", false);
+                $("#ddl-payment-receive").children().remove();
+                $("#ddl-payment-receive").append('@Html.Raw(moneyReceiverListString.ToString())');
+            }
+            else {
+                $('#ddl-payment-receive').prop("disabled", true);
+                $("#ddl-payment-receive").children().remove();
+                $("#ddl-payment-receive").append('<option value="0">*Không chọn*</option>');
+            }
+        }
+        function LoadClass() {
+            var language = $('select[name=slLanguage]').val();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Cashier/LoadClass",
+                data: '{language: "' + language + '", coefficient:"' + 0 + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs == false) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không tìm thấy chương trình học phù hợp',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        })
+                    }
+                    else {
+                        $('#ddl-class-course').html(msg.data);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e :) ");
+                }
+            });
+        }
+
+        function LoadInOutPut() {
+            countchange++;
+            if (countchange > 1) {
+                var language = $('select[name=slLanguage]').val();
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Cashier/LoadInOutPut",
+                    data: '{language: "' + language + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'không tìm thấy trình độ của ngôn ngữ này',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 3000
+                            })
+                        }
+                        else {
+                            $('select[name=out-point-hope]').html(msg.data);
+                            $('select[name=in-point-hope]').html(msg.data);
+
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("e :) ");
+                    }
+                });
+            }
+            LoadClass();
+        }
+        var numberTimeDesrire = 1;
+        function remove_div_timeDesrire(id) {
+            var div_id = 'numberTimeDesrire-' + id;
+            $('#' + div_id).remove();
+        }
+        function add_div_timeDesrire() {
+            var html = '<div class="form-row" id="numberTimeDesrire-' + numberTimeDesrire+'" > '+
+                            '<div class="form-group col-sm-6">' +
+                                '<select id="want-to-day" name="want-to-day" class="form-control select2">' +
+                                '<option value="1">Thứ 2</option>' +
+                                '<option value="2">Thứ 3</option>' +
+                                '<option value="3">Thứ 4</option>' +
+                                '<option value="4">Thứ 5</option>' +
+                                '<option value="5">Thứ 6</option>' +
+                                '<option value="6">Thứ 7</option>' +
+                                '<option value="0">Chủ nhật</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="col-sm-5 form-group">' +
+                                '<select name="ddl-study-combo" class="form-control select2 listTimeDerise">' +
+                                '<option value="0">---Ca học---</option>' +
+                                '</select>' +
+                                '</div>' +
+                                '<div class="col-sm-1 form-group" style="padding:4px">' +
+                                '<a href="javascript:;" onclick="remove_div_timeDesrire(' + numberTimeDesrire+')" style="float:left;font-size:20px;color:red"><i class="far fa-times-circle"></i></a>' +
+                                '</div>' +
+                        '</div>';
+            $('#div_timeDesrire').append(html);
+            $.ajax({
+                url: '/Cashier/getStudyingTime',
+                method: 'post',
+                dataType: 'json',
+                data: {},
+                success: function (r) {
+                    var html = '<option value="0">---Ca học---</option>';
+                    for (var i = 0; i < r.length; i++) {
+                        html += '<option value="' + r[i].ID + '">' + r[i].StudyTimeName + '</option>';
+                    }
+                    $('.listTimeDerise').each(function (index) {
+                        var value = $(this).val();
+                        if (value == 0) {
+                            $(this).html(html);
+                        }
+                    })
+
+                }
+            });
+        }
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#txt-content',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+                font_formats:
+                    "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+            });
+        });
+        function LoadEmailDangkyhoc() {
+            var e = $("select[name='slLanguage']").val();
+            $.ajax({
+                url: "/Admin/Cashier/LoadEmailDangkyhoc",
+                method: "post",
+                data: '{language: ' + parseInt(e) + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title').val(msg.tt);
+                        tinymce.get('txt-content').getBody().innerHTML = msg.ct;
+                        $('#div-mail').modal('show');
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        function LoadPrice() {
+
+            let priceMin = 0;
+            let priceMax = 0;
+            $("#ddl-class-course :selected").each(function () {
+                priceMin += $(this).data('min');
+                priceMax += $(this).data('max');
+            });
+
+            let moneyUnit = $('select[name=MoneyExchangeRate]').val();
+            let money = $('#totalcourse').val().replace(/,/g, '');
+            let commitmentPrice = $('select[name=commitmentpackage] :selected').data('price');
+            let discountPrice = parseInt($('input[name=txt-discount-price]').val());
+            let payment = (money * moneyUnit) + commitmentPrice - discountPrice;
+
+            if ((priceMin + commitmentPrice - discountPrice) > payment || (priceMax + commitmentPrice - discountPrice) < payment) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Tổng tiền phải nằm trong khoảng Giá Min + gói cam kết - Giá KM => Giá Max + gói cam kết - Giá KM',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 4000
+                });
+                $('select[name=MoneyExchangeRate]').val(0);
+                $('select[name=MoneyExchangeRate]').trigger('change');
+                $('#totalcourse').val(0);
+                $('#totalcourse').focus();
+                return;
+            }
+
+            $('#totalcourse').val(dinhdangtien(payment, ','));
+        }
+    </script>
+}

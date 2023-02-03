@@ -1,0 +1,2 @@
+PageError: CampaignSale    FunctionError: SendMail    loginUID: 0    MessageError: Object reference not set to an instance of an object.||    11/12/2022 13:46
+PageError: CampaignSale    FunctionError: SendMail    loginUID: 0    MessageError: Object reference not set to an instance of an object.||    11/12/2022 13:49

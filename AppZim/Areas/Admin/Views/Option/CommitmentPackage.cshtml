@@ -1,0 +1,249 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@using MB.Extensions;
+@model PagedList.IPagedList<tbl_Class>
+@{
+    ViewBag.Title = "CommitmentPackage";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách gói cam kết</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="d-xl-flex align-items-center justify-content-between">
+    <div>
+        @{
+            if (aclog.RoleID == 1) //chỉ admin được thêm
+            {
+                <a href="#div-add-room" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+            }
+        }
+    </div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("CommitmentPackage", "Option", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Tên gói</th>
+                    @{
+                        if (aclog.RoleID == 1)
+                        {
+                            <th>Giá bán</th>
+                        }
+                    }
+                    <th class="text-center">Ẩn/Hiện</th>
+                    <th>Chỉnh sửa</th>
+                    <th>Thời gian sửa</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                         <td>@item.ClassName</td>
+                        @{
+                            if (aclog.RoleID == 1)
+                            {
+                                <td class="text-primary">@String.Format("{0:0,0}", item.PriceClass)</td>
+                            }
+                        }
+                        <td class="text-center">
+                            @{
+                                if (item.isHide.Value)
+                                {
+                                    <i data-feather="check-circle"></i>
+                                }
+                            }
+                        </td>
+                        <td>@item.ModifiedBy</td>
+                        <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-center">
+                            <a href="#view-history" data-toggle="modal" data-id="@item.ID" class="btn btn-info view-history">
+                                <i data-feather="activity"></i> Lịch sử
+                            </a>
+                            @{
+                                if (aclog.RoleID == 1)
+                                {
+                                    <a href="#edit-roomcenter" data-toggle="modal" data-id="@item.ID" data-ishide="@item.isHide" data-class="@item.ClassName" data-price="@String.Format("{0:0,0}", item.PriceClass)" class="btn btn-primary edit-district">
+                                        <i data-feather="rotate-ccw"></i> Cập nhật
+                                    </a>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @Html.PagedListPager(Model, page => Url.Action("ClassList", new
+    {
+        page,
+        search = ViewBag.Search,
+    }),
+    new PagedListRenderOptions
+    {
+        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+    })
+</nav>
+
+<div class="modal fade" id="div-add-room" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddCommitmentPackage", "Option", new { area = "Admin"}, FormMethod.Post, new { id = "form"}))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo mới gói cam kết</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-class-name">Tên Gói:</label>
+                                    <input id="txt-class-name" name="txt-class-name" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-price">Giá:</label>
+                                    <input id="txt-price" name="txt-price" type="text" oninput="moneyfm(this)" required class="form-control" placeholder="00" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="edit-roomcenter" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditCommitmentPackage", "Option", new { area = "Admin" }, FormMethod.Post, new { id = "editform" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Cập nhật Gói cam kết</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-edit-class-name">Tên Gói:</label>
+                                    <input id="txt-edit-class-name" name="txt-edit-class-name" type="text" required class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-price-edit">Giá:</label>
+                                    <input id="txt-price-edit" name="txt-price-edit" type="text" oninput="moneyfm(this)" required class="form-control" placeholder="00" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="chk-cb" name="chk-cb">
+                                        <label class="custom-control-label" for="chk-cb">Tạm ẩn</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="view-history" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            <div class="modal-body pd-20 pd-sm-40">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div>
+                    <h4>History change</h4>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="timeline-group tx-13" id="div-his">
+
+                                </div><!-- timeline-group -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section myScripts
+{
+    <script>
+        $(document).on("click", ".edit-district", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=txt-edit-class-name]').val($(this).attr('data-class'));
+            $('input[name=txt-price-edit]').val($(this).attr('data-price'));
+            if ($(this).attr('data-ishide') == 'True') {
+                $('#chk-cb').prop("checked", true);
+            }
+            else {
+                $('#chk-cb').prop("checked", false);
+            }
+        });
+
+        $('.view-history').click(function () {
+            var classid = $(this).attr('data-id');
+            $('#div-his').empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Option/LoadHistoryChangePrice",
+                data: '{classid: ' + classid + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#div-his').append(msg.d);
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("e: view-history");
+                }
+            });
+        })
+    </script>
+}

@@ -1,0 +1,377 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using AppZim.ZIM
+@model List<Admin_Seller_GetListMember_Result>
+@{
+    ViewBag.Title = "ListMember";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var lmem = AccountTable.getbyrole(6).Where(x => x.LeaderID == 0 || x.LeaderID == null).ToList();
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var schools = SchoolTable.getall();
+    var position = SalarySettingTable.getall();
+}
+<style>
+    #DataTables_Table_0_wrapper .row {
+        margin-top: 10px;
+    }
+</style>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách thành viên trong nhóm: @ViewBag.LeaderName</li>
+    </ol>
+</nav>
+<div class="wd-100p mg-b-10">
+    @if (aclog.RoleID == 1 || (aclog.RoleID == 2 && aclog.ID == ViewBag.Role2ID) || (aclog.RoleID == 3 && aclog.ID == ViewBag.LeaderID))
+    {
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#div-create">
+            Tạo tài khoản thành viên
+        </button>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+            Thêm thành viên
+        </button>
+    }
+</div>
+
+<span class="mg-b-10">Tổng doanh thu toàn đội(tính cả các thành viên đã nghỉ): @String.Format("{0:0,0}", ViewBag.Revenue) VND</span>
+<table class="table table-striped table-vcenter mg-t-10">
+    <thead class="thead-light">
+        <tr>
+            <th>Họ và tên</th>
+            <th>Tài khoản</th>
+            <th>Email</th>
+            <th>Chức vụ</th>
+            <th class="text-center">Trạng thái</th>
+            <th>Ngày nhận việc</th>
+            <th>Doanh thu</th>
+            <th class="text-center">@ViewBag.Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+        <tr>
+            <td class="truncate">
+                <span data-toggle="tooltip" data-placement="top" title="@item.FullName">@item.FullName</span>
+            </td>
+            <td>@item.Phone</td>
+            <td>@item.Email</td>
+            <td>@item.RoleName</td>
+            <td class="text-center">
+                @switch (item.Status)
+                {
+                    case 1:
+                        <span class="badge badge-warning">@item.StatusName</span>
+                        break;
+                    case 2:
+                        <span class="badge badge-success">@item.StatusName</span>
+                        break;
+                    case 3:
+                        <span class="badge badge-danger">@item.StatusName</span>
+                        break;
+                }
+            </td>
+            <td>
+                @if (item.DateStartWork != null)
+                {
+                    <span>@AssetCRM.DateToText(item.DateStartWork.Value, DateTime.Now)</span>
+                }
+            </td>
+            <td>@String.Format("{0:0,0}", item.TotalRevenue)</td>
+            <td class="text-center">
+                <a href="/Admin/Staff/StaffDetail/@item.ID" class="btn btn-primary btn-icon btn-sm edit-center" data-toggle="tooltip" title="Chi tiết" @((aclog.RoleID == 1 || aclog.ID == item.LeaderID) ? "" : "hidden")>
+                    <i class="fas fa-user-shield"></i>
+                </a>
+                @if (aclog.RoleID == 1 || (aclog.RoleID == 3 && aclog.ID == ViewBag.LeaderID))
+                {
+                    <a href="javascript:;" class="btn btn-orange btn-icon btn-sm remove-member" data-id="@item.ID" data-name="@item.FullName" data-toggle="tooltip" title="Xóa khỏi nhóm">
+                        <i class="fas fa-user-times"></i>
+                    </a>
+                }
+            </td>
+        </tr>
+        }
+    </tbody>
+</table>
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="/Admin/Staff/AddMember" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Thêm thành viên</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input hidden name="LeaderID" value="@ViewBag.LeaderID" />
+                    <label>Chọn nhân viên:</label>
+                    <select name="MemberID" class="form-control select2">
+                        @foreach (var item in lmem)
+                        {
+                            <option value="@item.ID">@item.FullName</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="div-create" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="/Admin/Staff/AddStaffByLeader" id="add-form" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Tạo tài khoản thành viên</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Trung tâm</label>
+                                    <input id="hdtt" name="hdtt" type="hidden" />
+                                    <input id="hdct" name="hdct" type="hidden" />
+                                    <input type="hidden" name="LeaderID" value="@ViewBag.LeaderID" />
+                                    <select name="ddl-school" required class="select2 form-control">
+                                        @{
+                                            foreach (var item in schools)
+                                            {
+                                                <option value="@item.ID">@item.SchoolName</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row" hidden>
+                                <div class="col-sm-12">
+                                    <label for="txt-full-name">Chức vụ:</label>
+                                    <select name="hdfRole" class="form-control" required>
+                                        <option value="6">Nhân viên(Tư vấn viên)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Cấp bậc</label>
+                                    <select name="ddl-position" required class="form-control select2">
+                                        <option value="0">---</option>
+                                        @foreach (var i in position)
+                                        {
+                                            <option value="@i.ID">@i.PositionName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Doanh thu cũ</label>
+                                    <input id="txt-revenue" name="txt-revenue" type="text" class="validate form-control" oninput="moneyfm(this)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-email">Họ và tên:</label>
+                                    <input id="txt-full-name" name="txt-full-name" type="text" class="validate form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-phone">Số điện thoại:</label>
+                                    <input id="txt-phone" name="txt-phone" type="text" class="validate form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-email">Email:</label>
+                                    <input id="txt-email" name="txt-email" type="email" class="validate form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-address">Địa chỉ</label>
+                                    <textarea id="txt-address" name="txt-address" rows="1" type="text" class="validate form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-fb">Link FB</label>
+                                    <textarea id="txt-fb" name="txt-fb" rows="1" type="text" class="validate form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-dw">Ngày nhận việc</label>
+                                    <input id="txt-dw" name="txt-dw" type="text" class="validate form-control datetimepicker date-only" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="LoadEmail()" data-dismiss="modal" data-toggle="modal" data-target="#div-mail" class="btn btn-primary">Lưu</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade show" id="div-mail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Mẫu Email</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Tiêu đề:</label>
+                            <input type="text" name="txt-title" id="txt-title" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Nội dung:</label>
+                            <textarea id="txt-content" name="txt-content" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary add-done">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+@section myScripts
+{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('table').DataTable();
+        })
+        $(".remove-member").on("click", function () {
+            if (confirm("Bạn chắc muốn xóa " + $(this).attr("data-name") + " ra khỏi nhóm?")) {
+                window.location.href = "/Admin/Staff/RemoveMember?id=" + $(this).attr("data-id");
+            }
+        });
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#txt-content',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+                font_formats:
+                    "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+            });
+        });
+
+        function LoadEmail() {
+            var id = 7;
+            $.ajax({
+                url: "/Admin/Staff/LoadEmail",
+                method: "post",
+                data: '{id: ' + id + ',language: 2}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title').val(msg.tt);
+                        msg.ct = msg.ct.replace('[ten-nhan-vien]', $('#txt-full-name').val());
+                        msg.ct = msg.ct.replace('[tai-khoan]', $('#txt-email').val());
+                        msg.ct = msg.ct.replace('[mat-khau]', 'iccacademy');
+                        tinymce.get('txt-content').getBody().innerHTML = msg.ct;
+                        $('#div-mail').modal('show');
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+        $('.add-done').on('click', function () {
+            $('#hdtt').val($('#txt-title').val());
+            $('#hdct').val(tinymce.get('txt-content').contentDocument.activeElement.innerHTML);
+            $('#add-form').submit();
+        });
+    </script>
+}

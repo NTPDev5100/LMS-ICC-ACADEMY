@@ -1,0 +1,982 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@model List<get_list_of_student_appointment_Result>
+@{
+    ViewBag.Title = "Appointment";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_School> schools = SchoolTable.getall();
+    List<tbl_Grade> grand = GradeTable.getall();
+    List<tbl_StudyTime> studys = StudyTimeTable.getall().OrderBy(n => n.sTime).ToList();
+
+    var languages = Language.GetAll();
+    List<tbl_Discount> ldiscount = DiscountTable.getall().Where(n => n.Status == 1 && n.QuantityLeft > 0).ToList();
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var commitmentPackage = ClassTable.GetByType(3);
+}
+
+@section myStyles{
+    <style>
+        .pd-sm-b-40 {
+            padding-bottom: 5px;
+        }
+    </style>
+}
+
+@using (Html.BeginForm("Appointment", "Customer", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                        <li class="breadcrumb-item active" aria-current="page">Danh sách học viên chờ xếp lớp</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="..." value="@ViewBag.Search">
+                    <button class="btn" type="submit" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Lớp:</label>
+                        <select class="form-control select2" name="lop">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                var lops = ClassTable.getall().Where(n => n.isHide != true).OrderBy(n => n.ClassName).ToList();
+                                foreach (var c in lops)
+                                {
+                                    if (ViewBag.LopID != null)
+                                    {
+                                        if (ViewBag.LopID == c.ID)
+                                        {
+                                            <option value="@c.ID" selected>@c.ClassName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.ID">@c.ClassName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.ID">@c.ClassName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Ca học:</label>
+                        <select class="form-control select2" name="ca">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+
+                                foreach (var c in studys)
+                                {
+                                    if (ViewBag.CaID != null)
+                                    {
+                                        if (ViewBag.CaID == c.ID)
+                                        {
+                                            <option value="@c.ID" selected>@c.sTime - @c.eTime</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.ID">@c.sTime - @c.eTime</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.ID">@c.sTime - @c.eTime</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label>Ngôn ngữ:</label>
+                        <select name="slLanguage" class="form-control select2">
+                            <option value="0">---Ngôn ngữ---</option>
+                            @{
+                                foreach (var item in languages)
+                                {
+                                    <option value="@item.ID">@item.Name</option>
+                                }
+                            }
+                        </select>
+                        <script>$('select[name=slLanguage]').val(@ViewBag.Language)</script>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Ngày tạo từ:</label>
+                        <input type="text" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Đến:</label>
+                        <input type="text" name="to" class="form-control datetimepicker to-date date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2 text-center">
+                        <label class="form-control-label">Thao tác:</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th>Học viên</th>
+                    <th class="no-wrap">Lớp</th>
+                    <th class="no-wrap">Số buổi học thực tế</th>
+                    <th class="no-wrap">Tổng tiền</th>
+                    <th class="no-wrap">Hệ số đóng</th>
+                    <th class="no-wrap">Ngày đóng tiền</th>
+                    <th class="no-wrap">Ngôn ngữ</th>
+                    <th class="no-wrap text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        <tr class="tr-row">
+                            <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                            <td class="no-wrap">@item.StudentName</td>
+                            <td class="no-wrap">
+                                @if (item.ClassName.Length > 0)
+                                {
+                                    <span>- @item.ClassName</span>
+                                }
+                                else
+                                {
+                                    <span>- @Html.Raw(item.ComboName == null ? "" : item.ComboName.Replace(",", "<br /> - "))</span>
+                                }
+                            </td>
+                            <td class="no-wrap">@item.Lesson</td>
+                            <td class="no-wrap">@String.Format("{0:0,0}", item.CustomPrice)</td>
+                            <td class="no-wrap">@item.CoefficientName</td>
+                            <td class="no-wrap">
+                                @if (item.DateAppointment != null)
+                                {
+                                    <span>@item.DateAppointment.Value.ToString("dd/MM/yyyy")</span>
+                                }
+                            </td>
+                            <td class="no-wrap">@item.LanguageName</td>
+                            <td class="no-wrap">
+                                <a class="pd-5 view-info" href="#div-info-appoment" onclick="Showinfo(@item.StudentUID)" data-toggle="modal" data-appid="@item.ID" data-name="@item.StudentName" data-phone="@item.StudentPhone" data-dd="@String.Format("{0:0,0}", item.Deposit)" data-lesson="@item.Lesson"><i data-toggle="tooltip" data-placement="left" title="Thông tin đăng ký" data-feather="alert-circle"></i></a>
+                                <a class="pd-5" href="/Admin/Course/CreateCourseNew?appoint=@item.ID"><i data-toggle="tooltip" data-placement="left" title="Thêm vào khóa" data-feather="user-plus"></i></a>
+                                <a class="pd-5 btn-addcourse" href="#" data-toggle="modal" data-target="#div-addincourse" data-appid="@item.ID" data-name="@item.StudentName" data-phone="@item.StudentPhone" data-email="@item.StudentEmail"><i data-toggle="tooltip" data-placement="left" title="Thêm vào khóa đã được tạo" data-feather="plus-circle"></i></a>
+                            </td>
+                        </tr>
+                        <tr class="collapse-row">
+                            <td colspan="8">
+                                <div class="collapse-content">
+                                    <table class="table table-bordered">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Số điện thoại</th>
+                                                <th>Ghi chú</th>
+                                                <th>Ngày cọc</th>
+                                                <th>Ngày hẹn</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>@item.StudentPhone</td>
+                                                <td>@item.Note</td>
+                                                <td>@item.CreatedDate.Value.ToString("dd/MM/yyyy")</td>
+                                                <td>
+                                                    @if (item.DateAppointment != null)
+                                                    {
+                                                        <span>@item.DateAppointment.Value.ToString("dd/MM/yyyy")</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+            <div class="pagination-container">
+                @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+            </div>
+        </ul>
+    </nav>
+</div>
+
+<div class="modal fade" id="div-addincourse" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AssignCusAppointmentToCourse", "Customer", FormMethod.Post, new { id = "form-assign-course" }))
+            {
+                <input type="hidden" name="hdfAsignAppointID" id="hdfAsignAppointID" required />
+                <input type="hidden" name="hdtt" required />
+                <input type="hidden" name="hdct" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Chuyển vào khóa</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-4 form-group">
+                                <label>Học viên:</label>
+                                <input type="text" class="form-control" id="txt-fullname" disabled>
+                            </div>
+                            <div class="col-sm-4 form-group">
+                                <label>Email:</label>
+                                <input type="text" class="form-control" id="txt-email" disabled>
+                            </div>
+                            <div class="col-sm-4 form-group">
+                                <label>Số điện thoại:</label>
+                                <input type="tel" class="form-control" id="txt-phone" disabled>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="ddl-cource">Chọn khóa:</label>
+                                <select id="ddl-cource" name="ddl-cource" class="form-control select2" onchange="LoadCourseInfo()">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row" id="course-info">
+
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="button" id="btn-check" class="btn btn-primary" data-dismiss="modal">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+<!--<div class="modal fade show" id="div-modal-refund" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            using (Html.BeginForm("RefundAppointment", "Customer", FormMethod.Post, new { id = "form-submit-refund" }))
+            {
+                <input type="hidden" name="hdfRefundAppointID" id="hdfRefundAppointID" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Hoàn tiền</h4>
+                        </div>
+                    </div>-->
+<!-- media -->
+<!--</div>--><!-- modal-header -->
+<!--<div class="modal-body pd-sm-b-40 pd-sm-x-30">
+    <div class="personal-info">
+        <div class="form-row">
+            <div class="col-sm-4 form-group">
+                <label for="txt-full-name-refund">Học viên:</label>
+                <input type="text" class="form-control" id="txt-full-name-refund" disabled>
+            </div>
+            <div class="col-sm-4 form-group">
+                <label for="txt-deposit-refund">Đã đóng:</label>
+                <input type="text" class="form-control" id="txt-deposit-refund" disabled>
+            </div>
+            <div class="col-sm-3 form-group" hidden>
+                <label for="txt-refund">Hoàn trả:</label>
+                <input id="txt-refund" name="txt-refund" type="text" class="form-control" required placeholder="0" oninput="moneyfm(this)" />
+            </div>
+            <div class="col-sm-4 form-group">
+                <label>Trung tâm hoàn trả:</label>
+                <select id="ddl-school-refund" required name="ddl-school-refund" class="form-control select2">
+                    <option value="0">---Trung tâm---</option>
+                    @{
+                        foreach (var item in schools)
+                        {
+                            <option value="@item.ID"> @item.SchoolName</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="col-sm-12 form-group">
+                <label for="role">Ghi chú:</label>
+                <textarea id="txt-note-refund" name="txt-note-refund" required class="form-control" rows="1"></textarea>
+            </div>
+        </div>
+    </div>
+</div>-->
+<!-- modal-body -->
+<!--<div class="modal-footer pd-x-20 pd-y-15">
+            <button type="button" id="btn-check-refund" class="btn btn-primary">Xác nhận</button>
+            <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+        </div>
+    }
+</div>-->
+<!-- modal-content -->
+<!--</div>--><!-- modal-dialog -->
+<!--</div>--><!-- modal -->
+<!--<div class="modal fade" id="div-modal-close" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            using (Html.BeginForm("CloseCusAppointmentToCourse", "Customer", FormMethod.Post, new { id = "form-submit-close" }))
+            {
+                <input type="hidden" name="hdfCloseAppointID" id="hdfCloseAppointID" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Hủy đăng ký</h4>
+                        </div>
+                    </div>-->
+<!-- media -->
+<!--</div>--><!-- modal-header -->
+<!--<div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+    <div class="personal-info">
+        <div class="form-row">
+            <div class="col-sm-6 form-group">
+                <label for="txt-hoc-vien-huy">Học viên:</label>
+                <input type="text" class="form-control" id="txt-hoc-vien-huy" placeholder="..." disabled>
+            </div>
+            <div class="col-sm-6 form-group">
+                <label for="txt-hoc-vien-huy-phone">Số điện thoại</label>
+                <input type="text" id="txt-hoc-vien-huy-phone" class="form-control" placeholder="..." disabled>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="col-sm-12 form-group">
+                <label for="role">Ghi chú:</label>
+                <textarea id="txt-note-close" name="txt-note-close" required class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+</div>-->
+<!-- modal-body -->
+<!--<div class="modal-footer pd-x-20 pd-y-15">
+            <button type="button" id="btn-close-check" class="btn btn-primary">Xác nhận</button>
+            <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+        </div>
+    }
+</div>-->
+<!-- modal-content -->
+<!--</div>--><!-- modal-dialog -->
+<!--</div>--><!-- modal -->
+
+
+<div class="modal fade" id="div-info-appoment" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateAppointmentNotProfile", "Customer", FormMethod.Post, new { id = "form-update-app" }))
+            {
+                <input type="hidden" name="hdfAppointID" id="hdfAppointID" required />
+                <input type="hidden" id="hdfdeposit" />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Thông tin đăng ký</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-6 form-group">
+                                <label for="txt-info-full">Học viên:</label>
+                                <input type="text" class="form-control" id="txt-info-full" disabled>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-info-phone">Số điện thoại:</label>
+                                <input type="number" class="form-control" id="txt-info-phone" disabled>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-course-change">Ngày hẹn:</label>
+                                <input type="text" id="txt-appointment-date" name="txt-appointment-date" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY" value="">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-4 form-group">
+                                <label>Trung tâm:</label>
+                                <select name="ddl-school" id="ddl-school" class="form-control select2">
+                                    <option value="0">---Trung tâm---</option>
+                                    @{
+                                        foreach (var item in schools)
+                                        {
+                                            <option value="@item.ID"> @item.SchoolName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-4 form-group">
+                                <label>Ngôn ngữ:</label>
+                                <select id="ddl-language-deposit-add" name="ddl-language-deposit-add" class="form-control select2">
+                                    <option value="0">---Ngôn ngữ---</option>
+                                    @{
+                                        foreach (var item in languages)
+                                        {
+                                            <option value="@item.ID">@item.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-4 form-group">
+                                <label>Lớp:</label>
+                                <select name="ddl-class" id="ddl-class" class="form-control select2" multiple>
+                                    <option value="">--Chọn lớp---</option>
+                                    @{
+                                        foreach (var item in grand)
+                                        {
+                                            var lop = ClassTable.getgradeid(item.ID);
+                                            <optgroup label="@item.GradeName">
+                                                @foreach (var jtem in lop)
+                                                {
+                                                    <option value="@jtem.ID">@jtem.ClassName</option>
+                                                }
+                                            </optgroup>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-sm-3 form-group">
+                                <label for="role">Số buổi học thực tế:</label>
+                                <input name="txt-lesson" data-type="number" class="form-control" />
+                            </div>
+                            
+                            <div class="col-sm-3 form-group">
+                                <label for="role">Tư vấn viên:</label>
+                                <input name="txt-academic" type="text" class="form-control" readonly />
+                            </div>
+                            
+                            <div class="col-sm-6 form-group">
+                                <label for="role">Ghi chú:</label>
+                                <textarea id="txt-note-appoment" name="txt-note-appoment" class="form-control" rows="1"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row" id="div-dates">
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-4 form-group">
+                                <label>Số tiền đã đóng:</label>
+                                <input id="txt-dd" name="txt-dd" class="form-control" disabled>
+                            </div>
+                            <div class="col-sm-8 form-group">
+                                <label>Link FB TVV:</label>
+                                <input id="txt-fb" name="txt-fb" class="form-control">
+                            </div>
+                        </div>
+                        @*<div class="form-row">
+                                <div class="col-sm-4 form-group">
+                                    <label>Số tiền đóng thêm:</label>
+                                    <input type="text" class="form-control" id="txt-deposit-add" name="txt-deposit-add" oninput="moneyfm(this)" />
+                                </div>
+                                <div class="col-sm-4 form-group">
+                                    <label>Trung tâm:</label>
+                                    <select id="ddl-school-deposit-add" name="ddl-school-deposit-add" class="form-control select2">
+                                        <option value="">---Trung tâm---</option>
+                                        @{
+                                            foreach (var item in schools)
+                                            {
+                                                <option value="@item.ID">@item.SchoolName</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-sm-4 form-group">
+                                    <label>Phương thức thanh toán:</label>
+                                    <select name="ddl-payment-deposit-add" class="form-control">
+                                        <option value="1">Tiền mặt</option>
+                                        <option value="2">Thanh toán online</option>
+                                        <option value="4">Quẹt thẻ</option>
+                                        <option value="5">Chuyển khoản</option>
+                                        <option value="3">Khác</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-sm-12 form-group">
+                                    <label for="role">Ghi chú phiếu thu:</label>
+                                    <textarea id="txt-note-paid-appoment" name="txt-note-paid-appoment" class="form-control" rows="1"></textarea>
+                                </div>
+                            </div>*@
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <button type="button" id="btn-check-update" class="btn btn-primary">Xác nhận</button>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade show" id="div-mail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Mẫu Email</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Tiêu đề:</label>
+                            <input type="text" name="txt-title" id="txt-title" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Nội dung:</label>
+                            <textarea id="txt-content" name="txt-content" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary submit-addincourse">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts{
+    <script src="~/app-assets/js/accounting.min.js"></script>
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        var cs = 0;
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            });
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#txt-content',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+                font_formats:
+                    "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+            });
+        });
+        function Showinfo(accountID) {
+            $.ajax({
+                url: '/Customer/getlanguageOfStudent',
+                method: 'post',
+                dataType: 'json',
+                data: { accountID: accountID },
+                success: function (r) {
+                    if (r.rs == true) {
+                        $("select[name=ddl-language-deposit-add]").val(r.languageID).trigger('change.select2');
+
+                    }
+                }
+            })
+        }
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).on("click", ".close-app", function () {
+            $('#hdfCloseAppointID').val($(this).attr('data-id'));
+            $('#txt-hoc-vien-huy').val($(this).attr('data-name'));
+            $('#txt-hoc-vien-huy-phone').val($(this).attr('data-phone'));
+        })
+
+        $(document).on("click", ".refund-app", function () {
+            var id = $(this).attr('data-id');
+            $('#hdfRefundAppointID').val(id);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/CheckRefundAppointmentByID",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-full-name-refund').val(msg.fullname);
+                        $('#txt-deposit-refund').val(msg.deposit);
+                        $('#txt-refund').val(msg.deposit);
+                        $('#div-modal-refund').modal('show');
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Đã gửi yêu cầu hoàn tiền cho admin',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        })
+                        return;
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error view-info");
+                }
+            });
+        })
+
+        //$('#ddl-cource').on('change', function () {
+        //    tinhtien();
+        //});
+
+        //function tinhtien() {
+        //    if (cs == 0) {
+        //        var p = $('option:selected', $('#ddl-cource')).attr('data-price');
+        //        var cp = $("select[name=commitmentpackage").find(':selected').attr('data-money');
+        //        if (typeof p !== 'undefined') {
+        //            let classprice = $('#hdfPriceClass').val();
+        //            let classID = $('#hdfClassID').val();
+        //            let course_class = $('option:selected', $('#ddl-cource')).attr('data-classid');
+        //            let x = p.replace(/,/g, '');
+        //            if (course_class == classID && classID != 0 && course_class != 0) {
+        //                $('#txt-price-cource').val(classprice);
+        //                var c = classprice.replace(/,/g, '');
+        //                var d = $('#txt-deposit').val().replace(/,/g, '');
+        //                var l = c - d - cp;
+        //                $('#txt-price-left').val(accounting.formatNumber(l));
+        //            } else if (x * 1 < classprice * 1) {
+        //                toast.create({
+        //                    title: 'Thông báo!',
+        //                    text: 'Không thể chuyển vào khóa khác lớp có số tiền nhỏ hơn',
+        //                    icon: 'notifications_active',
+        //                    classBackground: 'noti-warning',
+        //                    timeout: 3000
+        //                });
+        //                $('#ddl-cource').val(0);
+        //                return false;
+        //            } else {
+        //                if (confirm("Khóa không thuộc lớp đã đăng kí, giá khóa học sẽ thay đổi theo giá khóa hiện tại! Bạn có muốn tiếp tục?")) {
+        //                    $('#txt-price-cource').val(p);
+        //                    var c = p.replace(/,/g, '');
+        //                    var d = $('#txt-deposit').val().replace(/,/g, '');
+        //                    var l = c - d - cp;
+        //                    console.log(d);
+        //                    $('#txt-price-left').val(accounting.formatNumber(l));
+        //                } else {
+        //                    $('#ddl-cource').val(0);
+        //                    return false;
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+
+        $('#btn-check').click(function () {
+            LoadEmail();
+            $('#div-mail').modal('show');
+        })
+
+        $(document).on("click", ".view-info", function () {
+            let idapp = $(this).attr('data-appid');
+            $('#hdfAppointID').val(idapp);
+            $('#hdfdeposit').val($(this).attr('data-deposit'));
+            $('#txt-info-full').val($(this).attr('data-name'));
+            $('#txt-info-phone').val($(this).attr('data-phone'));
+            $('#txt-dd').val($(this).attr('data-dd'));
+            $('input[name=txt-lesson]').val($(this).attr('data-lesson'));
+            // thông tin đăng ký
+            $('#ddl-class').val('');
+            $('#ddl-school').val('');
+            $('#ddl-study').val('');
+            $('#txt-note-appoment').val('');
+            $('#txt-appointment-date').val('');
+            $('#div-dates').val('');
+            $('#txt-fb').val('');
+            //load schedule appoment
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/GetAppointmentByID",
+                data: '{ID: ' + idapp + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#ddl-class').val(msg.app.ClassID);
+                        $('#ddl-school').val(msg.app.SchoolID);
+                        $('#ddl-study').val(msg.app.StudyID);
+                        $('#txt-note-appoment').val(msg.app.Note);
+                        $('#txt-fb').val(msg.linkfb);
+                        $('input[name=txt-academic]').val(msg.academic.FullName);
+                        if (msg.app.DateAppointment != null) {
+                            $('#txt-appointment-date').val(moment(msg.app.DateAppointment).format("DD/MM/YYYY"));
+                        }
+                        if (msg.combos.length > 0) {
+                            $.each(msg.combos.split(","), function (i, e) {
+                                $("#ddl-class option[value='" + e + "']").prop("selected", true);
+                            });
+                        }
+
+                        $('#div-dates').html(msg.dates);
+                        $('#ddl-class').trigger("change");
+                        $('#ddl-school').trigger("change");
+                        $('#ddl-study').trigger("change");
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error view-info");
+                }
+            });
+            $('#div-view-info').modal('open');
+        });
+
+        $('#btn-check-update').click(function () {
+            if (!ckstring($('#txt-deposit-add').val())) {
+                if (ckstring($('#ddl-school-deposit-add').val())) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn trung tâm',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 3000
+                    })
+                    return false;
+                }
+                else {
+                    $('#form-update-app').submit();
+                    $(this).attr('disabled', true);
+                }
+            }
+            else {
+                $('#form-update-app').submit();
+                $(this).attr('disabled', true);
+            }
+        })
+        $('#btn-check-refund').click(function () {
+            var pleft = $('#txt-deposit-refund').val();
+            var pl = parseInt(pleft.replace(/,/g, ''));
+
+            var rf = $('#txt-refund').val();
+            var rfp = parseInt(rf.replace(/,/g, ''));
+
+            if ($('#txt-refund').val() == '') {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập số tiền',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                return;
+            }
+            if ($('#ddl-school-refund').val() == '0') {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn trung tâm hoàn trả',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                return;
+            }
+            if (pl < rfp) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Số tiền hoàn trả nhỏ hơn hoặc bằng số tiền đã đóng',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 3000
+                })
+                return;
+            }
+            $('#form-submit-refund').submit();
+            $(this).attr('disabled', true);
+        })
+        $('#btn-close-check').click(function () {
+            if ($('#hdfdeposit').val() != '0') {
+                if (confirm('Học viên này đã đặt cọc, bạn có muốn hủy đăng ký?')) {
+                    $('#form-submit-close').submit();
+                    $(this).attr('disabled', true);
+                }
+            }
+            else {
+                $('#form-submit-close').submit();
+                $(this).attr('disabled', true);
+            }
+        });
+
+        $('.btn-addcourse').click(function () {
+            let idapp = $(this).attr('data-appid');
+            $('#hdfAsignAppointID').val($(this).attr('data-appid'));
+            $('#txt-fullname').val($(this).attr('data-name'));
+            $('#txt-phone').val($(this).attr('data-phone'));
+            $('#txt-email').val($(this).attr('data-email'));
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/LoadCourse",
+                data: '{id: ' + idapp + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.data.length > 0)
+                        $('#ddl-cource').html(msg.data);
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không có khóa học nào phù hợp',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        })
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        });
+        function LoadCourseInfo() {
+            var courseid = $('select[name=ddl-cource]').val();
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/LoadCourseInfo",
+                data: '{id: ' + courseid + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+
+                    if (msg.data.length > 0)
+                        $('#course-info').html(msg.data);
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không có khóa học nào phù hợp',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        })
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        function LoadEmail() {
+            var appointmentid = $('#hdfAsignAppointID').val();
+            var courseid = $('select[name=ddl-cource]').val();
+            $.ajax({
+                url: "/Admin/Customer/LoadEmailnhanlop",
+                method: "post",
+                data: '{appointmentid: ' + appointmentid + ', courseid:' + courseid + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title').val(msg.tt);
+                        tinymce.get('txt-content').getBody().innerHTML = msg.ct;
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+        $('.submit-addincourse').click(function () {
+            $('input[name=hdtt]').val($('input[name=txt-title]').val());
+            $('input[name=hdct]').val(tinymce.get('txt-content').contentDocument.activeElement.innerHTML);
+            $('#form-assign-course').submit();
+            $(this).attr('disabled', true);
+        });
+    </script>
+}

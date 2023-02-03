@@ -1,0 +1,250 @@
+﻿@using AppZim.ZIM;
+@using AppZim.Models;
+@using AppZim.TableSql;
+@using System.Text;
+@model List<ASW_SettingRoseSeller_Result>
+@{
+    ViewBag.Title = "SettingRoseSeller";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var gv = AccountTable.getbyrole(6).Where(n => n.Status == 2);
+    StringBuilder dsGV = new StringBuilder();
+    foreach (var item in gv)
+    {
+        dsGV.Append("<option value=\"" + item.ID + "\">" + item.FullName + "</option>");
+    }
+}
+<style>
+    img {
+        width: unset;
+    }
+</style>
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                    <li class="breadcrumb-item active" aria-current="page">Cấu hình hoa hồng Seller</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    @using (Html.BeginForm("SettingRoseSeller", "SalaryStaff", FormMethod.Get, new { id = "form-search" }))
+    {
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="..." value="@ViewBag.Search">
+                    <button class="btn" type="submit" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Họ tên  a > z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Họ tên  a > z</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Họ tên z > a</option>
+                            }
+                            else
+                            {
+                                <option value="2">Họ tên z > a</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Phần trăm ↑</option>
+                            }
+                            else
+                            {
+                                <option value="3">Phần trăm ↑</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Phần trăm ↓</option>
+                            }
+                            else
+                            {
+                                <option value="4">Phần trăm ↓</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- End breadcrumb -->
+<div class="ready-for-test mg-t-30">
+    <div class="card mg-b-30">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <div>
+                <h4 class="mg-b-5">Danh sách cấu hình hoa hồng</h4>
+            </div>
+            <div>
+                <a href="javascript:;" id="btn-group-new" class="btn btn-primary btn-icon add-new-salary" data-target="#div-add-salary"><i data-feather="plus" class="left"></i> Thêm mới</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-group-question table-vcenter" id="datatable-topic">
+                    <thead class="thead-light">
+                        <tr>
+                            <th class="th-name">Nhân viên</th>
+                            <th class="th-description">Số điện thoại</th>
+                            <th>Phần trăm (%)</th>
+                            <th>Ngày tạo</th>
+                            <th>Ngày sửa</th>
+                            <th class="wd-50"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tb-list-salary">
+                        @foreach (var item in Model)
+                        {
+                            <tr class="remove-row-@item.ID">
+                                <td>@item.FullName</td>
+                                <td>@item.Phone</td>
+                                <td>@String.Format("{0:0,0}", item.SalaryPresent)</td>
+                                <td>@item.CreatedDate</td>
+                                <td>@item.ModifiedDate</td>
+                                <td>
+                                    <div class="dropdown dropdown-icon">
+                                        <a href="javascript:;" class="material-icons" id="drop-down-1"
+                                           data-toggle="dropdown" aria-haspopup="true"
+                                           aria-expanded="false">more_vert</a>
+                                        <div class="dropdown-menu" aria-labelledby="drop-down-1">
+                                            <a class="dropdown-item btn-icon edit-salary" href="javascript:;" data-id="@item.ID" data-uid="@item.UID" data-persent="@String.Format("{0:0,0}", item.SalaryPresent)"><i data-feather="edit"></i> Chỉnh sửa</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+                    <div class="pagination-container">
+                        @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+                    </div>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+<div class="modal" id="div-add-salary" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("", "", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfID" value="0" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Cấu hình hoa hồng</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-uid">Nhân viên kinh doanh:</label>
+                                    <select name="txt-uid" id="txt-uid" required class="form-control select2">
+                                        @Html.Raw(dsGV.ToString())
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12" id="salaryPersent">
+                                    <label for="txt-persent">Phần trăm (%):</label>
+                                    <input id="txt-persent" name="txt-persent" type="number" oninput="moneyfm(this)" value="0" maxlength="100" max="100" required class="form-control" placeholder="20%" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-block btn-add-setting-salary">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).on("click", ".edit-salary", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('#txt-uid').val($(this).attr('data-uid'));
+            $('#txt-uid').prop('disabled', true);
+            $("#txt-uid").select2({
+                dropdownParent: $("#div-add-salary")
+            });
+            $('#txt-persent').val($(this).attr('data-persent'));
+            $('#div-add-salary').modal();
+        });
+
+        $(document).on("click", ".add-new-salary", function () {
+            $('input[name=hdfID]').val(0);
+            $('#txt-uid').val(0);
+            $('#txt-uid').prop('disabled', false);
+            $('#txt-persent').val(0);
+            $('#div-add-salary').modal();
+        });
+
+        $('.btn-add-setting-salary').click(function () {
+            let hdfID = $('input[name=hdfID]').val();
+            let uid = $('select[name=txt-uid]').val();
+            let persent = $('input[name=txt-persent]').val();
+            $.ajax({
+                type: "POST",
+                url: "/SalaryStaff/AddSettingSalaryRoseSeller",
+                data: '{id: "' + hdfID + '",teacherID:"' + uid + '",phantram:"' + persent + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        if (hdfID != 0) {
+                            $('html').find('tr.remove-row-' + hdfID).remove();
+                        }
+                        $('#tb-list-salary').append(msg.data);
+                        console.log(msg.data);
+                        feather.replace();
+                        $('#div-add-salary').modal('hide');
+
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Thành công',
+                            icon: 'check',
+                            classBackground: 'noti-success',
+                            timeout: 3000
+                        })
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: msg.message,
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 3000
+                        })
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        });
+    </script>
+}
+
+
+

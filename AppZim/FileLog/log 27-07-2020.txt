@@ -1,0 +1,4 @@
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1    MessageError: Column 'TrangThai' does not belong to table Table.    27/07/2020 00:02
+PageError: StudentSetController    FunctionError: SubmitTest    loginUID: 1182    MessageError: Object reference not set to an instance of an object.    27/07/2020 10:22
+PageError: StudentSetController    FunctionError: SubmitTest    loginUID: 1182    MessageError: Object reference not set to an instance of an object.    27/07/2020 10:24
+PageError: StudentSetController    FunctionError: SubmitTest    loginUID: 1189    MessageError: Object reference not set to an instance of an object.    27/07/2020 10:54

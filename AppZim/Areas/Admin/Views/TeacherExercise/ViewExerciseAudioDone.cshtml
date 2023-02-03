@@ -1,0 +1,250 @@
+﻿@using MB.Extensions
+@using AppZim.Models
+@using AppZim.TableSql
+@{
+    ViewBag.Title = "Chi tiết bài sửa";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    var lfix = ExerciseAddonStudentFixTable.getbyexestudent(Model.ID);
+    var lscore = ExerciseScoreDetailTable.getbyexeid(Model.ID);
+    List<tbl_ExerciseAddonStudentCommentRedo> lcmt = ExerciseAddonStudentCommentRedoTable.getbyexstudentid(Model.ID);
+}
+<style>
+    .rating {
+        float: left;
+        padding-left: 240px;
+    }
+
+        /* :not(:checked) is a filter, so that browsers that don’t support :checked don’t
+      follow these rules. Every browser that supports :checked also supports :not(), so
+      it doesn’t make the test unnecessarily selective */
+        .rating:not(:checked) > input {
+            position: absolute;
+            top: -9999px;
+            clip: rect(0,0,0,0);
+        }
+
+        .rating:not(:checked) > label {
+            float: right;
+            width: 1em;
+            /* padding:0 .1em; */
+            overflow: hidden;
+            white-space: nowrap;
+            cursor: pointer;
+            font-size: 300%;
+            /* line-height:1.2; */
+            color: #ddd;
+        }
+
+            .rating:not(:checked) > label:before {
+                content: '★ ';
+            }
+
+        .rating > input:checked ~ label {
+            color: #FFEB3B;
+        }
+
+        .rating:not(:checked) > label:hover,
+        .rating:not(:checked) > label:hover ~ label {
+            color: #FFEB3B;
+        }
+
+        .rating > input:checked + label:hover,
+        .rating > input:checked + label:hover ~ label,
+        .rating > input:checked ~ label:hover,
+        .rating > input:checked ~ label:hover ~ label,
+        .rating > label:hover ~ input:checked ~ label {
+            color: #FFEB3B;
+        }
+
+        .rating > label:active {
+            position: relative;
+            top: 2px;
+            left: 2px;
+        }
+    p > img {
+        max-width: 100%;
+    }
+</style>
+<div class="all">
+    <div class="row section">
+        <div class="s12"><h5 class="title-page center-align">Chi tiết bài chấm</h5></div>
+    </div>
+    <div class="exercise-mark section">
+        <div class="card-panel hoverable">
+            <div class="row ">
+
+                <div class="col s12">
+                    <div class="student-info ">
+                        <h5 class=" font-weight-600 teal-text m-0">@Model.CourseName</h5>
+                        <p>
+                            <span class="title lb-fixed font-weight-600 black-text">
+                                Họ tên:
+                            </span>
+                            @Model.StudentName
+                        </p>
+                        <p>
+                            <span class="title lb-fixed font-weight-600 black-text">
+                                Câu hỏi:
+                            </span>
+                            @Html.Raw(Model.ExerciseQuestion)
+                        </p>
+                        @{
+                            if (!string.IsNullOrEmpty(ViewBag.Exercise.LinkFile))
+                            {
+                                <p>
+                                    <span class="title lb-fixed font-weight-600 black-text">
+                                        File:
+                                    </span>
+                                    <a href="@ViewBag.Exercise.LinkFile" download="download">@ViewBag.Exercise.FileName<span class="material-icons ml-1 cyan-text" style="vertical-align:bottom;">cloud_download</span></a>
+                                </p>
+                            }
+                            if (Model.RateExercise != null)
+                            {
+                                <p>
+                                    <span class="title lb-fixed font-weight-600 black-text">
+                                        Đánh giá bài chấm:
+                                    </span>
+                                    @{
+                                        for (int i = 0; i < Model.RateExercise; i++)
+                                        {
+                                            <span class="material-icons" style="vertical-align:bottom; color:#FFEB3B!important;">star</span>
+                                        }
+                                    }
+                                </p>
+                            }
+                            if (lcmt.Count > 0)
+                            {
+                                <p>
+                                    <span class="title lb-fixed font-weight-600 black-text">
+                                        Phản hồi học viên:
+                                    </span>
+                                    @foreach (var item in lcmt)
+                                    {
+                                        <br /><span style="font-style: italic;">- @item.Comment</span>
+                                    }
+                                </p>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="teacher-editor">
+            <div class="row">
+                <div class="col s12 m7">
+
+                    <div class="card-panel hoverable">
+                        <div class="card-title">
+                            <h5 class=" font-weight-600 black-text m-0">Bài trả lời</h5>
+                            <hr />
+                        </div>
+                       
+                        @Html.Raw(Model.ParagraphAnswer)
+                      
+                        <audio controls>
+                            <source src="@Model.FileAudio" type="audio/ogg">
+                            <source src="@Model.FileAudio" type="audio/mpeg">
+                        </audio>
+                    </div>
+                </div>
+                <div class="col s12 m5">
+                    <div class="card-panel">
+                        <div class="card-title">
+                            <h5 class=" font-weight-600 black-text m-0">Sửa lỗi (@lfix.Count đoạn sửa)</h5>
+                            <hr />
+                        </div>
+                        <div class="teacher-answer">
+                            @{
+                                foreach (var item in lfix)
+                                {
+                                    <div class="edit-item padding-5 mb-5 hoverable" data-cmt="@item.DataCMT">                                      
+                                        <div class="input-field">
+                                            <textarea disabled id="@item.DataCMT" class="materialize-textarea" style="color:black;">@item.FixNote</textarea>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(item.LinkAudio))
+                                        {
+                                            <div class="record-wrap mt-2 mb-2">
+                                                <div class="audio-result mt-5">
+                                                    <audio controls="" class="valign-center" style="display: block; width: 100%;">
+                                                        <source src="@item.LinkAudio" type="audio/webm">
+                                                    </audio>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="teacher-comment section">
+        <div class="row">
+            <div class="col s12">
+                <div class="score-wrap">
+                    <div class="card-title mb-2">
+                        <h5 class="font-weight-600 black-text m-0">Đánh giá</h5>
+                        <hr />
+                    </div>
+                    <div class="row">
+                        @{
+                            foreach (var item in lscore)
+                            {
+                                <div class="input-field col s6 m3 score-item">
+                                    <input placeholder="Grammar" disabled type="text" class="validate" value="@item.Score">
+                                    <label>@item.ScoreName</label>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="row">
+                        <div class="col s12">
+                            <span class="bold black-text">Tổng điểm:</span>
+                            <div class="input-field inline">
+                                <input type="text" class="validate" value="@Model.Scores" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="comment-wrap section clear mb-5">
+                    <div class="card-title mb-3">
+                        <h5 class=" font-weight-600 black-text m-0">Nhận xét giáo viên</h5>
+                        <hr />
+                    </div>
+                    <div id="froala-editor" contenteditable="false">
+                        @Html.Raw(Model.NoteFix)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="~/app-assets/tinymce/tinymce.min.js"></script>
+<script>
+    //Comments function
+    $(document).ready(function () {
+        var teacherEditor = {
+            selector: '#froala-editor',
+            plugin: "autosave",
+            menubar: false,
+            oninit: "setPlainText",
+            plugins: "paste",
+            paste_as_text: true,
+            inline: false,
+            readonly: 1,
+            toolbar: 'bold italic underline  strikethrough forecolor backcolor | undo redo',
+            content_css: [
+                '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+            ]
+        }
+        tinymce.init(teacherEditor);
+        //Add score
+    });
+</script>

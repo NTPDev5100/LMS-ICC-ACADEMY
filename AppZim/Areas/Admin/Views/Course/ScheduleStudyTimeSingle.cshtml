@@ -1,0 +1,201 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@using MB.Extensions
+@{
+    ViewBag.Title = "ScheduleStudyTimeSingle";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var schools = SchoolTable.getall().OrderByDescending(n => n.ID).ToList();
+    var stys = StudyTimeTable.getall().OrderBy(n => n.sTime).ToList();
+
+    tbl_Account aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+}
+<style>
+    table#rooms tr th:first-child {
+        width: 60px;
+    }
+
+    table#rooms {
+        table-layout: fixed;
+    }
+</style>
+<!-- Breadcrumb -->
+<div class="row mg-b-20">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item active" aria-current="page">Xem lịch ca trống</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<!-- End breadcrumb -->
+<div class="row">
+    <div class="col-12">
+        <div class="mg-b-30" id="filterCollapse">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row d-flex flex-wrap">
+                        <div class="form-group col-md-4 col-6 col-xl-4">
+                            <label class="form-control-label">Trung tâm:</label>
+                            <select id="ddl-school" class="custom-select select2">
+                                <option value="0">---</option>
+                                @{
+                                    foreach (var item in schools)
+                                    {
+                                        if (aclog.RoleID == 8)
+                                        {
+                                            var check = AssignManagerSpecializeToSchoolTable.getbyuid(aclog.ID).Where(n => n.SchoolID == item.ID && n.isHide != true).FirstOrDefault();
+                                            if (check != null)
+                                            {
+                                                <option value="@item.ID">@item.SchoolName</option>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <option value="@item.ID">@item.SchoolName</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4 col-6 col-xl-4">
+                            <label class="form-control-label">Ca: </label>
+                            <select id="ddl-studytime" class="custom-select select2">
+                                <option value="0">---</option>
+                                @{
+                                    foreach (var item in stys)
+                                    {
+                                        <option value="@item.ID">@item.StudyTimeName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6 col-xl-2">
+                            <label class="form-control-label">Thời gian từ: </label>
+                            <input type="text" class="form-control datetimepicker date-only from-date" id="txt-stime" placeholder="DD / MM / YYYY">
+                        </div>
+                        <div class="form-group col-md-6 col-xl-2">
+                            <label class="form-control-label">Đến: </label>
+                            <input type="text" id="txt-etime" class="form-control datetimepicker date-only to-date" placeholder="DD / MM / YYYY">
+                        </div>
+                        <div class="form-group col-md-12 col-12 col-xl-12">
+                            <label class="form-control-label">Phòng: </label>
+                            <select id="ddl-room" class="custom-select select2" multiple></select>
+                        </div>
+                        <div class="form-group col-12 mg-b-0">
+                            <button type="button" id="btn-view" class="btn btn-primary">Kiểm tra</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 colsm-12 col-md-12">
+        <div class="schedule-teacher">
+            <div class="lichday-col-wrap" id="lichday_colwrapper">
+                <table id="customers" class="table table-bordered"></table>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    <script>
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+        jQuery(document).ready(function () {
+            $('#ddl-school').on('change', function () {
+                LoadRoom($(this).val());
+            });
+            function LoadRoom(id) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Course/LoadRoom",
+                    data: '{schoolid: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        $("#ddl-room").empty();
+                        $('#ddl-room').append('<option value="0">All</option>');
+                        $('#ddl-room').append(msg.rs);
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("Có lỗi rồi N4m ơi :) ");
+                    }
+                });
+            }
+
+            $('#btn-view').click(function () {
+                if ($("#ddl-school").val() == '0') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn trung tâm',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+
+                if ($("#ddl-room").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn phòng',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                if ($("#txt-stime").val() == '') {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn thời gian bắt đầu',
+                        icon: 'notifications_active',
+                        classBackground: 'noti-warning',
+                        timeout: 2500
+                    })
+                    return;
+                }
+
+                var id = $("#ddl-school").val();
+                var roomid = $("#ddl-room").val();
+                var studyid = $("#ddl-studytime").val();
+                var stime = $("#txt-stime").val();
+                var etime = $("#txt-etime").val();
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Course/LoadScheduleCheckStudyTimeSignle",
+                    data: '{schoolid: ' + id + ', roomid:"' + roomid + '", studyid:"' + studyid + '", stime:"' + stime + '", etime:"' + etime + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs == false) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Không có dữ liệu',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2500
+                            })
+                        }
+                        else {
+                            $('#customers').empty();
+                            $('#customers').append(msg.l);
+                        }
+
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("Có lỗi rồi N4m ơi :) ");
+                    }
+                });
+            })
+        });
+    </script>
+}

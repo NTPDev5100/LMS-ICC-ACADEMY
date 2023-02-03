@@ -1,0 +1,825 @@
+﻿
+@using AppZim.TableSql
+@using PagedList.Mvc
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "Lesson";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    int stt = 1;
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var course = CoursesTable.getall();
+}
+<style>
+    .table-striped tbody tr:nth-of-type(2n+2) {
+        background-color: #f5f5f58a;
+    }
+
+    .table {
+        border: 1px solid #c0ccda;
+    }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+    .table-course .actions-group {
+        display: block;
+    }
+
+    .table-striped tbody tr td a {
+        margin: 0.2rem 0;
+    }
+</style>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-20">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách bài học</li>
+    </ol>
+</nav>
+@using (Html.BeginForm("CourseList", "Course", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div>
+            <a href="javascript:;" class="btn btn-primary" data-toggle="modal" data-target="#modal-create-center"><i data-feather="plus-circle"></i> New</a>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Search..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" id="ddl-sort" class="custom-select select2" onchange="pagesearch()" style="min-width:150px">
+                        <option value="0">-- Sort by --</option>
+                        <option value="1">Khóa học (A - Z)</option>
+                        <option value="2">Khóa học (Z - A)</option>
+                        <option value="3">Giá tiền (Tăng)</option>
+                        <option value="4">Giá tiền (Giảm)</option>
+                    </select>
+                </div>
+                <a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    <div class="form-group col-md-4 col-6 col-xl-3">
+                        <label class="form-control-label">Status:</label>
+                        <select class="form-control select2" name="lop">
+                            <option value="0">--- Tất cả ---</option>
+                            <option value="1">Active</option>
+                            <option value="2">Hiden</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">From date:</label>
+                        <input type="number" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="dd/mm/yyyy" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">To date:</label>
+                        <input type="number" name="to" class="form-control datetimepicker from-date date-only" value="@ViewBag.To" placeholder="dd/mm/yyyy" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2 text-center">
+                        <label class="form-control-label">Action:</label>
+                        <div>
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-course">
+            <thead class="thead-light">
+                <tr>
+                    <th>No.</th>
+                    <th>Tên bài học</th>
+                    <th>Time Out</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th>Đánh giá</th>
+                    <th>Người tạo</th>
+                    <th>Thời gian tạo</th>
+                    <th class="center"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    for (var i = 1; i <= 10; i++)
+                    {
+                        <tr>
+                            <td>@(stt++)</td>
+                            <td style="font-weight:600;max-width:200px"> Cơ cấu phòng và dịch vụ của phòng @i</td>
+                            <td>10 phút</td>
+                            <td class="text-center">
+                                <span class="badge badge-success" style="font-size:1em">Active</span>
+                            </td>
+                            <td>
+                                <span style="color:#ffc107">
+                                    @for (var j = 0; j < 5; j++)
+                                    {
+                                        <span><i data-feather="star"></i></span>
+                                    }
+                                </span>
+                            </td>
+                            <td>Admin</td>
+                            <td>30/10/2020</td>
+                            <td class="text-center">
+                                <div class="actions-group">
+                                    <a href="javascript:;" onclick="EditLessonInternal" class="btn btn-outline-primary btn-sm bold" style="max-width:110px" data-toggle="modal" data-target="#modal-edit-center"><i data-feather="edit"></i> Detail</a>
+                                    @*<a href="/Admin/Course/ExerciseInternal" class="btn btn-outline-info btn-sm bold edit-center" style="max-width:110px">
+                                            <i data-feather="folder-minus"></i> Kho đề
+                                        </a>*@
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 mg-t-10 justify-content-end">
+        @*<div class="pagination-container">
+                @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+            </div>*@
+    </ul>
+</nav>
+
+<div class="modal fade" id="modal-create-center" tabindex="-1" role="dialog" aria-labelledby="addStaffTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-700" role="document" style="max-width:700px">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddLessonInternal", "Course", FormMethod.Post, new { id = "form-add" }))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo mới khóa học</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="">Khóa học</label>
+                                    <select name="txt-CourseID" class="form-control select2" required>
+                                        <option value="">---</option>
+                                        @foreach (var i in course)
+                                        {
+                                            <option value="@i.ID">@i.CourseName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-9">
+                                    <label for="">Tên bài học:</label>
+                                    <input name="txt-LessonName" type="text" class="validate form-control" required placeholder="Nhập...">
+                                </div>
+                                <div class="col-sm-3">
+                                    <label for="">Time Out:</label>
+                                    <input name="txt-Timeout" type="number" class="validate form-control" required placeholder="Nhập...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="">Nội dung:</label>
+                                    <textarea name="txt-LessonContent" rows="5" class="form-control editor" placeholder="Question..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-block btn-add">Create</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-edit-center" tabindex="-1" role="dialog" aria-labelledby="addStaffTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-700" role="document" style="max-width:700px">
+        <div class="modal-content">
+            @using (Html.BeginForm("UpdateLessonInternal", "Course", FormMethod.Post, new { id = "form-update" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfiled" value="" />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Cập nhật bài học</h4>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="">Khóa học</label>
+                                    <select name="txt-edit-CourseID" class="form-control select2" required disabled>
+                                        @foreach (var i in course)
+                                        {
+                                            <option value="@i.ID">@i.CourseName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-9">
+                                    <label for="">Tên bài học:</label>
+                                    <input name="txt-edit-LessonName" type="text" class="validate form-control" required placeholder="Nhập...">
+                                </div>
+                                <div class="col-sm-3">
+                                    <label for="">Time Out:</label>
+                                    <input name="txt-edit-Timeout" type="number" class="validate form-control" required placeholder="Nhập...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="">Nội dung:</label>
+                                    <textarea name="txt-edit-LessonContent" rows="5" class="form-control editor" placeholder="Question...">
+                                        We need to know about an image sprite before we start talking about CSS sprites. An image sprite is a compilation of different image assets that we want to use on our web application.
+
+                                        These images could fit in any of the below given cases…
+
+                                        Icon assets like social media, fancy bullets etc.
+                                        Different states for a button roll-over
+                                        A fixed background eg. a logo
+                                    </textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="chk-hide" name="chk-hide">
+                                        <label class="custom-control-label" for="chk-hide">Hidden</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" value="" name="hdfStatus" />
+                        <button type="button" class="btn btn-primary btn-block btn-update">Update</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+@section myScripts
+{
+    <script>
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+
+        $('.btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $('.btn-add').click(function () {
+            if (ckstring($('select[name=txt-CourseID]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn khóa học!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('select[name=txt-CourseID]').focus();
+                return;
+            }
+            if (ckstring($('input[name=txt-LessonName]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập tên bài học!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('input[name=txt-LessonName]').focus();
+                return;
+            }
+            if (ckstring($('input[name=txt-NumberOfMultiChoise]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập số câu trắc nghiệm!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('input[name=txt-NumberOfMultiChoise]').focus();
+                return;
+            }
+            if (ckstring($('input[name=txt-NumberOfEssay]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập số câu tự luận!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('input[name=txt-NumberOfEssay]').focus();
+                return;
+            }
+            if (ckstring($('input[name=txt-Timeout]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập giới hạn thời gian làm bài!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('input[name=txt-Timeout]').focus();
+                return;
+            }
+            $('#form-add').submit();
+            $(this).attr('disabled', true);
+        });
+        $('.btn-update').click(function () {
+            if (ckstring($('select[name=txt-edit-CourseID]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn khóa học!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('select[name=txt-edit-CourseID]').focus();
+                return;
+            }
+            if (ckstring($('input[name=txt-edit-LessonName]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập tên bài học!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('input[name=txt-edit-LessonName]').focus();
+                return;
+            }
+            if (ckstring($('input[name=txt-edit-NumberOfMultiChoise]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập số câu trắc nghiệm!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('input[name=txt-edit-NumberOfMultiChoise]').focus();
+                return;
+            }
+            if (ckstring($('input[name=txt-edit-NumberOfEssay]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập số câu tự luận!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('input[name=txt-edit-NumberOfEssay]').focus();
+                return;
+            }
+            if (ckstring($('input[name=txt-edit-Timeout]').val())) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng nhập giới hạn thời gian làm bài!',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2500
+                });
+                $('input[name=txt-edit-Timeout]').focus();
+                return;
+            }
+            $('#form-update').submit();
+            $(this).attr('disabled', true);
+        });
+        //Load chi tiết phòng ban
+        function EditLessonInternal(ID) {
+            $.ajax({
+                type: "POST",
+                url: "/Course/LoadLessonInternalDetail",
+                data: '{ID: "' + ID + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('input[name=hdfiled]').val(msg.l.ID);
+                        $('select[name=txt-edit-CourseID]').val(msg.l.CourseID);
+                        $('input[name=txt-edit-LessonName]').val(msg.l.LessonName);
+                        $('textarea[name=txt-edit-LessonContent]').val(msg.l.LessonContent);
+                        $('input[name=txt-edit-NumberOfMultiChoise]').val(msg.l.NumberOfMultiChoise);
+                        $('input[name=txt-edit-NumberOfEssay]').val(msg.l.NumberOfEssay);
+                        $('input[name=txt-edit-Timeout]').val(msg.l.Timeout);
+
+                        $('input[name=chk-hide]').prop('checked', msg.l.IsHide);
+                        $('input[name=hdfStatus]').val(msg.l.IsHide);
+
+                        $('select[name=txt-edit-CourseID]').val(msg.l.CourseID).select2({ dropdownParent: $('select[name=txt-edit-CourseID]').closest('.modal') });
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        }
+        //Check Hide
+        $('input[name="chk-hide"]').on('click', function () {
+            if ($(this).prop('checked') == true) {
+                $('input[name="hdfStatus"]').val('true');
+            } else {
+                $('input[name="hdfStatus"]').val('false');
+            }
+        });
+
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+            const desEditor = {
+                selector: 'textarea.editor',
+                menubar: false,
+                inline: false,
+                min_height: 300,
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste',
+                    'autoresize',
+                    'stickytoolbar',
+                    'link',
+                    'media'
+                ],
+                oninit: "setPlainText",
+                paste_as_text: true,
+                autoresize_bottom_margin: 30,
+                toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | UploadImage link media',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            };
+            const matches = function (el, selector) {
+                return (el.matches || el.matchesSelector || el.msMatchesSelector || el.mozMatchesSelector || el
+                    .webkitMatchesSelector || el.oMatchesSelector).call(el, selector);
+            };
+            const setObjectAttribute = function (ele, objects) {
+                if (!Object.prototype.forEach) {
+                    Object.defineProperty(Object.prototype, 'forEach', {
+                        value: function (callback, thisArg) {
+                            if (this == null) {
+                                throw new TypeError('Not an object');
+                            }
+                            thisArg = thisArg || window;
+                            for (var key in this) {
+                                if (this.hasOwnProperty(key)) {
+                                    callback.call(thisArg, this[key], key, this);
+                                }
+                            }
+                        }
+                    });
+                }
+                objects.forEach(function (item, key) {
+                    ele.setAttribute(key, item);
+                });
+            }
+            const createAnswerByQuestion = (id, group, answer) => {
+                let answerWrap = document.createElement('div');
+                answerWrap.setAttribute('class', 'col-12 col-md-6 form-group correct-answer');
+                let inputEl = document.createElement('input');
+                setObjectAttribute(inputEl, {
+                    'class': 'form-control class-answer',
+                    'data-answer-id': 0,
+                    'data-question': id,
+                    'data-id': 'answer-' + id,
+                    'quest-group-id': group,
+                    'autocomplete': 'off',
+                    'placeholder': 'Answer',
+                    'answer-true': answer
+                });
+                answerWrap.appendChild(inputEl);
+                return answerWrap;
+            }
+            //let questId = 0;
+
+            const createEmptySpace = () => {
+                questId += 1;
+                let questionId = "quest-id-" + questId;
+                console.log(questId);
+                let groupId = "quest-group-" + group;
+                let currentEditor = tinymce.activeEditor;
+                let answerContainer = document.getElementById('question-answer-list');
+                let htmlZone =
+                    `<div class="dropwrap question__wrap question-each" contenteditable="false" id="${questionId}" data-question="${questId}" quest-group-id="${groupId}"></div>`;
+                const answerNode = createAnswerByQuestion(questionId, groupId, true);
+                let addNoiseEl = document.createElement('a');
+                let type = $('select[name="ddl-type"]').val();
+                if (type == 3) {
+                    addNoiseEl.innerHTML = '<i data-feather="plus"></i> Same';
+                }
+                else {
+                    addNoiseEl.innerHTML = '<i data-feather="plus"></i> Noise';
+                }
+                setObjectAttribute(addNoiseEl, {
+                    'href': 'javascript:;',
+                    'class': 'add-noise btn btn-warning action-icon'
+                });
+                addNoiseEl.addEventListener('click', function (e) {
+                    let noiseList = document.querySelector('#answer-noise .answer-noise-list');
+                    let questId = this.previousElementSibling.getAttribute('data-question');
+                    let answerEl = createAnswerByQuestion(questId, group, false);
+                    answerEl.classList.add('noise-word');
+                    let deleteNoiseEl = document.createElement('a');
+                    deleteNoiseEl.innerHTML = '<i data-feather="minus-circle"></i>';
+
+                    setObjectAttribute(deleteNoiseEl, {
+                        'href': 'javascript:;',
+                        'class': 'delete-noise btn btn-transparent tx-danger action-icon'
+                    });
+                    deleteNoiseEl.addEventListener('click', function (e) {
+                        let parentEl = this.parentNode;
+                        parentEl.parentNode.removeChild(parentEl);
+                    });
+                    answerEl.appendChild(deleteNoiseEl);
+                    noiseList.appendChild(answerEl);
+                    feather.replace();
+                });
+                answerNode.appendChild(addNoiseEl);
+                currentEditor.selection.setContent(htmlZone);
+                answerContainer.appendChild(answerNode);
+                document.getElementById('answer-noise').style.display = 'block';
+                feather.replace();
+            };
+
+            let dragEditor = {
+                selector: '.drag-editor',
+                menubar: false,
+                inline: false,
+                min_height: 300,
+                auto_focus: false,
+                body_class: 'drop-answer',
+                forced_root_block: 'div',
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste',
+                    'autoresize',
+                    'stickytoolbar',
+                    'link',
+                    'media',
+                    'table'
+                ],
+                paste_as_text: true,
+                autoresize_bottom_margin: 30,
+                toolbar: 'undo redo | formatselect | fontsizeselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | removeformat emptySpace | UploadImage link media | table tabledelete | tableprops tablerowprops tablecellprops | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                    '/app-assets/zimv2/assets/css/custom.css?v=' + new Date().getTime()
+                ],
+                //   valid_elements: 'span.dropwrap',
+                //images_dataimg_filter: function (img) {
+                //    return img.hasAttribute('internal-blob');
+                //},
+                setup: (editor) => {
+                    //Add custom button
+                    editor.ui.registry.addButton('emptySpace', {
+                        text: 'Add space question',
+                        onAction: createEmptySpace
+                    });
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt",
+                init_instance_callback: function (editor) {
+                    const iframeDoc = editor.iframeElement.contentWindow.document;
+                    //Remove hover style
+                    const removeHoverStyle = () => {
+                        let questions = iframeDoc.getElementsByClassName('question__wrap');
+                        let answers = document.querySelectorAll('[data-question]');
+                        let noises = document.querySelectorAll('.noise-word input');
+                        [...answers].map(el => el.classList.remove('highlight-box'));
+                        [...questions].map(el => el.classList.remove('highlight-box'));
+                        [...noises].map(el => el.classList.remove('highlight-box'));
+                    }
+                    //Check editor content change and delete answer
+                    editor.on('keyup', function (e) {
+                        let currentQuestions = iframeDoc.querySelectorAll('.question__wrap');
+                        if (currentQuestions.length < 1) {
+                            let answerContainer = document.getElementById('question-answer-list');
+                            while (answerContainer.firstElementChild) {
+                                document.getElementById('answer-noise').style.display = 'none';
+                                answerContainer.removeChild(answerContainer.firstElementChild);
+                            }
+                            return false;
+                        }
+                        let listIds = [...currentQuestions].map(x => x.id);
+                        let listCurAnswers = document.querySelectorAll('.class-answer');
+                        console.log(listCurAnswers);
+                        let listNewAnswers = [...listCurAnswers].filter(x => {
+                            if (!listIds.includes(x.getAttribute('data-question'))) {
+                                x.parentNode.parentNode.removeChild(x.parentNode);
+                            }
+                        });
+                    });
+
+                    // Hover drop block in editor
+                    editor.on('mouseover', function (e) {
+                        let element = e.target;
+                        removeHoverStyle();
+                        if (!matches(element, '.question__wrap')) {
+                            removeHoverStyle();
+                            return false;
+                        }
+                        let id = element.id;
+                        let answer = document.querySelectorAll('[data-question="' + id + '"]');
+                        element.classList.add('highlight-box');
+                        [...answer].map(x => x.classList.add('highlight-box'));
+                    });
+
+                    // Hover input  in answer list
+                    $(document).on('mouseover', function (e) {
+                        let element = e.target;
+                        removeHoverStyle();
+                        if (!matches(element, '[data-question]')) {
+                            return false;
+                        }
+                        const id = element.getAttribute('data-question');
+                        let questionEl = iframeDoc.getElementById(id);
+                        let answer = document.querySelectorAll('[data-question="' + id + '"]');
+                        if (questionEl) {
+                            questionEl.classList.add('highlight-box');
+                            [...answer].map(x => x.classList.add('highlight-box'));
+                        }
+
+                    });
+                }
+            }
+            let introduceEditor = {
+                selector: '.introdution-editor',
+                menubar: false,
+                inline: false,
+                min_height: 300,
+                auto_focus: false,
+                body_class: 'drop-answer',
+                forced_root_block: 'div',
+                plugins: [
+                    'lists',
+                    'autolink',
+                    'paste',
+                    'autoresize',
+                    'stickytoolbar',
+                    'link',
+                    'media',
+                    'table'
+                ],
+                paste_as_text: true,
+                autoresize_bottom_margin: 30,
+                toolbar: 'undo redo | formatselect | fontsizeselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | removeformat | UploadImage link media | table tabledelete | tableprops tablerowprops tablecellprops | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+                    '/app-assets/zimv2/assets/css/custom.css?v=' + new Date().getTime()
+                ],
+                //   valid_elements: 'span.dropwrap',
+                //images_dataimg_filter: function (img) {
+                //    return img.hasAttribute('internal-blob');
+                //},
+                setup: (editor) => {
+
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                fontsize_formats: "8pt 10pt 12pt 14pt 18pt 24pt 36pt",
+                init_instance_callback: function (editor) {
+
+                }
+            }
+            //Init editor
+            tinymce.init(desEditor);
+            tinymce.init(dragEditor);
+            tinymce.init(introduceEditor);
+            const readURL = function (input) {
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        if (e.target.result !== null)
+                            $('.thumbnail-preview img').attr('src', e.target.result);
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+            const readAudioURL = (input) => {
+                if (input.files && input.files[0]) {
+                    let filesArr = [...input.files];
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        let $inputWrap = $(input).closest('.setting-audio').find('.custom-file');
+                        let $preview = $(input).closest('.setting-audio').find('.preview-audio');
+                        let $fileName = $(input).closest('.setting-audio').find('.custom-file-label');
+                        console.log(filesArr);
+                        if (e.target.result !== null) {
+                            const $audio = $('<audio style="height:2.375rem; width:100%;" controls src="' + e
+                                .target.result + '"></audio>');
+                            $preview.children().remove();
+                            $preview.append($audio);
+                            $preview.removeClass('d-none');
+                            $fileName.text(filesArr[0].name);
+                        }
+                    }
+                    reader.readAsDataURL(filesArr[0]);
+                }
+            }
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/SetPackage/UploadFilePost',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '" style="width: unset;" />');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+
+            $(".file-upload").on('change', function () {
+                readURL(this);
+            });
+            $(".audio-upload").on('change', function () {
+                readAudioURL(this);
+            });
+
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content').stop()
+                    .slideToggle(
+                        200);
+            });
+
+            $('.custom-checkbox').on('click', function () {
+                let $input = $(this).find('input');
+                $input.prop('checked', $input.prop('checked'))
+            });
+            $('body').on('click', '.match-label-list .badge', function () {
+                $('#js-add-label').modal('show');
+            });
+
+
+        });
+    </script>
+}
+
+
+
+

@@ -1,0 +1,121 @@
+.aside-fixed {
+    width: 270px;
+}
+
+    .aside-fixed + .content {
+        padding: 0;
+    }
+
+    .aside-fixed .aside-header, .aside-fixed .aside-body {
+        background-color: #1F4069;
+    }
+
+    .aside-fixed .aside-header {
+        box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.25);
+        z-index: 2;
+        overflow: visible;
+        position: relative;
+    }
+
+    .aside-fixed .nav-aside .nav-label {
+        color: #fff;
+    }
+
+    .aside-fixed .nav-aside .nav-link {
+        color: #96ADCC;
+        height: 40px;
+    }
+
+        .aside-fixed .nav-aside .nav-link:hover {
+            color: #fff;
+        }
+
+            .aside-fixed .nav-aside .nav-link:hover svg {
+                color: inherit;
+            }
+
+        .aside-fixed .nav-aside .nav-link [class^=fa] {
+            width: 18px;
+            height: 18px;
+            margin-right: 15px;
+            line-height: 18px;
+        }
+
+        .aside-fixed .nav-aside .nav-link svg {
+            color: inherit;
+        }
+
+    .aside-fixed .nav-aside .nav-item {
+        border-bottom: 1px solid #405D87;
+    }
+
+        .aside-fixed .nav-aside .nav-item.with-sub.show:not(.active) a svg {
+            color: inherit;
+        }
+
+    .aside-fixed .aside-logo, .aside-fixed .aside-color span, .aside-fixed .aside-menu-link {
+        color: #fff;
+    }
+
+    .aside-fixed .content-body .container {
+        max-width: 1170px;
+    }
+
+    .aside-fixed .aside-logo span, .aside-fixed .aside-logo:hover span, .aside-fixed .aside-logo:focus span {
+        color: #fff;
+    }
+
+.content-header .breadcrumb {
+    margin-bottom: 0;
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.content-header .navbar-right {
+    display: flex;
+    align-items: center;
+}
+
+    .content-header .navbar-right .dropdown-notification {
+        margin-right: 15px;
+    }
+
+        .content-header .navbar-right .dropdown-message .dropdown-link.new-indicator, .content-header .navbar-right .dropdown-notification .dropdown-link.new-indicator {
+            color: #000;
+        }
+
+    .content-header .navbar-right .dropdown-notification {
+        padding-right: 15px;
+        border-right: 1px solid #EEEEEE;
+    }
+
+.content-body {
+    height: calc(100vh - 55px);
+}
+
+@media screen and (min-width: 992px) {
+    .aside-fixed + .content {
+        margin-left: 60px;
+    }
+
+    .content-body {
+        height: calc(100vh - 110px);
+    }
+}
+
+@media screen and (min-width: 1200px) {
+    .aside-fixed + .content {
+        margin-left: 270px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .content-header .breadcrumb {
+        display: none;
+    }
+}
+
+.ht-100vh {
+    height: 100vh;
+}

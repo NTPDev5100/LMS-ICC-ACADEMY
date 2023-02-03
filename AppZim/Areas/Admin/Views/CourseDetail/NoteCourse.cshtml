@@ -1,0 +1,204 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@{
+    ViewBag.Title = "StudentCourseDetail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    List<tbl_CoursesNote> l = CoursesNoteTable.getbycourseid(Model.ID);
+    l = l.OrderByDescending(n => n.CreatedDate).ToList();
+    var totalLesson = CoursesScheduleTable.getbycourseid(Model.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(Model.ID, 1).Count;// số buổi đã học
+    tbl_Courses course = CoursesTable.getbyid(Model.ID);
+    int remainLesson = totalLesson - learnedLesson - course.DifferenceSchedule.Value;
+}
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+<style>
+    .timeline-time {
+        width: 100px !important;
+    }
+
+    .timeline-label {
+        margin-left: 100px !important;
+    }
+
+    .timeline-item + .timeline-item::before {
+        left: 100px !important;
+    }
+
+    img {
+        width: unset;
+    }
+</style>
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-9">
+        <div class="create_notification">
+            @using (Html.BeginForm("AddNote", "CourseDetail", FormMethod.Post, new { id = "f-comment" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="hdfcourse" value="@Model.ID" />
+                <input type="hidden" name="txt-note" />
+                <div class="message-editor-wrap mg-y-20">
+                    <div id="message-editor" class="content-editor"></div>
+                    <div class="d-flex justify-content-between mg-t-20">
+                        <a href="javascript:;" id="btn-check" class="btn btn-primary">Tạo đánh giá</a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="media d-block d-lg-flex">
+            <div class="media-body">
+                <div class="timeline-group tx-13">
+                    <div class="timeline-label">Thời gian</div>
+                    @{
+                        foreach (var item in l)
+                        {
+                            var ac = AccountTable.getbyusername(item.CreatedBy);
+                            <div class="timeline-item">
+                                <div class="timeline-time">@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                                <div class="timeline-body">
+                                    <h6 class="mg-b-0">@ac.FullName</h6>
+                                    <p><a href="">@AccountTable.getrolehtml(ac.RoleID.Value)</a></p>
+                                    @Html.Raw(item.Note)
+                                </div><!-- timeline-body -->
+                            </div><!-- timeline-item -->
+                        }
+                    }
+                </div><!-- timeline-group -->
+            </div><!-- media-body -->
+        </div><!-- media -->
+    </div>
+    <div class="col-12 col-sm-12 col-md-12 col-xl-3">
+        <div class="navigator">
+            <div class="card-body pd-0">
+                <label class="tx-uppercase tx-sans tx-15 tx-medium tx-spacing-1 mg-b-15 btn-name">@Model.CourseName <button class="btn btn-remain" data-toggle="tooltip" data-placement="left" title="Số buổi đã học">@learnedLesson</button><button class="btn btn-success" data-toggle="tooltip" data-placement="left" title="Số buổi học còn lại" style="margin-left:5px;">@remainLesson</button><button class="btn btn-total" data-toggle="tooltip" data-placement="left" title="Số buổi học chênh lệch">@course.DifferenceSchedule</button></label>
+                <ul class="list-menu">
+                    <li class="menu-item">
+                        <a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", Model.ID })" class="menu-link"><i data-feather="calendar"></i>Lịch học</a>
+                    </li>
+                    @if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 4 || aclog.RoleID == 7)
+                    {
+                        <li class="menu-item">
+                            <a href="@Url.Action("EditCourse", "CourseDetail", new { area = "Admin", id = Model.ID })" class="menu-link"><i data-feather="edit"></i>Chỉnh sửa</a>
+                        </li>
+                    }
+                    <li class="menu-item">
+                        <a href="@Url.Action("ListStudent","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book"></i>Học viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action( "AttendanceCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="check-circle"></i>Điểm danh</a>
+                    </li>
+                    @*<li class="menu-item">
+                        <a href="@Url.Action("CourseExam","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="activity"></i>Điểm số</a>
+                    </li>*@
+                    @if (aclog.RoleID != 6)
+                    {
+                        @*<li class="menu-item">
+                            <a href="@Url.Action( "ExerciseCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="book-open"></i>Bài tập</a>
+                        </li>*@
+                        <li class="menu-item">
+                            <a href="@Url.Action( "DocumentCourse","CourseDetail", new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="file-text"></i>Tài liệu</a>
+                        </li>
+                    }
+                    <li class="menu-item active">
+                        <a href="@Url.Action("NoteCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="flag"></i>Đánh giá</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("NotificationCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="bell"></i>Thông báo</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("TeacherCourse","CourseDetail",  new { area = "Admin", id = Model.ID  })" class="menu-link"><i data-feather="user"></i>Giáo viên</a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="@Url.Action("VideoOfSchedule","CourseDetail",  new { area = "Admin", id = course.ID  })" class="menu-link"><i data-feather="video"></i>Video bài giảng</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section myScripts{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/jqueryui/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/ClassDetail/UploadFileExercise',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '.content-editor',
+                plugin: "autosave",
+                menubar: false,
+                oninit: "setPlainText",
+                plugins: "paste",
+                paste_as_text: true,
+                inline: false,
+                menubar: 'file edit insert view format table tools help',
+                toolbar: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            });
+
+            $('#btn-check').click(function () {
+                var content = tinymce.get('message-editor').contentDocument.activeElement.innerHTML;
+                var counttext = tinymce.get('message-editor').contentDocument.activeElement.innerText;
+                if (counttext.length == 1) {
+                    toast.create({
+                        title: 'Notification!',
+                        text: 'Nội dung không được để trống',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                $('input[name=txt-note]').val(content);
+                $('#f-comment').submit();
+                $(this).attr("disabled", true);
+            })
+        })
+    </script>
+}

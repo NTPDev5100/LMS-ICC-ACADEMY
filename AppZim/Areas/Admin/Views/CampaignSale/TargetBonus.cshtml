@@ -1,0 +1,218 @@
+﻿@using AppZim.Models
+@using AppZim.TableSql
+@model List<Admin_TargetBonus_GetList_Result>
+@{
+    ViewBag.Title = "TargetBonus";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var campaigns = CampaignSaleTable.getall().OrderByDescending(x => x.sTime).ThenBy(x => x.eTime).ToList();
+    tbl_Account aclog = AccountTable.getbyID(Convert.ToInt32(Session["UID"].ToString()));
+}
+<style>
+    .zoom {
+        transition: transform .2s;
+        width: 30px;
+        height: 30px;
+        margin: 0 auto;
+    }
+
+        .zoom:hover {
+            -ms-transform: scale(10); /* IE 9 */
+            -webkit-transform: scale(10); /* Safari 3-8 */
+            transform: scale(10);
+        }
+</style>
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Cấu hình thưởng</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+@using (Html.BeginForm("TargetBonus", "CampaignSale", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        @if (aclog.RoleID == 1 || aclog.RoleID == 2)
+        {
+            <div>
+                <a href="#div-add" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+            </div>
+        }
+
+        <div class="row" style="margin-right:-5px;">
+            <div class="sort-by mg-l-5 mg-r-5">
+                <select name="slTargetType" class="custom-select select2" onchange="pagesearch()">
+                    <option value="0">---Loại mục tiêu---</option>
+                    <option value="3">Mục tiêu nhóm</option>
+                    <option value="4">Mục tiêu cá nhân</option>
+                </select>
+                <script>$('select[name=slTargetType]').val(@ViewBag.TargetType)</script>
+            </div>
+        </div>
+    </div>
+}
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Loại mục tiêu</th>
+                    <th>Mốc đạt thưởng</th>
+                    <th>% thưởng</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @{
+                                if (item.TargetType == 1)
+                                {
+                                    <span>Mục tiêu công ty</span>
+                                }
+                                else if (item.TargetType == 2)
+                                {
+                                    <span>Mục tiêu phòng ban</span>
+                                }
+                                else if (item.TargetType == 3)
+                                {
+                                    <span>Mục tiêu nhóm</span>
+                                }
+                                else
+                                {
+                                    <span>Mục tiêu cá nhân</span>
+                                }
+                            }
+                        </td>
+                        <td>@String.Format("{0:0,0}", item.TargetRevenue)</td>
+                        <td>@item.TargetFinishPercent %</td>
+                        <td class="text-center">
+                            @if (aclog.RoleID == 1 || aclog.RoleID == 2)
+                            {
+                                <a href="#div-edit" data-toggle="modal" data-id="@item.ID" data-description="@item.DescriptionBonus" data-percent="@item.TargetFinishPercent" data-targetvalue="@String.Format("{0:0,0}", item.TargetRevenue)" class="btn btn-primary btn-icon btn-sm btn-edit">
+                                    <i data-feather="rotate-ccw"></i> Cập nhật
+                                </a>
+                                <button type="button" onclick="DeleteTargetBonus(@item.ID)" class="btn btn-icon btn-sm" style="background-color:red;border-color:red;color:white;">
+                                    <i class="fas fa-trash"></i> Xoá
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    <div class="pagination-container">
+        @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+    </div>
+</nav>
+
+<div class="modal" id="div-add" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddTargetBonus", "CampaignSale", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>Thêm cấu hình thưởng</h4>
+                        <div class="form-group">
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="slType">Loại mục tiêu:</label>
+                                    <select name="slType" id="slType" required class="custom-select select2">
+                                        <option value="3">Mục tiêu nhóm</option>
+                                        <option value="4">Mục tiêu cá nhân</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-target">Mốc đạt thưởng:</label>
+                                    <input id="txt-target" name="txt-target" type="text" oninput="moneyfm(this)" required class="form-control" placeholder="00" />
+                                </div>
+                            </div>
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-percent">% thưởng:</label>
+                                    <input id="txt-percent" name="txt-percent" type="text" required class="form-control" placeholder="00" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div id="div-edit" class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditTargetBonus", "CampaignSale", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="hdfID" name="hdfID" required />
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></a>
+                    <div>
+                        <h4>chỉnh sửa cấu hình thưởng</h4>
+                        <div class="form-group">
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label for="txt-target-edit">Mốc đạt thưởng:</label>
+                                    <input id="txt-target-edit" name="txt-target-edit" type="text" oninput="moneyfm(this)" required class="form-control" />
+                                </div>
+                            </div>
+                            <div class="row mg-b-10">
+                                <div class="col-sm-12">
+                                    <label for="txt-percent-edit">% thưởng:</label>
+                                    <input id="txt-percent-edit" name="txt-percent-edit" type="text" required class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Cập nhật</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).on("click", ".btn-edit", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('#txt-target-edit').val($(this).attr('data-targetvalue'));
+            $('#txt-percent-edit').val($(this).attr('data-percent'));
+            $('#txt-description-edit').val($(this).attr('data-description'));
+        });
+        function DeleteTargetBonus(e) {
+            var c = confirm("Bạn có chắc muốn xoá phần thưởng này ?");
+            if (c) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/CampaignSale/DeleteTargetBonus",
+                    data: '{id: ' + e + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        window.location.reload();
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(xmlhttprequest);
+                    }
+                });
+            }
+        }
+    </script>
+}

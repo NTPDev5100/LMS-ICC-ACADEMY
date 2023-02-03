@@ -1,0 +1,399 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "Exrcise";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+
+    List<tbl_CoursesAttendanceStudentWarning> datas = new List<tbl_CoursesAttendanceStudentWarning>();
+    List<tbl_CoursesAttendanceStudent> warnings = CoursesAttendanceStudentTable.getbyuid(Model.ID);
+    List<tbl_Courses> studentcourse = new List<tbl_Courses>();
+    foreach (var item in warnings)
+    {
+        tbl_Courses c = CoursesTable.getbyid(item.CourseID.Value);
+        studentcourse.Add(c);
+        if (string.IsNullOrEmpty(item.Note))
+        {
+            continue;
+        }
+        tbl_CoursesAttendanceStudentWarning f = new tbl_CoursesAttendanceStudentWarning();
+        f.ContentFeedback = item.Note;
+        f.CreatedBy = item.CreatedBy;
+        f.CreatedDate = item.CreatedDate;
+        f.ModifiedBy = item.ModifiedBy;
+        f.ModifiedDate = item.ModifiedDate;
+        datas.Add(f);
+    }
+    List<tbl_CoursesAttendanceStudentWarning> cx = CoursesAttendanceStudentWarningTable.getbystudentid(Model.ID);
+    datas.AddRange(cx);
+    datas = datas.OrderByDescending(n => n.CreatedDate).ToList();
+
+    //List<tbl_CoursesAttendanceStudent> warning = CoursesAttendanceStudentTable.getbyuid(Model.ID);
+    //List<tbl_CoursesAttendanceStudent> listwarning = new List<tbl_CoursesAttendanceStudent>();
+    //foreach (var item in warning)
+    //{
+    //    var list= CoursesAttendanceStudentTable.getbyuidcourseid(item.StudentID.Value, item.CourseID.Value).Where(n => n.ID != item.ID && n.Warning == true && n.StudentID == item.StudentID).OrderByDescending(n => n.CreatedDate).ToList();
+    //    if (list != null)
+    //    {
+    //        listwarning.AddRange(list);
+    //    }
+    //}
+    List<tbl_CoursesAttendanceStudent> listwarning = CoursesAttendanceStudentTable.getbyuid(Model.ID);
+    listwarning = listwarning.Where(n => n.Warning == true).OrderByDescending(n => n.CreatedDate).ToList();
+
+    List<tbl_CoursesStudent> courses = new List<tbl_CoursesStudent>();
+    if (Model.RoleID == 5)
+    {
+        int studentUID = Model.ID;
+        courses = CoursesStudentTable.getbystudentid(studentUID).Where(n => n.isHide != true).ToList();
+    }
+}
+@section myStyles{
+    <style>
+        img {
+            width: unset;
+        }
+
+        .reply-block.accepted {
+            background: #e5ffe1;
+        }
+    </style>
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item"><a href="@Url.Action("CustomerWarning", "Customer", new { area = "Admin" })">Cảnh báo</a></li>
+    </ol>
+</nav>
+<div class="warning-content">
+    <div class="row">
+        <div class="col-12 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mg-b-0"><i data-feather="alert-triangle" class="mg-r-10"></i>Cảnh báo học viên</h6>
+                </div>
+                <div class="card-body">
+                    <div class="information-block">
+                        <div class="student-info">
+                            <div class="student-course">
+                                <p class="txt">
+                                    <span class="lb"><i data-feather="user"></i></span> <span class="value">@Model.FullName</span>
+                                </p>
+                                <p class="txt">
+                                    <span class="lb"><i data-feather="phone"></i></span> <span class="value">@Model.Phone</span>
+                                </p>
+                                <p class="txt">
+                                    <span class="lb"><i data-feather="mail"></i></span> <span class="value">@Model.Email</span>
+                                </p>
+                                <p class="txt">
+                                    <span class="lb"><i data-feather="home"></i></span> <span class="value">@Model.Address</span>
+                                </p>
+
+                            </div>
+                            @{
+                                foreach (var item in courses)
+                                {
+                                    tbl_Courses c = CoursesTable.getbyid(item.CourseID.Value);
+                                    <div class="w-100 mg-t-10" style="border-top: 1px solid #e1e1e1; padding-top: 10px;">
+                                        <div class="student-course">
+                                            <p class="txt">
+                                                <span class="lb no-wrap">Trung tâm:</span> <span class="value">@c.SchoolName</span>
+                                            </p>
+                                            <p class="txt">
+                                                <span class="lb">Khóa:</span> <span class="value">@c.CourseName</span>
+                                            </p>
+                                            <p class="txt">
+                                                <span class="lb">Học vụ:</span> <span class="value">@c.AcademicName</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                }
+                                foreach (var item in listwarning)
+                                {
+                                    <div class="w-100 mg-t-10" style="border-top: 1px solid #e1e1e1; padding-top: 10px;">
+                                        <div class="student-course">
+                                            <p class="txt">
+                                                <span class="lb">Điểm danh:</span> <span class="value">@item.AttendanceName</span>
+                                            </p>
+                                            <p class="txt">
+                                                <span class="lb">Nhận xét:</span> <span class="value">@item.LearningName</span>
+                                            </p>
+                                            <p class="txt">
+                                                <span class="lb">Người tạo:</span> <span class="value">@item.TeacherName</span>
+                                            </p>
+                                            <p class="txt">
+                                                <span class="lb">Thời gian:</span> <span class="value">@item.Date.Value.ToString("dd/MM/yyyy")</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                @{
+                    int id = Model.ID;
+                    var lExam = CoursesExamDetailTable.getDetailInCustomerDetail(id);
+                    if (lExam != null)
+                    {
+                        if (lExam.Count > 0)
+                        {
+                            <div class="card-header">
+                                <div class="mail-content-header pos-static">
+                                    <a href="" id="mailContentClose" class="link-02  d-lg-block d-xl-none mg-r-20">
+                                        <i data-feather="arrow-left"></i>
+                                    </a>
+                                    <div class="media">
+                                        <h6 class="mg-b-0"><i data-feather="message-square" class="mg-r-10"></i>Kết quả thi</h6>
+                                    </div><!-- media -->
+                                </div><!-- mail-content-header -->
+                            </div>
+                            <div class="card-body pd-x-0">
+                                <table class="table table-vcenter table-hover">
+                                    <tr>
+                                        <th>Ngày thi</th>
+                                        <th>Listening</th>
+                                        <th>Reading</th>
+                                        <th>Writting</th>
+                                        <th>Speaking</th>
+                                        <th>Trung bình</th>
+                                        <th>Ghi chú</th>
+                                        <th>Tổng điểm thành phần</th>
+                                        <th>Kết quả</th>
+                                    </tr>
+                                    @foreach (var item in lExam)
+                                    {
+                                        var courseExam = CoursesExamTable.getbyid(item.CoursesExamID.Value);
+                                        double total = item.Listening.ToFloat(0) + item.Speaking.ToFloat(0) + item.Reading.ToFloat(0) + item.Writing.ToFloat(0);
+                                        <tr>
+                                            <td>@courseExam.DateExam.Value.ToString("dd/MM/yyyy")</td>
+                                            <td>@item.Listening</td>
+                                            <td>@item.Reading</td>
+                                            <td>@item.Writing</td>
+                                            <td>@item.Speaking</td>
+                                            <td>@item.Overall</td>
+                                            <td>@item.Note</td>
+                                            <td>@total</td>
+                                            @if (item.Target == 2)
+                                            {
+                                                <td>Hoàn thành</td>
+                                            }
+                                            else if (item.Target == 3)
+                                            {
+                                                <td>Chưa đạt</td>
+                                            }
+                                            else
+                                            {
+                                                <td>---</td>
+                                            }
+                                        </tr>
+                                    }
+                                </table>
+                            </div>
+                        }
+
+                    }
+                }
+
+
+                <div class="card-header">
+                    <div class="mail-content-header pos-static">
+                        <a href="" id="mailContentClose" class="link-02  d-lg-block d-xl-none mg-r-20">
+                            <i data-feather="arrow-left"></i>
+                        </a>
+                        <div class="media">
+                            <h6 class="mg-b-0"><i data-feather="message-square" class="mg-r-10"></i>Giáo viên phản hồi</h6>
+                        </div><!-- media -->
+                    </div><!-- mail-content-header -->
+                </div>
+                <div class="card-body pd-x-0">
+                    <div class="mail-content-body pos-static">
+                        @using (Html.BeginForm("RepWarning", "Customer", FormMethod.Post, new { id = "form-rep" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="hdfStudentID" value="@Model.ID" required />
+                            <input type="hidden" name="hdfcontent" required />
+                            <div class="pd-20 pd-t-0-f">
+                                <div id="content-editor" class="content-editor">
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between mg-t-20">
+                                    <button id="btn-get-data" class="btn btn-primary">Phản hồi</button>
+                                </div>
+                            </div>
+
+                            foreach (var item in datas)
+                            {
+                                string accept = "";
+                                bool leader = false;
+                                var accre = AccountTable.getbyusername(item.CreatedBy);
+                                if (accre == null)
+                                {
+                                    continue;
+                                }
+                                if (studentcourse.Where(n => n.TeacherLeaderUID == accre.ID).ToList().Count > 0)
+                                {
+                                    leader = true;
+                                }
+                                if (item.StatusCMT == 2)
+                                {
+                                    accept = "accepted";
+                                }
+
+                                <div class="report-reply">
+                                    <div class="pd-20 reply-block @accept">
+                                        <div class="media reply-header">
+                                            <div class="avatar avatar-sm">
+                                                @if (string.IsNullOrEmpty(accre.AvatarThumbnail))
+                                                {
+                                                    <img src="/app-assets/zimv2/images/invis-user.png" class="rounded-circle" alt="">
+                                                }
+                                                else
+                                                {
+                                                    <img src="@accre.AvatarThumbnail" class="rounded-circle" alt="">
+                                                }
+                                            </div>
+                                            <div class="media-body mg-l-10">
+                                                <h6 class="mg-b-2 tx-13">@accre.FullName</h6>
+                                                <span class="d-block tx-11 tx-color-03">@item.CreatedDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                            </div><!-- media-body -->
+                                            @{
+                                                if (item.StatusCMT != null && leader && (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7 || aclog.RoleID == 8))
+                                                {
+                                                    <div class="reply-action">
+                                                        @if (item.StatusCMT == 1)
+                                                        {
+                                                            <a href="javascript:;" class="btn btn-outline-success btn-sm update-solution" data-id="@item.ID" data-value="2">Accept</a>
+                                                            <a href="javascript:;" class="btn btn-outline-danger btn-sm update-solution" data-id="@item.ID" data-value="3">Reject</a>
+                                                        }
+                                                        @if (item.StatusCMT == 2)
+                                                        {
+                                                            <span class="tx-success"><i data-feather="check-circle"></i> Accept</span>
+                                                        }
+                                                        @if (item.StatusCMT == 3)
+                                                        {
+                                                            <span class="tx-danger"><i data-feather="x-circle"></i> Reject</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            }
+                                        </div><!-- media -->
+                                        <div class="reply-content pd-t-15">
+                                            <p></p>
+                                            @Html.Raw(item.ContentFeedback)
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div><!-- mail-content-body -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- mail-content -->
+@using (Html.BeginForm("UpdateStatusCMTwarning", "Customer", FormMethod.Post, new { id = "form-update-status" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="hdfID" />
+    <input type="hidden" name="hdfStatus" />
+    <input type="hidden" name="hdf-url" />
+}
+@section myScripts{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script src="~/app-assets/zimv2/lib/jqueryui/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/ClassDetail/UploadFileExercise',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                console.log(msg.l);
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '.content-editor',
+                plugin: "autosave",
+                menubar: false,
+                oninit: "setPlainText",
+                plugins: "paste",
+                paste_as_text: true,
+                inline: false,
+                menubar: 'file edit insert view format table tools help',
+                toolbar: 'formatselect | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                content_css: [
+                    '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i'
+                ],
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                }
+            });
+
+            $('#btn-get-data').click(function () {
+                var content = tinymce.get('content-editor').contentDocument.activeElement.innerHTML;
+                var counttext = tinymce.get('content-editor').contentDocument.activeElement.innerText;
+                $('input[name=hdfcontent]').val(content);
+                if (counttext.length == 1) {
+                    toast.create({
+                        title: 'Notification!',
+                        text: 'Commnet is not null',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 2500
+                    })
+                    return;
+                }
+                else {
+                    $('#form-rep').submit();
+                    $(this).attr('disabled', true);
+                }
+            })
+        })
+
+        $('.update-solution').click(function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=hdfStatus]').val($(this).attr('data-value'));
+            if (confirm('Are you sure?')) {
+                $('#form-update-status').submit();
+            }
+        })
+    </script>
+}

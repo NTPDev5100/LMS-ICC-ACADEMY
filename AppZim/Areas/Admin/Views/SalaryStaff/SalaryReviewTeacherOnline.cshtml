@@ -1,0 +1,169 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models;
+@model List<ASW_SalaryReviewTeacher_Online_Result>
+@{
+    ViewBag.Title = "SalaryReviewTeacherOnline";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+}
+<style>
+    .table-striped tbody tr:nth-of-type(2n+2) {
+        background-color: #f5f5f58a;
+    }
+
+    .table {
+        border: 1px solid #c0ccda;
+    }
+
+        .table td {
+            vertical-align: middle;
+        }
+</style>
+<!-- Breadcrumb -->
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+                    <li class="breadcrumb-item active" aria-current="page">Lương giáo viên dạy Online</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("SalaryReviewTeacherOnline", "SalaryStaff", FormMethod.Get, new { id = "form-search", area = "Admin" }))
+        {
+        <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+            <div class="search-form mg-l-5 mg-r-5">
+                <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                <button class="btn" type="submit" id="btn-search"><i data-feather="search"></i></button>
+            </div>
+            <div class="sort-by mg-l-5 mg-r-5">
+                <select name="sort" id="ddl-sort" class="custom-select">
+                    <option value="0">-- Tháng --</option>
+                    @{
+                        for (int i = 1; i <= 12; i++)
+                        {
+                            if (DateTime.Now.Date.Month == i)
+                            {
+                                <option value="@i" selected>Tháng @i</option>
+                            }
+                            else
+                            {
+                                <option value="@i">Tháng @i</option>
+                            }
+                        }
+                    }
+                </select>
+                <script>
+                        $('#ddl-sort').val(@ViewBag.Sort)
+                </script>
+            </div>
+            <div class="sort-by mg-l-5 mg-r-5">
+                <select name="year" id="ddl-year" class="custom-select">
+                    <option value="0">-- Năm --</option>
+                    @{
+                        for (int i = 2020; i <= 2040; i++)
+                        {
+                            if (DateTime.Now.Date.Year == i)
+                            {
+                                <option value="@i" selected>@i</option>
+                            }
+                            else
+                            {
+                                <option value="@i">@i</option>
+                            }
+                        }
+                    }
+                </select>
+                <script>
+                    $('#ddl-year').val(@ViewBag.Year)
+                </script>
+            </div>
+            <a href="javascript:;" class="btn btn-primary" onclick="pagesearch()"><i data-feather="search"></i> Tìm kiếm</a>
+            <a href="javascript:;" class="btn btn-success mg-l-5 export-excel"><i data-feather="file-text"></i> Export excel</a>
+        </div>
+        }
+    </div>
+</div>
+
+
+<!-- End breadcrumb -->
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Họ và tên</th>
+                    <th class="center-align">Số điện thoại</th>
+                    <th>Khóa học</th>
+                    <th>Loại lớp</th>
+                    <th class="text-center">Tháng</th>
+                    <th class="text-center"><span>Năm</span></th>
+                    <th><span>Phần trăm</span></th>
+                    <th>Phương thức</th>
+                    <th><span>Tổng lương</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var i in Model)
+                    {
+                        <tr>
+                            <td>@i.FullName</td>
+                            <td>@i.Phone</td>
+                            <td>@i.CourseName</td>
+                            <td><span class="badge badge-success pd-l-10 pd-r-10 pd-t-5 pd-b-5">Online</span></td>
+                            <td class="text-center">@i.Month</td>
+                            <td class="text-center">@i.Year</td>
+                            <td class="text-success">@i.PersentSalarySetting (%)</td>
+                            <td>@i.PersentCourseName</td>
+                            <td class="text-primary bold">@String.Format("{0:0,0}", i.TotalSalaryTeacher)</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </ul>
+</nav>
+@section myScripts
+{
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        //Xuất excel
+        $('.export-excel').click(function () {
+            let search = $('input[name=search]').val();
+            let month = $('select[name=sort]').val();
+            let year = $('select[name=year]').val();
+            $.ajax({
+                type: "POST",
+                url: "/SalaryStaff/ExportExcelSalaryTeacherOnline",
+                data: '{search: "' + search + '",sort:"' + month + '",year:"' + year + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        fnExcelReport(msg.data, msg.f); //hàm này ở layout
+                    }
+                    else {
+                        alert(msg.noti);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        });
+    </script>
+}

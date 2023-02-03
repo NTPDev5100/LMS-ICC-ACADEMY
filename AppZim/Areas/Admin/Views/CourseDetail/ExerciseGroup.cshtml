@@ -1,0 +1,183 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "ExrciseDetailEssayMulti";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var l = ExerciseTable.getbygroupid(ViewBag.gid);
+}
+@section myStyles{
+    <style>
+        .radi-item .radiolb .check-input.wrong + .ip-avata:before {
+            background: #707871;
+        }
+
+        .radi-item .radiolb .check-input.right + .ip-avata:before {
+            background: #11be26;
+        }
+
+        .quiz-index .index-link.wrong.checked svg {
+            display: inline-block;
+            color: #707871;
+            width: 20px;
+        }
+
+        .quiz-index .index-link svg {
+            display: unset;
+            color: #10be26;
+        }
+    </style>
+}
+
+<div class="row mg-b-30">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", ViewBag.Course.ID })">@ViewBag.Course.CourseName</a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action( "ExerciseCourse","CourseDetail", new { area = "Admin", ViewBag.Course.ID  })">Exercise</a></li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-md-4">
+        <div class="left-sticky">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mg-b-0">INFORMATION</h6>
+                </div>
+                <div class="card-body">
+                    <div class="information-block">
+                        <div class="student-info">
+                            <div class="student-course">
+                                <p class="txt"><span class="lb">Center:</span> <span class="value">@ViewBag.Course.SchoolName</span></p>
+                                <p class="txt"><span class="lb">Course:</span> <span class="value">@ViewBag.Course.CourseName</span></p>
+                                <p class="txt"><span class="lb">Open:</span> <span class="value">@ViewBag.Course.OpeningDate.ToString("dd/MM/yyyy")</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card mg-t-10">
+                <div class="card-header">
+                    <h6 class="mg-b-0 d-flex align-items-end justify-content-between"><span>@l.Count Questions</span></h6>
+                </div>
+                <div class="card-body">
+                    <div class="question-nav">
+                        <nav class="quiz-index nav nav-pills flex-wrap" id="quiz-index">
+                            @{
+                                for (int i = 0; i < l.Count; i++)
+                                {
+                                    int dem = i + 1;
+                                    var item = l[i];
+                                    <a href="#quiz-id-@item.ID" class="index-link">Question @dem <i data-feather="check-circle"></i></a>
+                                }
+                            }
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-8">
+        <div class="list-question" data-spy="scroll" data-target="#quiz-index">
+            @{
+                for (int i = 0; i < l.Count; i++)
+                {
+                    int dem = i + 1;
+                    var item = l[i];
+                    var law = ExerciceMultiChoiseTable.getbyexeid(item.ID);
+
+
+                    var awatrue = ExerciceMultiChoiseTable.getbyanwertrue(item.ID);
+                    if (awatrue == null)
+                    {
+                        continue;
+                    }
+                    <div class="quiz-group" id="quiz-id-@item.ID" data-id="@item.ID">
+                        <div class="quiz-question">
+                            <span class="bold">Question @dem: @Html.Raw(item.ExerciseTitle)</span>
+                        </div>
+                        <div class="quiz-answer">
+                            <ul class="quiz-answer-ul circlestyle">
+                                <li class="radi-item">
+                                    <label class="radiolb">
+                                        @{
+                                            if (awatrue.ID == law[0].ID)
+                                            {
+                                                <input type="radio" class="check-input right" disabled checked value="0">
+                                            }
+                                            else
+                                            {
+                                                <input class="with-gap" disabled type="radio" />
+                                            }
+                                        }
+                                        <span class="ip-avata"></span>
+                                        <label class="val">
+                                            @law[0].AnswerTitle
+                                        </label>
+                                    </label>
+                                </li>
+                                <li class="radi-item">
+                                    <label class="radiolb">
+                                        @{
+                                            if (awatrue.ID == law[1].ID)
+                                            {
+                                                <input type="radio" class="check-input right" disabled checked value="0">
+                                            }
+                                            else
+                                            {
+                                                <input class="with-gap" disabled type="radio" />
+                                            }
+                                        }
+                                        <span class="ip-avata"></span>
+                                        <label class="val">
+                                            @law[1].AnswerTitle
+                                        </label>
+                                    </label>
+                                </li>
+                                <li class="radi-item">
+                                    <label class="radiolb">
+                                        @{
+                                            if (awatrue.ID == law[2].ID)
+                                            {
+                                                <input type="radio" class="check-input right" disabled checked value="0">
+                                            }
+                                            else
+                                            {
+                                                <input class="with-gap" disabled type="radio" />
+                                            }
+                                        }
+                                        <span class="ip-avata"></span>
+                                        <label class="val">
+                                            @law[2].AnswerTitle
+                                        </label>
+                                    </label>
+                                </li>
+                                <li class="radi-item">
+                                    <label class="radiolb">
+                                        @{
+                                            if (awatrue.ID == law[3].ID)
+                                            {
+                                                <input type="radio" class="check-input right" disabled checked value="0">
+                                            }
+                                            else
+                                            {
+                                                <input class="with-gap" disabled type="radio" />
+                                            }
+                                        }
+                                        <span class="ip-avata"></span>
+                                        <label class="val">
+                                            @law[3].AnswerTitle
+                                        </label>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

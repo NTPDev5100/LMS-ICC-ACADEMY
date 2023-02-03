@@ -1,0 +1,229 @@
+﻿@using AppZim.Models;
+@using AppZim.TableSql;
+@using AppZim.ZIM;
+@{
+    ViewBag.Title = "List Examiner";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<div class="exam__wrap">
+    <div class="card mg-b-30">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <div>
+                <h4 class="mg-b-5">Danh sách chấm gói bài</h4>
+                <p class="mg-b-0">Chọn giáo viên trong danh sách</p>
+            </div>
+            <div>
+                <a href="javascript:;" id="btn-group-new" class="btn btn-primary btn-icon" data-toggle="modal" data-target="#js-edit-teacher">Chọn giáo viên</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-group-question table-vcenter">
+                    <thead class="thead-light">
+                        <tr>
+                            <th class="th-name">Tên giáo viên</th>
+                            <th class="th-name">Số điện thọai</th>
+                            <th class="wd-50"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="list-examiner">
+                        @{
+                            List<tbl_SetPackageExaminers> lexaminer = SetPackageExaminersTable.getlistexaminer();
+                            foreach (var item in lexaminer)
+                            {
+                                <tr id="examiner-@item.ID">
+                                    <td>@item.TeacherName</td>
+                                    <td>@item.TeacherPhone</td>
+                                    <td><a href="javascript:;" class="btn btn-icon delete-teacher" data-teacherID="@item.TeacherID" style="color:red"><i data-feather="delete" style="height:20px;width:20px" class="left"></i></a></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!---Create Teacher-->
+<div class="modal" tabindex="-1" role="dialog" id="js-edit-teacher">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Danh sách giáo viên</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-group-question table-vcenter" id="tb-list-teacher">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th class="th-name">Tỉnh/TP</th>
+                                        <th class="th-name">Quận</th>
+                                        <th class="th-name">Giáo viên</th>
+                                        <th class="th-name">Số điện thoại</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        List<tbl_Account> listteacher = AccountTable.getbyrole(4).Where(n => n.Status == 2).ToList();
+                                        foreach (var item in listteacher)
+                                        {
+                                            <tr>
+                                                <td>@item.LocationName</td>
+                                                <td>@item.DistrictName</td>
+                                                <td>@item.FullName</td>
+                                                <td>@item.Phone</td>
+                                                @if (SetPackageExaminersTable.CheckActive(item.ID))
+                                                {
+                                                    <td class="text-center">
+                                                        <div class="custom-control custom-checkbox" style="padding-left: 1rem;">
+                                                            <input type="checkbox" data-teacherID="@item.ID"  class="custom-control-input add-teacher" checked id="ck-@item.ID">
+                                                            <label class="custom-control-label" for="ck-@item.ID"></label>
+                                                        </div>
+                                                    </td>
+                                                }
+                                                else
+                                                {
+                                                    <td class="text-center">
+                                                        <div class="custom-control custom-checkbox" style="padding-left: 1rem;">
+                                                            <input type="checkbox" data-teacherID="@item.ID"  class="custom-control-input add-teacher" id="ck-@item.ID">
+                                                            <label class="custom-control-label" for="ck-@item.ID"></label>
+                                                        </div>
+                                                    </td>
+                                                }
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/app-assets/zimv2/lib/datatables.net/js/jquery.dataTables.min.js"></script>
+<script>
+    (function ($) {
+
+        'use strict';
+        var datatableInit = function () {
+            var $table = $('#tb-list-teacher');
+            var datatable = $table.dataTable({
+                order: [],
+                aaSorting: [
+                    [1, 'asc']
+                ],
+                pageLength: 10
+            });
+        };
+
+        $(function () {
+            datatableInit();
+        });
+
+    }).apply(this, [jQuery]);
+    $('.add-teacher').click(function () {
+        let teacherID = $(this).attr('data-teacherID');    
+        let check = false;
+        if ($(this).prop('checked')) {
+            check = true;
+        } else {
+            check = false;
+        }
+        let data = {
+            tID: teacherID,
+            check: check
+        }
+        $.ajax({
+            type: "POST",
+            url: "/Admin/SetPackage/AddExaminer",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (msg.rs) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: msg.message,
+                        icon: 'error_outline',
+                        classBackground: 'noti-success',
+                        timeout: 3000
+                    });
+                    if (check == true) {
+                        $('#list-examiner').append(msg.html);
+                    }
+                    else {
+                        $('#examiner-' + msg.dataid + '').remove();
+                    }
+                    feather.replace();
+                }
+                else {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: msg.message,
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    });
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("error");
+            }
+        });
+
+    });
+    $(document).on('click', '.delete-teacher', function () {
+        let tid = $(this).attr('data-teacherID');
+      
+        let check = false;
+        let data = {
+            tID: tid,
+            check: check
+        }
+        $.ajax({
+            type: "POST",
+            url: "/Admin/SetPackage/AddExaminer",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (msg) {
+                if (msg.rs) {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: msg.message,
+                        icon: 'error_outline',
+                        classBackground: 'noti-success',
+                        timeout: 3000
+                    });
+                    $('#examiner-' + msg.dataid + '').remove();
+                    $('#ck-' + tid + '').prop('checked', false);
+                }
+                else {
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: msg.message,
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 3000
+                    });
+                }
+            },
+            error: function (xmlhttprequest, textstatus, errorthrow) {
+                console.log("error");
+            }
+        });
+
+    });
+</script>

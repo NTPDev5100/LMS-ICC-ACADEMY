@@ -1,0 +1,1 @@
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1    MessageError: The underlying provider failed on Open.    20/01/2022 16:18

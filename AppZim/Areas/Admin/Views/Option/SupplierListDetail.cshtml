@@ -1,0 +1,377 @@
+﻿
+@using AppZim.Models
+@using AppZim.TableSql
+@using AppZim.ZIM
+@using MB.Extensions
+
+@{
+    ViewBag.Title = "SupplierListDetail";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    tbl_SupplierServices ncc = SupplierServicesTable.getbyID(Model.ID);
+    List<tbl_Services> service = ServicesTable.GetAllBySupplierID(Model.ID);
+}
+<link href="~/app-assets/zimv2/assets/css/dashforge.profile.css" rel="stylesheet" />
+<style>
+    .list-student-course .table tr td {
+        background: #fff !important;
+    }
+
+    .list-student-course .table th {
+        background: #f3f4f7 !important;
+    }
+
+    td.class-name {
+        width: 200px;
+        min-width: 200px;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        background: #fff !important;
+    }
+
+    .select-td {
+        min-width: 150px;
+    }
+
+    .teach {
+        width: 60px;
+        min-width: 60px;
+        position: sticky;
+        left: 200px;
+        background: #fff;
+    }
+
+
+    .rating-box {
+        display: flex;
+        align-items: center;
+    }
+
+    .col-form-label {
+        text-align: right;
+    }
+
+    .rating-total,
+    .rating-detail,
+    .rating-close {
+        padding: 0px;
+    }
+
+    .rating-nav {
+        list-style-type: none;
+        padding: 0px;
+    }
+
+        .rating-nav li {
+            display: flex;
+            align-items: center;
+        }
+
+            .rating-nav li + li {
+                margin-top: 10px;
+            }
+
+        .rating-nav .star {
+            margin-right: 5px;
+            font-size: 14px;
+            color: #566376;
+        }
+
+        .rating-nav .process-bar {
+            width: 130px;
+            height: 10px;
+            background-color: white;
+            position: relative;
+            margin-right: 20px;
+            border-radius: 5px;
+        }
+
+            .rating-nav .process-bar .process-bar-inside {
+                background-color: #ffa500;
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                border-radius: 5px;
+            }
+
+        .rating-nav .rating-link {
+            text-decoration: none;
+        }
+
+    .rating-close-btn {
+        border: 1px solid #e1e1e1;
+        padding: 8px 20px;
+        text-decoration: none;
+        transition: .2s;
+        display: inline-block;
+        border-radius: 2px;
+    }
+
+        .rating-close-btn:hover {
+            background-color: #01a301;
+            color: #fff;
+        }
+
+    .student-rating {
+        display: flex;
+        align-items: center;
+        /*padding: 30px;*/
+    }
+
+        .student-rating .rate {
+            height: 46px;
+            padding: 0 17px;
+            float: left;
+            margin-right: 20px;
+        }
+
+    .rate:not(:checked) > input {
+        display: none;
+    }
+
+    .rate:not(:checked) > label {
+        float: right;
+        width: 1em;
+        overflow: hidden;
+        white-space: nowrap;
+        cursor: pointer;
+        font-size: 30px;
+        color: #ccc;
+    }
+
+        .rate:not(:checked) > label:before {
+            content: '★';
+        }
+
+    .rate > input:checked ~ label {
+        color: #ffa500;
+    }
+    /*.rate:not(:checked)>label:hover,
+        .rate:not(:checked)>label:hover~label {
+            color: #ffa500;
+        }*/
+    .student-rating .title {
+        /*margin-right: 20px;*/
+        display: inline-block;
+    }
+
+    .student-rating .submit-rating {
+        padding: 5px 10px;
+        background-color: #01a301;
+        position: relative;
+        color: #fff;
+        text-decoration: none;
+        transition: .2s;
+    }
+
+        .student-rating .submit-rating::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 10px solid transparent;
+            border-right-color: #01a301;
+            transition: .2s;
+        }
+
+    @@media only screen and (max-width : 768px) {
+        .rating-total, .rating-detail, .rating-close {
+            padding: 15px;
+        }
+
+        .rating-box {
+            display: block;
+            text-align: center;
+        }
+
+        .rating-detail {
+            border-top: 1px solid #e1e1e1;
+            border-bottom: 1px solid #e1e1e1;
+            border-right: 0;
+            border-left: 0;
+        }
+
+        .rating-nav li {
+            justify-content: center;
+        }
+
+        .rating-nav .process-bar {
+            width: 120px;
+        }
+
+        .student-rating {
+            flex-wrap: wrap;
+        }
+
+            .student-rating .title {
+                width: 100%;
+            }
+
+            .student-rating .rate {
+                margin-right: 10px;
+            }
+
+        .student-rating {
+            padding: 15px;
+        }
+    }
+</style>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item"><a href="@Url.Action("SupplierList", "Option", new { area = "Admin" })">Danh sách nhà cung cấp</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Cập nhật thông tin</li>
+    </ol>
+</nav>
+<div class="media d-block d-lg-flex">
+    <div class="config-teacher" style="width:100%">
+        <div class="teacher-infomation mg-b-15">
+            <fieldset class="form-fieldset">
+                <legend>Thông tin chi tiết</legend>
+
+                @using (Html.BeginForm("EditSupplierDetail", "Option", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" value="@ncc.ID" name="hdfID" />
+                    <div class="form-group row">
+                        <label for="txt-edit-supplier" class="col-sm-2 col-form-label">Nhà cung cấp</label>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" required name="txt-edit-supplier" placeholder="..." value="@ncc.SupplierName">
+                        </div>
+                        <label class="col-sm-2 col-form-label">Trạng thái</label>
+                        <div class="col-sm-4">
+                            <select name="txt-edit-statusID" required class="form-control">
+                                <option value="1">Sắp hoạt động</option>
+                                <option value="2">Hoạt động</option>
+                                <option value="3">Hết hoạt động</option>
+                            </select>
+                            <script>
+                                $('select[name=txt-edit-statusID]').val(@ncc.StatusID);
+                            </script>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-edit-mst" class="col-sm-2 col-form-label">Mã số thuế</label>
+                        <div class="col-sm-4">
+                            <input value="@ncc.MST" name="txt-edit-mst" type="text" class="validate form-control" required>
+                        </div>
+                        <label for="txt-email" class="col-sm-2 col-form-label">Đại diện</label>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" name="txt-edit-daidien" required placeholder="..." value="@ncc.Represent">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-phone" class="col-sm-2 col-form-label">Số điện thoại</label>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" name="txt-edit-phone" required placeholder="..." value="@ncc.Phone">
+                        </div>
+                        <label for="txt-birthday" class="col-sm-2 col-form-label">Phụ trách</label>
+                        <div class="col-sm-4">
+                            <input type="text" name="txt-edit-phutrach" required class="form-control" placeholder="..." value="@ncc.CuratorFullName" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="txt-phone" class="col-sm-2 col-form-label">Giới thiệu</label>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" name="txt-edit-Description" required placeholder="..." value="@ncc.Description">
+                        </div>
+                        <label for="txt-birthday" class="col-sm-2 col-form-label">Địa chỉ</label>
+                        <div class="col-sm-4">
+                            <input type="text" name="txt-edit-address" required class="form-control" placeholder="..." value="@ncc.Address" />
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-primary">Cập nhật</button>
+                    </div>
+                }
+            </fieldset>
+        </div>
+        <div class="list-student-course">
+            @{
+                if (service != null)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped table-vcenter">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th></th>
+                                    <th>Dịch vụ</th>
+                                    <th>Phụ trách</th>
+                                    <th>Trạng thái</th>
+                                    <th>Mô tả</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in service)
+                                {
+                                    <tr class="tr-row">
+                                        <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                                        <td>@item.ServiceName</td>
+                                        <td>@item.CuratorFullName</td>
+                                        <td class="text-success">@item.StatusName</td>
+                                        <td>@item.DescribeService</td>
+                                    </tr>
+                                    <tr class="collapse-row">
+                                        <td colspan="5">
+                                            <div class="collapse-content">
+                                                <table class="table table-bordered">
+                                                    <thead class="thead-light">
+                                                        <tr>
+                                                            <th>Đợt thi</th>
+                                                            <th>Ngày thi</th>
+                                                            <th>Giá vốn</th>
+                                                            <th>Giá bán</th>
+                                                            <th>Đã bán</th>
+                                                            <th>Tổng lợi nhuận</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @{
+                                                            var exam = ServiceExamsTable.GetAllByServiceID(item.ID);
+                                                            if (exam != null)
+                                                            {
+                                                                foreach (var i in exam)
+                                                                {
+                                                                    var ser = ServicesStudentTable.getbyserviceexamsid(i.ID);
+                                                                    <tr>
+                                                                        <td>@i.ExamService</td>
+                                                                        <td>@i.ExamDate.Value.ToString("dd/MM/yyyy")</td>
+                                                                        <td>@String.Format("{0:0,0}", i.OriginalPrice)</td>
+                                                                        <td>@String.Format("{0:0,0}", i.ExamPrice)</td>
+                                                                        <td>@ser.Count()</td>
+                                                                        <td class="text-primary bold">@String.Format("{0:0,0}", ser.Sum(x => x.PriceService) - i.OriginalPrice)</td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div><!-- media -->
+
+@section myScripts{
+    <script>
+
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+    </script>
+}
+

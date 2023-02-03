@@ -1,0 +1,234 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using PagedList.Mvc;
+@using MB.Extensions;
+@model PagedList.IPagedList<tbl_School>
+@{
+    ViewBag.Title = "Center";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var citys = LocationTable.getall();
+    var districts = DistrictTable.getall();
+}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Trung tâm</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div>
+        <a href="#modal-create-center" class="btn btn-primary" data-toggle="modal"><i data-feather="plus"></i> Thêm</a>
+    </div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("Center", "Option", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+            </div>}
+    </div>
+</div>
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Trung tâm</th>
+                    <th>Địa chỉ</th>
+                    <th>Quận/Huyện</th>
+                    <th>Màu sắc</th>
+                    <th class="text-center">Ẩn</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model)
+                {
+                    <tr>
+                        <td class="no-wrap">@s.SchoolName</td>
+                        <td class="truncate"><span data-toggle="tooltip" data-placement="top" title="@s.SchoolAddress">@s.SchoolAddress</span></td>
+                        <td>@s.DistrictName</td>
+                        <td style="background:#@s.CodeColor"></td>
+                        <td class="text-center">
+                            @if (s.isHide.ToString().ToLower() == "true")
+                            {
+                                <label class='lb-contrainer'><input type="checkbox" disabled checked="checked" /><span class='checkmark'></span></label>
+                            }
+                            else
+                            {
+                                <label class='lb-contrainer'><input type="checkbox" disabled /><span class='checkmark'></span></label>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <a href="#modal-edit-center" data-toggle="modal" data-id="@s.ID" data-ishide="@s.isHide" data-center="@s.SchoolName" data-dis="@s.DistrictID" data-phone="@s.SchoolPhone" data-address="@s.SchoolAddress" data-color="@s.CodeColor" class="btn btn-primary btn-icon btn-sm edit-center">
+                                <i data-feather="rotate-ccw"></i> Cập nhật
+                            </a>
+                            @*<a href="@Url.Action("RoomCenter","Option", new { area = "Admin", id = s.ID  })" class="btn btn-success btn-icon btn-sm edit-center"><i data-feather="home"></i> Phòng</a>*@
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation" class="mg-t-10">
+    @Html.PagedListPager(Model, page => Url.Action("Center", new { page, search = ViewBag.Search }),
+    new PagedListRenderOptions
+    {
+        UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+    })
+</nav>
+
+<div class="modal fade" id="modal-create-center" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddCenter", "Option", FormMethod.Post))
+            {
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo mới</h4>
+                        <div class="form-group">
+                            <label>Trung tâm:</label>
+                            <input id="txt-center" name="txt-center" required type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <label>Màu sắc:</label>
+                                    <input id="txt-color" name="txt-color" required type="text" class="validate jscolor form-control">
+                                </div>
+                                <div class="col-sm-6">
+                                    <label>Số điện thoại:</label>
+                                    <input id="txt-phone" name="txt-phone" type="number" class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Quận/Huyện:</label>
+                            <select name="ddl-district" required class="form-control select2">
+                                <option value="">---</option>
+                                @{
+                                    foreach (var p in citys)
+                                    {
+                                        <optgroup label="@p.CityName" style="display:none">
+                                            @foreach (var item in districts)
+                                            {
+                                                if (item.LocationID == p.ID)
+                                                {
+                                                    <option class="sp-sub sp-sub-@item.LocationID" value="@item.ID">@item.DistrictName</option>
+                                                }
+                                            }
+                                        </optgroup>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Địa chỉ:</label>
+                            <textarea name="txt-address" rows="3" class="form-control"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Xác nhận</button>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="modal-edit-center" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("EditCenter", "Option", FormMethod.Post))
+            {
+                <input type="hidden" id="gradeid" name="hdfID">
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Cập nhật trung tâm</h4>
+                        <div class="form-group">
+                            <label>Trung tâm:</label>
+                            <input id="txt-edit-center" name="txt-edit-center" required type="text" class="validate form-control" placeholder="">
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <label>Màu sắc:</label>
+                                    <input id="txt-edit-color" name="txt-edit-color" required type="text" class="validate jscolor form-control">
+                                </div>
+                                <div class="col-sm-6">
+                                    <label>Số điện thoại:</label>
+                                    <input id="txt-edit-phone" name="txt-edit-phone" required placeholder="" type="text" class="validate form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Quận/Huyện:</label>
+                            <select name="ddl-edit-district" id="ddl-edit-district" required class="form-control select2">
+                                <option value="">---</option>
+                                @{
+                                    foreach (var p in citys)
+                                    {
+                                        <optgroup label="@p.CityName" style="display:none">
+                                            @foreach (var item in districts)
+                                            {
+                                                if (item.LocationID == p.ID)
+                                                {
+                                                    <option class="sp-sub sp-sub-@item.LocationID" value="@item.ID">@item.DistrictName</option>
+                                                }
+                                            }
+                                        </optgroup>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Địa chỉ:</label>
+                            <textarea required name="txt-edit-address" rows="3" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" id="chk-hide" name="chk-hide" class="custom-control-input">
+                                <label class="custom-control-label" for="chk-hide">Tạm ẩn</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div><!-- modal-body -->
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts
+{
+    <script src="~/app-assets/js/jscolor.js"></script>
+    <script src="~/app-assets/zimv2/assets/select2/js/select2.full.min.js"></script>
+    <script>
+        $(document).on("click", ".edit-center", function () {
+            $('input[name=hdfID]').val($(this).attr('data-id'));
+            $('input[name=txt-edit-center]').val($(this).attr('data-center'));
+            $('input[name=txt-edit-phone]').val($(this).attr('data-phone'));
+            $('textarea[name=txt-edit-address]').val($(this).attr('data-address'));
+            $('input[name=txt-edit-color]').val($(this).attr('data-color')).attr("style", "background-color:#" + $(this).attr('data-color') + "");
+            $('select[name=ddl-edit-district]').val($(this).attr('data-dis'));
+            //$('select').formSelect();
+            if ($(this).attr('data-ishide') == 'True') {
+                $('#chk-hide').prop("checked", true);
+            }
+            else {
+                $('#chk-hide').prop("checked", false);
+            }
+            $("#ddl-edit-district").trigger("change");
+        });
+    </script>
+}

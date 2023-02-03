@@ -1,0 +1,2 @@
+PageError: CustomerController    FunctionError: CustomerReserve    loginUID: 1    MessageError: An error occurred while reading from the store provider's data reader. See the inner exception for details.    22/02/2022 10:46
+PageError: CourseController    FunctionError: AssignCusAppointmentToCourse    loginUID: 0    MessageError: Nullable object must have a value.||    22/02/2022 17:00

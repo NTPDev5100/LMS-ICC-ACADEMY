@@ -1,0 +1,373 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@model PagedList.IPagedList<tbl_SetPackageStudent>
+@{
+    ViewBag.Title = "Customer";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_School> schools = SchoolTable.getall();
+}
+@section myStyles{
+    <style>
+        .pd-sm-b-40 {
+            padding-bottom: 5px;
+        }
+    </style>
+}
+@using (Html.BeginForm("Customer", "SetPackage", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                        <li class="breadcrumb-item active" aria-current="page">Danh sách học viên mua gói</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="..." value="@ViewBag.Search">
+                    <button class="btn" type="submit" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Học viên a > z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Học viên a > z</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Học viên z > a</option>
+                            }
+                            else
+                            {
+                                <option value="2">Học viên z > a</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Ngày mua ↑</option>
+                            }
+                            else
+                            {
+                                <option value="3">Ngày mua ↑</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Ngày mua ↓</option>
+                            }
+                            else
+                            {
+                                <option value="4">Ngày mua ↓</option>
+                            }
+                            if (ViewBag.Sort == 5)
+                            {
+                                <option value="5" selected>Số tiền ↑</option>
+                            }
+                            else
+                            {
+                                <option value="5">Số tiền ↑</option>
+                            }
+                            if (ViewBag.Sort == 6)
+                            {
+                                <option value="6" selected>Số tiền ↓</option>
+                            }
+                            else
+                            {
+                                <option value="6">Số tiền ↓</option>
+                            }
+                        }
+                    </select>
+                </div>
+                @*<a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0 transparent" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                        <i data-feather="filter"></i>
+                    </a>*@
+            </div>
+        </div>
+    </div>
+
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Học viên</th>
+                    <th class="no-wrap">Tên gói</th>
+                    <th class="no-wrap">Giá tiền</th>
+                    <th class="no-wrap">Giảm giá</th>
+                    <th class="no-wrap">Còn lại</th>
+                    <th class="no-wrap">Ngày mua</th>
+                    <th class="no-wrap">Thanh toán</th>
+                    <th class="no-wrap">Trạng thái</th>
+                    <th class="no-wrap text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        tbl_Account student = AccountTable.getbyID(item.StudentID.Value);
+                        tbl_SetPackage set = SetPackageTable.getbyid(item.SetPackageID.Value);
+                        string datebuy = "";
+                        if (item.CreatedDate != null)
+                        {
+                            datebuy = item.CreatedDate.Value.ToString("dd/MM/yyyy");
+                        }
+                        if (aclog.ID == 1)
+                        {
+                            <tr class="tr-row">
+                                <td class="no-wrap">@student.FullName</td>
+                                <td>@set.PackageName</td>
+                                <td class="no-wrap">@string.Format("{0:N0}", item.SetPrice)</td>
+                                <td class="no-wrap">@string.Format("{0:N0}", item.DiscountPrice)</td>
+                                @{
+                                    if (item.Paid.Value)
+                                    {
+                                        <td class="no-wrap">0</td>
+                                    }
+                                    else
+                                    {
+                                        <td class="no-wrap">@string.Format("{0:N0}", item.SetPrice - item.DiscountPrice)</td>
+                                    }
+                                }
+                                <td>@datebuy</td>
+                                <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy - HH:mm")</td>
+                                @{
+                                    if (item.Paid.Value)
+                                    {
+                                        <td class="no-wrap text-success">Đã thanh toán</td>
+                                        <td class="no-wrap text-center"></td>
+                                    }
+                                    else
+                                    {
+                                        <td class="no-wrap text-danger">Chưa thanh toán</td>
+                                        <td class="no-wrap text-center">
+                                            <a class="pd-5 paid-set" data-id="@item.ID" href="javascript:;" data-toggle="tooltip" data-placement="right" title="Thanh toán"><i data-feather="credit-card"></i></a>
+                                        </td>
+                                    }
+                                }
+                            </tr>
+                        }
+                        else
+                        {
+                            if (aclog.ID == student.SupportUID.Value)
+                            {
+                                <tr class="tr-row">
+                                    <td class="no-wrap">@student.FullName</td>
+                                    <td>@set.PackageName</td>
+                                    <td class="no-wrap">@string.Format("{0:N0}", item.SetPrice)</td>
+                                    <td class="no-wrap">@string.Format("{0:N0}", item.DiscountPrice)</td>
+                                    @{
+                                        if (item.Paid.Value)
+                                        {
+                                            <td class="no-wrap">0</td>
+                                        }
+                                        else
+                                        {
+                                            <td class="no-wrap">@string.Format("{0:N0}", item.SetPrice - item.DiscountPrice)</td>
+                                        }
+                                    }
+                                    <td>@datebuy</td>
+                                    <td>@item.ModifiedDate.Value.ToString("dd/MM/yyyy - HH:mm")</td>
+                                    @{
+                                        if (item.Paid.Value)
+                                        {
+                                            <td class="no-wrap text-success">Đã thanh toán</td>
+                                            <td class="no-wrap text-center"></td>
+                                        }
+                                        else
+                                        {
+                                            <td class="no-wrap text-danger">Chưa thanh toán</td>
+                                            <td class="no-wrap text-center">
+                                                <a class="pd-5 paid-set" data-id="@item.ID" href="javascript:;" data-toggle="tooltip" data-placement="right" title="Thanh toán"><i data-feather="credit-card"></i></a>
+                                            </td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation" class="mg-t-10">
+        @Html.PagedListPager(Model, page => Url.Action("Customer", "SetPackage", new
+        {
+            page,
+            search = ViewBag.Search,
+            sort = ViewBag.Sort
+        }),
+        new PagedListRenderOptions
+        {
+            UlElementClasses = new[] { "pagination mg-b-0 justify-content-end" },
+        })
+
+    </nav>
+</div>
+
+<div class="modal fade show" id="div-modal-paid" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("PaidSet", "SetPackage", FormMethod.Post, new { id = "form-paid-set" }))
+            {
+                <input type="hidden" name="hdfSetID" id="hdfSetID" required />
+                <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                    <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div class="media align-items-center">
+                        <div class="media-body">
+                            <h4 class="tx-18 tx-sm-20 mg-b-2">Thanh toán</h4>
+                        </div>
+                    </div><!-- media -->
+                </div><!-- modal-header -->
+                <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                    <div class="personal-info">
+                        <div class="form-row">
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-full-name-refund" class="">Học viên:</label>
+                                <input type="text" class="form-control" id="txt-full-name" name="txt-full-name" disabled>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-deposit-refund" class="">Tên gói:</label>
+                                <input type="text" class="form-control" id="txt-set-name" name="txt-set-name" disabled>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-deposit-refund" class="">Giá:</label>
+                                <input type="text" class="form-control" id="txt-set-price" data-type="currency" name="txt-set-price" disabled>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-deposit-refund" class="">Giảm giá:</label>
+                                <input type="text" class="form-control" id="txt-set-discountPrice" data-type="currency" name="txt-set-discountPrice" disabled>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-deposit-refund" class="">Còn lại:</label>
+                                <input type="text" class="form-control" id="txt-set-priceLeft" data-type="currency" name="txt-set-priceLeft" disabled>
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-refund" class="">Số tiền thu:</label>
+                                <input id="txt-paid-money" name="txt-paid-money" data-type="currency" type="text" class="form-control" required placeholder="0" />
+                            </div>
+                            <div class="col-sm-3 form-group">
+                                <label for="txt-bao-luu-name" class="">Trung tâm thu tiền:</label>
+                                <select id="ddl-school-received" required name="ddl-school-received" class="form-control select2">
+                                    <option value="">---Trung tâm---</option>
+                                    @{
+                                        foreach (var item in schools)
+                                        {
+                                            <option value="@item.ID"> @item.SchoolName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-sm-12 form-group">
+                                <label for="role" class="">Ghi chú:</label>
+                                <textarea id="txt-note" name="txt-note" required class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- modal-body -->
+                <div class="modal-footer pd-x-20 pd-y-15">
+                    <a href="javascript:;" id="btn-check-refund" class="btn btn-primary">Xác nhận</a>
+                    <button type="button" class="btn btn-white" data-dismiss="modal">Thoát</button>
+                </div>
+            }
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+@section myScripts{
+    <script src="~/app-assets/js/accounting.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            });
+            if (!ckstring('@TempData["InvoiceURL"]')) {
+                // invoice
+                window.open('@TempData["InvoiceURL"]');
+            }
+        });
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $(document).on("click", ".paid-set", function () {
+            var id = $(this).attr('data-id');
+            $('#hdfSetID').val(id);
+            $.ajax({
+                type: "POST",
+                url: "/Admin/SetPackage/GetSetDetail",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-full-name').val(msg.data.StudentName);
+                        $('#txt-set-name').val(msg.data.SetName);
+                        $('#txt-set-price').val(msg.data.SetPrice);
+                        $('#txt-set-discountPrice').val(msg.data.DiscountPrice);
+                        $('#txt-set-priceLeft').val(msg.data.PriceLeft);
+                        $('#div-modal-paid').modal('show');
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Đã gửi yêu cầu hoàn tiền cho admin',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-warning',
+                            timeout: 3000
+                        })
+                        return;
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error refund-app");
+                }
+            });
+        })
+        $('#btn-check-refund').click(function () {
+            var priceleft = $('#txt-set-priceLeft').val();
+            var priceinput = $('#txt-paid-money').val();
+            if (priceinput === priceleft) {
+                var school = $('#ddl-school-received').val();
+                if (school != "") {
+                    $('#btn-check-refund').addClass("disabled");
+                    $('#form-paid-set').submit();
+                }
+                else {
+                    console.log("Chon truong dee");
+                }
+
+            }
+            else {
+                console.log("Nhap dung so tien");
+            }
+        });
+    </script>
+}

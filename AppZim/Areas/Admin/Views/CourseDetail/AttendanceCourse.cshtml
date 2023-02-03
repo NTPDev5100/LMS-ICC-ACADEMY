@@ -1,0 +1,1016 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using System.Linq
+@{
+    ViewBag.Title = "AttendanceCourse";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(int.Parse(Session["UID"].ToString()));
+    List<tbl_CoursesStudent> lstudent = CoursesStudentTable.getbycourseid(Model.ID);
+    tbl_Courses course = CoursesTable.getbyid(Model.ID);
+    var totalLesson = CoursesScheduleTable.getbycourseid(course.ID).Count;//tổng buổi học
+    var learnedLesson = CoursesScheduleTable.GetByCourseAndStatus(course.ID, 1).Count;// số buổi đã học
+    int remainLesson = totalLesson - learnedLesson - course.DifferenceSchedule.Value;
+    var cahocs = StudyTimeTable.getall();
+    List<Admin_Teacher_GetAvailable_Result> teachers = AccountTable.GetTeacherAvailable(course.ID, course.ClassID.Value);
+    List<tbl_CoursesScheduleHistory> historys = CoursesScheduleTable.GetHistoryByCourseID(course.ID);
+}
+<style>
+    .pd-sm-b-40 {
+        padding-bottom: 5px;
+    }
+
+    :root {
+        --white: #ffffff;
+        --light: #f0eff3;
+        --black: #000000;
+        --dark-blue: #1f2029;
+        --dark-light: #353746;
+        --red: #da2c4d;
+        --yellow: #f8ab37;
+        --grey: #ecedf3;
+    }
+
+    [type="radio"]:checked,
+    [type="radio"]:not(:checked) {
+        position: absolute;
+        left: -9999px;
+        width: 0;
+        height: 0;
+        visibility: hidden;
+    }
+
+    .checkbox-tools:checked + label,
+    .checkbox-tools:not(:checked) + label {
+        position: relative;
+        /*display: inline-block;*/
+        padding: 10px 10px 9px 10px;
+        /*width: 110px;*/
+        font-size: 14px;
+        /*line-height: 20px;
+            letter-spacing: 1px;
+            margin: 0 auto;
+            margin-right: 5px;
+            margin-bottom: 10px;*/
+        margin-left: 5px;
+        text-align: center;
+        border-radius: 4px;
+        /*overflow: hidden;*/
+        cursor: pointer;
+        text-transform: uppercase;
+        color: var(--white);
+        /*-webkit-transition: all 300ms linear;
+            transition: all 300ms linear;*/
+    }
+
+    .checkbox-tools:not(:checked) + label {
+        background-color: #ffffff;
+        color: black;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .checkbox-tools:checked + label {
+        background-color: transparent;
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .checkbox-tools:not(:checked) + label:hover {
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .checkbox-tools:checked + label::before,
+    .checkbox-tools:not(:checked) + label::before {
+        position: absolute;
+        content: '';
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+        background-color: #01a42f;
+        z-index: -1;
+    }
+
+    .checkbox-tools:checked + label .uil,
+    .checkbox-tools:not(:checked) + label .uil {
+        font-size: 24px;
+        /* line-height: 24px;*/
+        display: block;
+        padding-bottom: 10px;
+    }
+    /*student*/
+
+    .checkbox-student:checked + label,
+    .checkbox-student:not(:checked) + label {
+        position: relative;
+        /*display: inline-block;*/
+        padding: 10px 10px 9px 10px;
+        /*width: 110px;*/
+        font-size: 14px;
+        /*line-height: 20px;
+            letter-spacing: 1px;
+            margin: 0 auto;
+            margin-right: 5px;
+            margin-bottom: 10px;*/
+        margin-left: 5px;
+        text-align: center;
+        border-radius: 4px;
+        /*overflow: hidden;*/
+        cursor: pointer;
+        text-transform: uppercase;
+        color: var(--white);
+        /*-webkit-transition: all 300ms linear;
+            transition: all 300ms linear;*/
+    }
+
+    .checkbox-student:not(:checked) + label {
+        background-color: #ffffff;
+        color: black;
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+        border: #01a42f 1px solid;
+    }
+
+    .checkbox-student:checked + label {
+        background-color: #01a42f;
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .checkbox-student:not(:checked) + label:hover {
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .checkbox-student:checked + label::before,
+    .checkbox-student:not(:checked) + label::before {
+        position: absolute;
+        content: '';
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+        background-color: #01a42f;
+        z-index: -1;
+    }
+
+    .checkbox-student:checked + label .uil,
+    .checkbox-student:not(:checked) + label .uil {
+        font-size: 24px;
+        /*line-height: 24px;*/
+        display: block;
+        padding-bottom: 10px;
+    }
+
+    .penicon:before {
+        font-family: 'Font Awesome 5 Free';
+        content: '\f044';
+    }
+
+    .check:before {
+        font-family: 'Font Awesome 5 Free';
+        content: '\f058';
+        color: #01a42f;
+    }
+
+    .edit-schedule:before {
+        font-family: 'Font Awesome 5 Free';
+        content: '\f133';
+    }
+
+    .update-schedule:before {
+        font-family: 'Font Awesome 5 Free';
+        content: '\f191';
+    }
+
+    .hover-custom:hover {
+        background-color: #01a42f;
+        color: white;
+    }
+
+        .hover-custom:hover div div div button {
+            background-color: white;
+            color: #01a42f;
+        }
+</style>
+<div class="row mg-b-30">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                <li class="breadcrumb-item"><a href="@Url.Action("CourseList", "Course", new { area = "Admin" })">Khóa học </a></li>
+                <li class="breadcrumb-item"><a href="@Url.Action("ScheduleCourse", "CourseDetail", new { area = "Admin", Model.ID })">@Model.CourseName</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Điểm danh</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 colsm-12 col-md-12 col-xl-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <h5 class="wd-100p">Lưu ý: chỉ có thể thay đổi lịch học các buổi học giáo viên chưa điểm danh</h5>
+                    <div class="wd-100p mg-b-10">
+                        <button class="btn btn-primary btn-history" data-toggle="modal" data-target="#div-history">Lịch sử thay đổi lịch học</button>
+                        <button class="btn btn-warning btn-multiple mg-l-3">Chỉnh sửa lịch học</button>
+                    </div>
+
+                    <div style="margin-left:-5px;">
+                        @foreach (var i in lstudent)
+                        {
+                            if (i.ID == ViewBag.Student)
+                            {
+                                <input class="checkbox-student" type="radio" name="cb-student" id="student-@i.ID" checked value="@i.StudentUID.Value">
+                                <label for="student-@i.ID" onclick="LoadAttendance(@i.ID)">
+                                    @i.StudentName
+                                </label>
+                            }
+                            else
+                            {
+                                <input class="checkbox-student" type="radio" name="cb-student" id="student-@i.ID" value="@i.StudentUID.Value">
+                                <label for="student-@i.ID" onclick="LoadAttendance(@i.ID)">
+                                    @i.StudentName
+                                </label>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="div-main">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="div-attendance" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-800" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Điểm danh</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                <input type="hidden" name="hdattendance" />
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Điểm danh:</label>
+                            <select class="form-control" name="slAttendance">
+                                <option value="1">Có mặt</option>
+                                <option value="2">Vắng có phép</option>
+                                <option value="3">Vắng không phép</option>
+                                <option value="4">Đi muộn</option>
+                                <option value="5">Về sớm</option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-12 form-group">
+                            <label class="">Đánh giá:</label>
+                            <select class="form-control" name="slLearning">
+                                <option value="1">Giỏi</option>
+                                <option value="2">Khá</option>
+                                <option value="3">Trung bình</option>
+                                <option value="4">Kém</option>
+                                <option value="5">Theo dõi đặc biệt</option>
+                                <option value="6">Có cố gắng</option>
+                                <option value="7">Không cố gắng</option>
+                                <option value="8">Không nhận xét</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-12 form-group">
+                            <label for="txt-date-reserve" class="">Nhận xét</label>
+                            <textarea name="txt-note" class="form-control" rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label>Cảnh báo:</label><br />
+                            <input type="checkbox" name="cb-warning" />
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary btn-add-attendance">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="div-editschedule" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-800" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Đổi lịch học</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                <input type="hidden" name="hdschedule" />
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="required">Ngày học:</label>
+                            <input type="text" name="txt-date" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY">
+                        </div>
+
+                        <div class="col-sm-12 form-group">
+                            <label class="required">Ca học:</label>
+                            <select class="form-control select2" name="slStudyTime" onchange="LoadTeacher()">
+                                <option value="">---</option>
+                                @foreach (var c in cahocs)
+                                {
+                                    <option value="@c.ID">@c.StudyTimeName</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-sm-12 form-group">
+                            <label class="required">Giáo viên</label>
+                            <select class="form-control select2" name="slTeacher">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary btn-editschedule">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="div-updateschedule" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-800" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Lùi lịch học</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                <input type="hidden" name="hdupdate" />
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group" id="div_timeDesrire">
+
+                        </div>
+
+                        <div class="col-sm-12 form-group text-center">
+                            <a href="javascript:;" onclick="add_div_timeDesrire()" style="font-size:20px;"><i class="fas fa-plus-circle"></i> Chọn ngày xếp lịch</a>
+                        </div>
+
+                        <div class="col-sm-12 form-group">
+                            <label class="required">Giáo viên</label>
+                            <select class="form-control select2" name="slTeacher-update">
+                                @foreach (var t in teachers)
+                                {
+                                    <option value="@t.id">@t.name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-sm-12 form-group">
+                            <label class="required">Ngày bắt đầu</label>
+                            <input type="text" name="txt-startdate" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY">
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary btn-updatechedule">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="div-multiple" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-800" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Đổi lịch học nhiều buổi</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                <input type="hidden" name="hd-multiple-id" />
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group" id="div_timeDesrire2">
+
+                        </div>
+
+                        <div class="col-sm-12 form-group text-center">
+                            <a href="javascript:;" onclick="add_div_timeDesrire2()" style="font-size:20px;"><i class="fas fa-plus-circle"></i> Chọn ngày xếp lịch</a>
+                        </div>
+
+                        <div class="col-sm-12 form-group">
+                            <label class="required">Giáo viên</label>
+                            <select class="form-control select2" name="slTeacher-update2">
+                                @foreach (var t in teachers)
+                                {
+                                    <option value="@t.id">@t.name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-sm-12 form-group">
+                            <label class="required">Ngày bắt đầu</label>
+                            <input type="text" name="txt-startdate2" class="form-control datetimepicker date-only" placeholder="DD / MM / YYYY">
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary btn-multiple-save">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<div class="modal fade" id="div-history" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog wd-sm-800" role="document" style="max-width:unset;">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Lịch sử thay đổi lịch học</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-t-30 pd-sm-b-40 pd-sm-x-30">
+                <div class="table-responsive">
+                    <table class="table table-striped table-vcenter">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="no-wrap">Ngày chỉnh sửa</th>
+                                <th class="no-wrap">Người chỉnh sửa</th>
+                                <th class="no-wrap">Nội dung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                foreach (var i in historys)
+                                {
+                                    <tr class="tr-row">
+                                        <td class="no-wrap">@i.CreatedBy</td>
+                                        <td class="no-wrap">@i.CreatedDate</td>
+                                        <td class="no-wrap">@Html.Raw(i.History)</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+
+<input type="hidden" name="hdcourseid" value="@Model.ID" />
+@section myScripts{
+    <script>
+
+        var courseid = $('input[name=hdcourseid]').val();
+        var teacherId = 0;
+        $(document)
+            .ajaxStart(function () {
+                $('#AjaxLoader').show();
+            })
+            .ajaxStop(function () {
+                $('#AjaxLoader').hide();
+            });
+
+        $(document).ready(function () {
+            LoadAttendance($("input[type='radio']:checked").val());
+        });
+
+        $('body').tooltip({
+            selector: '[data-toggle="tooltip"]'
+        });
+
+        $(document).on('click', '.btn-add-attendance', function () {
+            var id = $('input[name=hdattendance]').val();
+            var attid = $('select[name=slAttendance]').val();
+            var learid = $('select[name=slLearning]').val();
+            var note = $('textarea[name=txt-note]').val();
+            var student = $("input[type='radio']:checked").val();
+            var warning = 0;
+            if ($('input[name=cb-warning]').prop("checked")) {
+                warning = 1;
+            }
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CourseDetail/AttendanceStudent",
+                data: '{id: ' + id + ', student:' + student + ', attendance:' + attid + ', learning:' + learid + ', note:"' + note + '", warning:' + warning + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (!msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Đã có lỗi xảy ra',
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 2000
+                        })
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Điểm danh thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 2000
+                        })
+                    }
+                    LoadAttendance($("input[type='radio']:checked").val());
+                    $('#div-attendance').modal('hide');
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        });
+
+        function LoadAttendance(studentid) {
+
+            $('#div-main').empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CourseDetail/LoadAttendance",
+                data: '{courseid: ' + courseid + ', studentid:' + studentid + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    let html = '';
+                    msg.data.forEach(item => {
+                        html += `<div class="card hover-custom">
+                                                            <div class="card-body">
+                                                                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                                                    <div style="margin: auto;">
+                                                                        <input type="checkbox" name="cb-id" class="form-check-input" style="top: 50%;transform: translateY(-50%);" value="${item.ID}" />
+                                                                    </div>
+
+                                                                    <div style="margin: auto;">
+                                                                        <label>Ngày học</label><br />
+                                                                        <span>` + item.Date + `</span>
+                                                                    </div>
+
+                                                                    <div style="margin: auto;">
+                                                                        <label>Ca học</label><br />
+                                                                        <span>` + item.sTime + ` - ` + item.eTime + `</span>
+                                                                    </div>
+
+                                                                    <div style="margin: auto;">
+                                                                        <label>Giáo viên</label><br />
+                                                                        <span>${item.FullName}</span>
+                                                                    </div>
+
+                                                                    <div style="margin: auto;">
+                                                                        <label>Điểm danh</label><br />
+                                                                        <span>${(item.AttendanceName || '')}</span>
+                                                                    </div>
+
+                                                                    <div style="margin: auto;">
+                                                                        <label>Đánh giá</label><br />
+                                                                        <span>` + (item.LearningName || '') + `</span>
+                                                                    </div>
+
+                                                                    <div style="margin: auto;">
+                                                                        <label>Nhận xét</label><br />
+                                                                        <span>` + (item.Note || '') + `</span>
+                                                                    </div>
+
+                                                                    <div class="text-center" style="margin: auto;">
+                                                                        <label>Cảnh báo</label><br />
+                                                                        <span class="` + (item.Warning == true ? 'check' : '') + `"></span>
+                                                                    </div>
+
+                                                                    <div style="margin: auto;">
+                                                                        <button data-id=` + item.ID + ` data-toggle="tooltip" data-placement="left" title="Điểm danh" class="btn btn-primary penicon btn-attendance"></button>
+                        ` + ((item.FisnishStatus == 0 || item.FisnishStatus == 2) ? '<button data-id=' + item.ID + ' data-teacher=' + item.TeacherId + ' data-studytime=' + item.StudyTimeId + ' data-date=' + item.Date + ' data-toggle="tooltip" data-placement="left" title="Đổi lịch học" class="btn btn-secondary edit-schedule btn-edit-schedule"></button><button data-id=' + item.ID + ' data-teacher=' + item.TeacherId + ' data-toggle="tooltip" data-placement="left" title="Lùi lịch học" class="btn btn-warning update-schedule btn-update-schedule mg-l-3"></button>' : '') + `
+
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>`;
+                    });
+                    $('#div-main').html(html);
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+
+        $(document).on('click', '.btn-attendance', function () {
+            $('input[name=hdattendance]').val($(this).attr('data-id'));
+            let id = $(this).attr('data-id');
+            $('select[name=slAttendance]').val(1).trigger('change');
+            $('select[name=slLearning]').val(1).trigger('change');
+            $('textarea[name=txt-note]').val('');
+            ($('input[name=cb-warning]').prop('checked', false));
+            let student = $("input[type='radio']:checked").val();
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CourseDetail/LoadAttendanceByID",
+                data: '{id: ' + id + ', studentid:' + student + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    console.log(msg.data)
+                    if (msg.rs) {
+                        $('select[name=slAttendance]').val(msg.data?.AttendanceID).trigger('change');
+                        $('select[name=slLearning]').val(msg.data?.LearningID).trigger('change');
+                        $('textarea[name=txt-note]').val(msg.data?.Note);
+                        if (msg.data?.Warning) {
+                            ($('input[name=cb-warning]').prop('checked', true));
+                        }
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                }
+            });
+            $('#div-attendance').modal('show');
+        });
+
+        $(document).on('click', '.btn-edit-schedule', async function () {
+            await $('input[name=hdschedule]').val($(this).attr('data-id'));
+            teacherId = $(this).attr('data-teacher');
+            await $('input[name=txt-date]').val($(this).attr('data-date'));
+            await $('select[name=slStudyTime]').val($(this).attr('data-studytime'));
+            await $('select[name=slStudyTime]').trigger('change');
+            $('#div-editschedule').modal('show');
+            LoadTeacher();
+        });
+
+        $(document).on('click', '.btn-editschedule', function () {
+            if (confirm('bạn có muốn thay đổi lịch học của khóa học này ?')) {
+                let id = $('input[name=hdschedule]').val();
+                let date = $('input[name=txt-date]').val();
+                let studytime = $('select[name=slStudyTime]').val();
+                let teacher = $('select[name=slTeacher]').val();
+
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/CourseDetail/UpdateSchedule",
+                    data: '{id: ' + id + ', date:"' + date + '", studytime:' + studytime + ', teacher:' + teacher + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (!msg.rs) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Đã có lỗi xảy ra',
+                                icon: 'error_outline',
+                                classBackground: 'noti-error',
+                                timeout: 2000
+                            })
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Đổi lịch học thành công',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-success',
+                                timeout: 2000
+                            })
+                        }
+                        LoadAttendance($("input[type='radio']:checked").val());
+                        $('#div-editschedule').modal('hide');
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log(xmlhttprequest);
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Vui lòng chọn đầy đủ thông tin',
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 2000
+                        })
+                    }
+                });
+            }
+        });
+
+        $(document).on('click', '.btn-update-schedule', function () {
+            $('input[name=hdupdate]').val($(this).attr('data-id'));
+            $('#div_timeDesrire').html('');
+            $('select[name=slTeacher-update]').val($(this).attr('data-teacher')).trigger('change');
+            $('#div-updateschedule').modal('show');
+        });
+
+        function LoadTeacher() {
+            let date = $('input[name=txt-date]').val();
+            let studytime = $('select[name=slStudyTime]').val();
+            if (date == "" || studytime == "") {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn đầy đủ thông tin',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2000
+                })
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CourseDetail/LoadTeacher",
+                data: '{course: ' + courseid + ', date:"' + date + '", studytime:' + studytime + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (!msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Không có giáo viên nào phù hợp',
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 2000
+                        })
+                    } else {
+                        console.log(msg.data);
+                        let html = '';
+                        msg.data.forEach(element => {
+                            html += `<option value="` + element.id + `">` + element.name + `</option>`;
+                        });
+
+                        $('select[name=slTeacher]').html(html);
+                        $('select[name=slTeacher]').val(teacherId);
+                        $('select[name=slTeacher]').trigger('change');
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn đầy đủ thông tin',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 2000
+                    })
+                }
+            });
+        }
+
+        var numberTimeDesrire = 1;
+        function remove_div_timeDesrire(id) {
+            var div_id = 'numberTimeDesrire-' + id;
+            $('#' + div_id).remove();
+        }
+
+        function add_div_timeDesrire() {
+            var html = '<div class="form-row" id="numberTimeDesrire-' + numberTimeDesrire + '" > ' +
+                '<div class="form-group col-sm-6">' +
+                '<select id="want-to-day" name="want-to-day" class="form-control select2">' +
+                '<option value="1">Thứ 2</option>' +
+                '<option value="2">Thứ 3</option>' +
+                '<option value="3">Thứ 4</option>' +
+                '<option value="4">Thứ 5</option>' +
+                '<option value="5">Thứ 6</option>' +
+                '<option value="6">Thứ 7</option>' +
+                '<option value="0">Chủ nhật</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="col-sm-5 form-group">' +
+                '<select name="ddl-study" class="form-control select2 listTimeDerise">' +
+                '<option value="0">---Ca học---</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="col-sm-1 form-group" style="padding:4px">' +
+                '<a href="javascript:;" onclick="remove_div_timeDesrire(' + numberTimeDesrire + ')" style="float:left;font-size:20px;color:red"><i class="far fa-times-circle"></i></a>' +
+                '</div>' +
+                '</div>';
+            $('#div_timeDesrire').append(html);
+            $.ajax({
+                url: '/Cashier/getStudyingTime',
+                method: 'post',
+                dataType: 'json',
+                data: {},
+                success: function (r) {
+                    var html = '<option value="0">---Ca học---</option>';
+                    for (var i = 0; i < r.length; i++) {
+                        html += '<option value="' + r[i].ID + '">' + r[i].StudyTimeName + '</option>';
+                    }
+                    $('.listTimeDerise').each(function (index) {
+                        var value = $(this).val();
+                        if (value == 0) {
+                            $(this).html(html);
+                        }
+                    })
+
+                }
+            });
+        }
+
+        var numberTimeDesrire2 = 1;
+        function remove_div_timeDesrire2(id) {
+            var div_id = 'numberTimeDesrire2-' + id;
+            $('#' + div_id).remove();
+        }
+
+        function add_div_timeDesrire2() {
+            var html = '<div class="form-row" id="numberTimeDesrire2-' + numberTimeDesrire2 + '" > ' +
+                '<div class="form-group col-sm-6">' +
+                '<select id="want-to-day" name="want-to-day" class="form-control select2">' +
+                '<option value="1">Thứ 2</option>' +
+                '<option value="2">Thứ 3</option>' +
+                '<option value="3">Thứ 4</option>' +
+                '<option value="4">Thứ 5</option>' +
+                '<option value="5">Thứ 6</option>' +
+                '<option value="6">Thứ 7</option>' +
+                '<option value="0">Chủ nhật</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="col-sm-5 form-group">' +
+                '<select name="ddl-study" class="form-control select2 listTimeDerise">' +
+                '<option value="0">---Ca học---</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="col-sm-1 form-group" style="padding:4px">' +
+                '<a href="javascript:;" onclick="remove_div_timeDesrire2(' + numberTimeDesrire2 + ')" style="float:left;font-size:20px;color:red"><i class="far fa-times-circle"></i></a>' +
+                '</div>' +
+                '</div>';
+            $('#div_timeDesrire2').append(html);
+            $.ajax({
+                url: '/Cashier/getStudyingTime',
+                method: 'post',
+                dataType: 'json',
+                data: {},
+                success: function (r) {
+                    var html = '<option value="0">---Ca học---</option>';
+                    for (var i = 0; i < r.length; i++) {
+                        html += '<option value="' + r[i].ID + '">' + r[i].StudyTimeName + '</option>';
+                    }
+                    $('.listTimeDerise').each(function (index) {
+                        var value = $(this).val();
+                        if (value == 0) {
+                            $(this).html(html);
+                        }
+                    })
+
+                }
+            });
+        }
+
+        $('.btn-updatechedule').click(function () {
+            let teacher = $('select[name=slTeacher-update]').val();
+            let dayofweek = $('select[name=want-to-day]').map(function () {
+                return this.value;
+            }).get();
+            let studytime = $('select[name=ddl-study]').map(function () {
+                return this.value;
+            }).get();
+            let id = $('input[name=hdupdate]').val();
+
+            let startdate = $('input[name=txt-startdate]').val();
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CourseDetail/DelayedClassTime",
+                data: '{id: ' + id + ', course:' + courseid + ', teacherId:' + teacher + ', dayofweek:"' + dayofweek + '", studytime:"' + studytime + '", startdate:"' + startdate + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (!msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Đã có lỗi xảy ra',
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 2000
+                        })
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Lùi lịch học thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 2000
+                        })
+                    }
+                    window.location.reload();
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn đầy đủ thông tin',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 2000
+                    })
+                }
+            });
+        });
+
+        $(document).on('click', '.btn-multiple', function () {
+
+            let arrayId = $.map($('input[name="cb-id"]:checked'), function (c) { return c.value; });
+            if (arrayId.length <= 0) {
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng chọn ít nhất 1 buổi học',
+                    icon: 'error_outline',
+                    classBackground: 'noti-error',
+                    timeout: 2000
+                })
+                return;
+            }
+
+            $('input[name=hd-multiple-id]').val(arrayId.toString());
+            $('#div_timeDesrire').html('');
+            $('select[name=slTeacher-update]').val(0).trigger('change');
+            $('#div-multiple').modal('show');
+        });
+
+        $('.btn-multiple-save').click(function () {
+            let teacher = $('select[name=slTeacher-update2]').val();
+
+            let dayofweek = $('select[name=want-to-day]').map(function () {
+                return this.value;
+            }).get();
+
+            let studytime = $('select[name=ddl-study]').map(function () {
+                return this.value;
+            }).get();
+
+            let id = $('input[name=hd-multiple-id]').val();
+
+            let startdate = $('input[name=txt-startdate2]').val();
+            console.log(id);
+            console.log(JSON.stringify('[' + id + ']'));
+            $.ajax({
+                type: "POST",
+                url: "/Admin/CourseDetail/DelayedMultipleClass",
+                data: '{id:"' + id + '", course:' + courseid + ', teacherId:' + teacher + ', dayofweek:"' + dayofweek + '", studytime:"' + studytime + '", startdate:"' + startdate + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (!msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Đã có lỗi xảy ra',
+                            icon: 'error_outline',
+                            classBackground: 'noti-error',
+                            timeout: 2000
+                        })
+                    }
+                    else {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Lùi lịch học thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 2000
+                        })
+                    }
+                    window.location.reload();
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log(xmlhttprequest);
+                    toast.create({
+                        title: 'Thông báo!',
+                        text: 'Vui lòng chọn đầy đủ thông tin',
+                        icon: 'error_outline',
+                        classBackground: 'noti-error',
+                        timeout: 2000
+                    })
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,2 @@
+PageError: CampaignSale    FunctionError: CheckRevenueOfCampaign    loginUID: 0    MessageError: Index was out of range. Must be non-negative and less than the size of the collection.
+Parameter name: index ||     31/01/2023 15:25

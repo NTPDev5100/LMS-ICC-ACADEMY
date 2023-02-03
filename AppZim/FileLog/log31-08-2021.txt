@@ -1,0 +1,6 @@
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1    MessageError: An error occurred while executing the command definition. See the inner exception for details.    31/08/2021 09:16
+PageError: CustomerController    FunctionError: CustomerList    loginUID: 1    MessageError: The underlying provider failed on Open.    31/08/2021 09:16
+PageError: Cashier    FunctionError: sendNotifyTestDone    loginUID: 0    MessageError: Object reference not set to an instance of an object.||    31/08/2021 10:22
+PageError: Cashier    FunctionError: sendNotifyTestDone    loginUID: 0    MessageError: Object reference not set to an instance of an object.||    31/08/2021 10:44
+PageError: Cashier    FunctionError: sendNotifyTestDone    loginUID: 0    MessageError: Object reference not set to an instance of an object.||    31/08/2021 10:46
+PageError: Cashier    FunctionError: sendNotifyTestDone    loginUID: 0    MessageError: Object reference not set to an instance of an object.||    31/08/2021 10:49

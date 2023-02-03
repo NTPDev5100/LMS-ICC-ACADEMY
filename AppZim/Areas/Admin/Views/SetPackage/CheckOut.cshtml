@@ -1,0 +1,268 @@
+﻿
+@{
+    ViewBag.Title = "CheckOut";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<style>
+    .disableHover:hover{
+        background:none !important;
+    }
+</style>
+<div class="card mg-b-50">
+    <div class="card-body">
+        <ul class="steps justify-content-center">
+            <li class="step-item complete">
+                <a href="@Url.Action("Store","SetPackage",new { area="admin"})" class="step-link">
+                    <span class="step-icon"><i data-feather="file-text"></i></span>
+                    <div>
+                        <span class="step-title">Chọn gói</span>
+                        <span class="step-desc">Lựa chọn gói bạn muốn mua.</span>
+                    </div>
+                </a>
+            </li>
+            <li class="step-item active">
+                <a href="" class="step-link">
+                    <span class="step-icon"><i data-feather="clipboard"></i></span>
+                    <div>
+                        <span class="step-title">Mua hàng</span>
+                        <span class="step-desc">Tiến hành mua hàng.</span>
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+</div>
+
+<div class="card bd-0 rounded-10 shadow-lg">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <img src="/app-assets/zimv2/assets/img/Mix3D-04.png" alt="">
+            </div>
+            <div class="col-md-6">
+                <div class="bd-l pd-15 ht-100p">
+                    @using (Html.BeginForm("CheckoutSetPackage", "SetPackage", FormMethod.Post, new { id = "form-checkout" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <h4>Giỏ hàng</h4>
+                        <input name="hdfSetID" type="hidden" value="@Model.ID" />
+                        <div class="product-cart tx-16">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="bd-t-0-f">Sản phẩm</th>
+                                            <th class="bd-t-0-f">Đơn giá</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="tx-color-03">
+                                            <td class="product-name">@Model.PackageName</td>
+                                            <td><span class="">@string.Format("{0:N0}", Model.Price)</span></td>
+                                        </tr>
+
+                                        @*<tr>
+                                                <td colspan="2">
+                                                    <div class="form-row mg-t-15">
+                                                        <div class="col-8">
+                                                            <div class="form-group ">
+                                                                <input type="text" name="txt-discount" class="form-control" placeholder="Coupon" value="DISCOUNT10">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <a href="javascript:;" class="btn btn-dark btn-block">
+                                                                Apply
+                                                                code
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="">
+                                                    <span class="">Discount</span>
+                                                </td>
+                                                <td class="">
+                                                    <span class="">0</span>
+                                                </td>
+                                            </tr>*@
+                                        <tr>
+                                            <td class="bd-b-0-f"><span class="tx-medium">Tổng tiền</span></td>
+                                            <td class="bd-b-0-f"><span class="tx-bold tx-danger">@string.Format("{0:N0}", Model.Price)</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="bd-b-0-f"><span class="">Hình thức</span></td>
+                                            <td class="bd-b-0-f">
+                                                <select class="form-control" name="ddl-payment-type" required onchange="changeType($(this))">
+                                                    <option value="">----</option>
+                                                    @if (ViewBag.PaymentType == 1)
+                                                    {
+                                                        <option value="1">Chuyển khoản</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="1">Chuyển khoản</option>
+                                                    }
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr id="chuyenkhoan" style="display:none" class="disableHover">
+                                            <td class="bd-b-0-f text-center" style="padding-top:20px" colspan="2"><button type="button" class="btn btn-info thongtinthanhtoan" data-toggle="modal" data-target="#exampleModal">Thông tin thanh toán</button></td>
+                                        </tr>
+                                        <tr id="paypal" style="display:none" class="disableHover">
+                                            <td class="bd-b-0-f text-center" style="padding-top:20px" colspan="2"><div id="paypal-button"></div></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <button href="javascript:;" class="btn-block btn btn-primary btn-lg tx-uppercase tx-bold mg-t-30 submit-checkout" disabled>
+                            <i data-feather="credit-card" class="mg-r-10"></i>Thanh toán
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document" style="max-width:650px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Thông tin thanh toán</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h6>Chúng tôi xin thông báo về quy trình thanh toán chuyển khoản qua Ngân hàng như sau:</h6>
+                <table class="table table-hover table-bordered mg-t-10">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="no-wrap">Tên tài khoản</th>
+                            <th scope="col" class="no-wrap">STK cá nhân</th>
+                            <th scope="col" class="no-wrap" colspan="2">STK Trung tâm</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">Số tài khoản</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Ngân hàng</th>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Nội dung</th>
+                            <td colspan="3">
+                                <p>Theo cấu trúc sau:</p>
+                                <p>[Tên gói bài/Khóa học/Dịch vụ].[Họ và tên].[Số điện thoại]</p>
+                                <p>Ví dụ: Khoa Hoc TOIEC.TRUONG MINH LOC.0987654321</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="mg-t-20">
+                    <p>Xin chân thành cảm ơn.</p>
+                    <p>Lưu ý: Sau khi chuyển khoản, Quý khách nhấn nút <span class="text-info">Thanh Toán</span> để tạo phiên thanh toán.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal">Tôi hiểu rồi</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section myScripts{
+    @*<script src="https://www.paypalobjects.com/api/checkout.js"></script>
+    <script>
+        let tigia = 23000;
+        let dongia = @Model.Price;
+        let totalPrice = parseInt(dongia) / parseInt(tigia);
+        paypal.Button.render({
+            // Configure environment
+            env: 'sandbox',
+            client: {
+                sandbox: 'AYM2OqpVl6zD24SpPwyG4VazLisd77PrgWB1JERwlP_K0Bu_SUo5MbXoyMgLqZYwaVUH26xglSjY6wbb',
+                production: 'demo_production_client_id'
+            },
+            // Customize button (optional)
+            locale: 'en_US',
+            style: {
+                size: 'large',
+                color: 'gold',
+                shape: 'pill',
+            },
+
+            // Enable Pay Now checkout flow (optional)
+            commit: true,
+
+            // Set up a payment
+            payment: function (data, actions) {
+                return actions.payment.create({
+                    transactions: [{
+                        amount: {
+                            total: parseFloat(totalPrice).toFixed(2),
+                            currency: 'USD'
+                        }
+                    }]
+                });
+            },
+            // Execute the payment
+            onAuthorize: function (data, actions) {
+                return actions.payment.execute().then(function () {
+                    // Show a confirmation message to the buyer
+                    $('#form-checkout').submit();
+                    window.alert('Chúc mừng bạn đã thanh toán thành công!');
+                });
+            }
+        }, '#paypal-button');
+
+    </script>*@
+    <script>
+        $(function () {
+            $(window).keydown(function (e) {
+                if (e.keyCode == 13) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+        $('.submit-checkout').on('click', function () {
+            $('.submit-checkout').prop('disabled', true);
+            $('#form-checkout').submit();
+        });
+
+        $('.thongtinthanhtoan').on('click', function () {
+            $('.submit-checkout').prop('disabled', false);
+        });
+
+        function changeType(cc) {
+            let value = cc.val();
+            if (value == 1) {
+                $('#chuyenkhoan').show();
+                $('.submit-checkout').show();
+                $('#paypal').hide();
+            }
+            else if (value == 2) {
+                $('#chuyenkhoan').hide();
+                $('.submit-checkout').prop('disabled', true);
+                $('.submit-checkout').hide();
+                $('#paypal').show();
+            }
+            else {
+                $('#chuyenkhoan').hide();
+                $('.submit-checkout').prop('disabled', true);
+                $('.submit-checkout').show();
+                $('#paypal').hide();
+            }
+        }
+    </script>
+}

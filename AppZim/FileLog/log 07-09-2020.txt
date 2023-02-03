@@ -1,0 +1,3 @@
+PageError: StudentSetController    FunctionError: CheckTimeUp    loginUID: 1998    MessageError: The underlying provider failed on Open.    07/09/2020 15:12
+PageError: StudentSetController    FunctionError: CheckTimeUp    loginUID: 1998    MessageError: An error occurred while executing the command definition. See the inner exception for details.    07/09/2020 15:15
+PageError: StudentSetController    FunctionError: CheckTimeUp    loginUID: 1998    MessageError: The underlying provider failed on Open.    07/09/2020 15:15

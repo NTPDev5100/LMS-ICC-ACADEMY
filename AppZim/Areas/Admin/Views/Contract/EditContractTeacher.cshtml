@@ -1,0 +1,97 @@
+﻿@{
+    ViewBag.Title = "EditContractTeacher";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+@section myStyles{
+    <style>
+        .fix-container {
+            max-width: initial;
+        }
+    </style>
+}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mg-b-30">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+        <li class="breadcrumb-item active" aria-current="page">Chỉnh sửa hợp đồng giáo viên</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="new-post-wrap fix-container">
+    @using (Html.BeginForm("EditContract", "Contract", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="hdid" value="@ViewBag.ID" />
+        <div class="row">
+            <div class="col-12 ">
+                <h4 class="">Nội dung hợp đồng</h4>
+            </div>
+        </div>
+        <div class="editor-wrap">
+            <textarea name="txt-content" id="post-content">@Html.Raw(ViewBag.Content)</textarea>
+        </div>
+        <div class="form-row mg-b-15 mg-t-15 align-items-center">
+            <div class="col-12 col-xs-4 col-md-12">
+                <div class="d-flex align-items-center justify-content-end">
+                    <button type="submit" class="btn btn-primary">Lưu lại</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/tinymce/tinymce.min.js"></script>
+    <script>
+        function uploadImage() {
+            var editor = tinymce.activeEditor;
+            // create input element, call modal dialog w
+            var fileInput = document.createElement('input');
+            fileInput.setAttribute('type', 'file');
+            fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+            // if file is submitted run our key code
+            fileInput.addEventListener('change', () => {
+
+                if (fileInput.files != null && fileInput.files[0] != null) {
+                    // create instance of FileReader()
+                    var formData = new FormData();
+                    formData.append("FileUpload", fileInput.files[0]);
+                    $.ajax({
+                        async: false,
+                        type: 'POST',
+                        url: '/Admin/PostNewFeed/UploadFilePost',
+                        data: formData,
+                        dataType: 'json',
+                        contentType: false,
+                        processData: false,
+                        success: function (msg) {
+                            console.log(msg.l);
+                            editor.insertContent('<img src="' + msg.l + '"/>');
+                        },
+                        error: function (error) {
+                            console.log('error upload file audio');
+                        }
+                    });
+                }
+            });
+            fileInput.click()
+        }
+        tinymce.init({
+            selector: '#post-content',
+            images_dataimg_filter: function (img) {
+                return img.hasAttribute('internal-blob');
+            },
+            plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern autoresize',
+            menubar: 'file edit insert view format table tools help',
+            toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+            setup: (editor) => {
+                editor.ui.registry.addButton('UploadImage', {
+                    text: 'Image',
+                    icon: 'image',
+                    onAction: uploadImage
+                });
+            },
+            content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+            font_formats:
+                "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+        });
+    </script>
+}

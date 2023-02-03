@@ -1,0 +1,339 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "Documents";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    if (Session["UID"] == null)
+    {
+        Response.Redirect("~/Login/Signin");
+    }
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_DocumentCategoryZim> lca = DocumentZimTable.getcatezimall();
+
+    bool dele = false;
+    if (aclog.RoleID == 1 || aclog.RoleID == 2 || aclog.RoleID == 7)
+    {
+        dele = true;
+    }
+    int i = 0;
+}
+
+<link href="~/app-assets/zimv2/assets/css/dashforge.filemgr.css" rel="stylesheet" />
+<style>
+    .dropdown-icon {
+        position: unset;
+    }
+
+    .card-file h6 a {
+        width: 200px;
+    }
+
+    .app-filemgr {
+        overflow: hidden;
+    }
+</style>
+<div class="filemgr-wrapper" style="margin-left:60px">
+    <div class="filemgr-sidebar">
+        <div class="filemgr-sidebar-header">
+            @{
+                if (dele)
+                {
+                    <div class="dropdown dropdown-icon flex-fill">
+                        <button class="btn btn-xs btn-block btn-white" data-toggle="dropdown">Thêm <i data-feather="chevron-down"></i></button>
+                        <div class="dropdown-menu tx-13">
+                            <a href="#modal-add-category" class="dropdown-item" data-toggle="modal"><i data-feather="folder"></i><span>Thư mục mới</span></a>
+                        </div><!-- dropdown-menu -->
+                    </div><!-- dropdown -->
+                    <div class="dropdown dropdown-icon flex-fill mg-l-10">
+                        <button class="btn btn-xs btn-block btn-primary" data-toggle="dropdown">Tải lên <i data-feather="chevron-down"></i></button>
+                        <div class="dropdown-menu tx-13">
+                            <a href="#modal-document" class="dropdown-item" data-toggle="modal"><i data-feather="file"></i><span>Tệp tin</span></a>
+                        </div><!-- dropdown-menu -->
+                    </div><!-- dropdown -->
+                }
+                else
+                {
+                    <span>DOCUMENTS</span>
+                }
+            }
+        </div><!-- filemgr-sidebar-header -->
+        <div class="filemgr-sidebar-body">
+            <div class="pd-t-20 pd-b-10 pd-x-10">
+                <label class="tx-sans tx-uppercase tx-medium tx-10 tx-spacing-1 tx-color-03 pd-l-10">Danh sách thư mục</label>
+                <nav class="nav nav-sidebar tx-13 schedule-group">
+                    @{
+                        int index = 0;
+                        string active = "";
+                        foreach (var item in lca)
+                        {
+                            int countdoc = DocumentZimTable.getdocbycateid(item.ID).Count;
+                            if (index == 0)
+                            {
+                                active = "active";
+                            }
+                            <div class="pos-relative pd-r-20">
+                                <a href="javascript:;" class="nav-link category-doc @active cate-@item.ID" data-id="@item.ID"><i data-feather="folder"></i> <span>@item.CategoryZimName <span class="category-@item.ID">(@countdoc)</span></span></a>
+                                @{
+                                    if (dele)
+                                    {
+                                        <div class="dropdown-file">
+                                            <a href="" class="dropdown-link  pos-absolute t-0 r-0" data-toggle="dropdown"><i data-feather="more-vertical"></i></a>
+                                            <div class="dropdown-menu dropdown-menu-right">
+                                                <a href="#modal-edit-category" data-toggle="modal" data-id="@item.ID" data-name="@item.CategoryZimName" class="dropdown-item edit-cate"><i data-feather="edit"></i>Đổi tên</a>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            index += 1;
+                            active = "";
+                        }
+                    }
+                </nav>
+            </div>
+            @*@{
+                if (dele)
+                {
+                    <div class="pd-y-10 pd-x-20">
+                        <label class="tx-sans tx-uppercase tx-medium tx-10 tx-spacing-1 tx-color-03 mg-b-15">Dung lượng</label>
+                        <div class="media">
+                            <i data-feather="database" class="wd-30 ht-30"></i>
+                            <div class="media-body mg-l-10">
+                                <div class="tx-12 mg-b-4">@ViewBag.UsedSpace GB used of @ViewBag.TotalSpace GB</div>
+                                <div class="progress ht-3 mg-b-20">
+                                    <div class="progress-bar wd-15p" style="width:@ViewBag.Percent%" role="progressbar" aria-valuenow="@ViewBag.Percent" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div><!-- media-body -->
+                        </div><!-- media -->
+                    </div>
+                }
+            }*@
+        </div><!-- filemgr-sidebar-body -->
+    </div><!-- filemgr-sidebar -->
+    <div class="filemgr-content">
+        <div class="filemgr-content-header">
+            <i data-feather="search"></i>
+            <div class="search-form">
+                <input type="search" class="form-control" id="txt-search-name" placeholder="Nhập từ khóa cần tìm...">
+            </div><!-- search-form -->
+        </div><!-- filemgr-content-header -->
+        <div class="filemgr-content-body">
+            <div class="pd-20 pd-lg-25 pd-xl-30">
+                <label class="d-block tx-medium tx-10 tx-uppercase tx-sans tx-spacing-1 tx-color-03 mg-b-15">Tệp tin</label>
+                <div class="row row-xs" id="div-data">
+
+                </div><!-- row -->
+            </div>
+        </div><!-- filemgr-content-body -->
+    </div><!-- filemgr-content -->
+</div><!-- filemgr-wrapper -->
+
+@{
+    if (dele)
+    {
+        <!-- Upload file -->
+        <div class="modal fade" id="modal-document" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+                <div class="modal-content">
+                    @using (Html.BeginForm("UpFileDocument", "Library", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                    {
+                        <input type="hidden" name="hdfCateID" id="hdfCateID" />
+                        <div class="modal-body pd-20 pd-sm-40">
+                            <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </a>
+                            <div>
+                                <h4>Tải lên tài liệu</h4>
+                                <div class="form-group" style="display:none;">
+                                    <label>Image: (Giới hạn file 50Mb)</label>
+                                    <input type="file" id="fileimg" name="fileimg" class="dropify" accept="image/*" data-max-file-size="50M">
+                                </div>
+                                <div class="form-group">
+                                    <label>Chọn tệp tin: (Giới hạn file 50Mb)</label>
+                                    <input type="file" id="fileupload" name="fileupload" class="dropify" multiple required data-max-file-size="50M">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Tải lên</button>
+                            </div>
+                        </div><!-- modal-body -->
+                    }
+                </div><!-- modal-content -->
+            </div><!-- modal-dialog -->
+        </div><!-- modal -->
+        <!-- Create category -->
+        <div class="modal fade" id="modal-add-category" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+                <div class="modal-content">
+                    @using (Html.BeginForm("AddCateZim", "Library", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                    {
+                        <div class="modal-body pd-20 pd-sm-40">
+                            <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </a>
+                            <div>
+                                <h4>Thêm mới</h4>
+                                <div class="form-group">
+                                    <label>Tên thư mục:</label>
+                                    <input type="text" name="txt-cate" class="form-control" required placeholder="...">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                            </div>
+                        </div><!-- modal-body -->
+                    }
+                </div><!-- modal-content -->
+            </div><!-- modal-dialog -->
+        </div><!-- modal -->
+        <!-- Create category -->
+        <div class="modal fade" id="modal-edit-category" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+                <div class="modal-content">
+                    @using (Html.BeginForm("EditCateZim", "Library", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                    {
+                        <input type="hidden" name="hdfID" id="hdfID" />
+                        <div class="modal-body pd-20 pd-sm-40">
+                            <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </a>
+                            <div>
+                                <h4>Chỉnh sửa</h4>
+                                <div class="form-group">
+                                    <label>Tên thư mục:</label>
+                                    <input type="text" id="txt-edit-cate" name="txt-edit-cate" class="form-control" required placeholder="...">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Lưu lại</button>
+                            </div>
+                        </div><!-- modal-body -->
+                    }
+                </div><!-- modal-content -->
+            </div><!-- modal-dialog -->
+        </div><!-- modal -->
+    }
+}
+@section myScripts{
+    <script src="~/app-assets/zimv2/assets/js/dashforge.filemgr.js"></script>
+    <script>
+        window.onload = function () {
+            $('.aside-fixed').addClass('minimize');
+        }
+
+
+        $(document).ready(function () {
+            $('body').addClass('app-filemgr');
+            $('#mainMenuOpen').addClass('d-none')
+
+            $('.category-doc').on('click', function () {
+                var $this = $(this);
+                $this.addClass('active');
+                $('.category-doc').not($this).removeClass('active');
+            });
+
+
+            var loa = $('.schedule-group').find('.active');
+            var id = $(loa).attr('data-id');
+            $('#hdfCateID').val(id);
+            loaddata(id);
+
+            $("#txt-search-name").keyup(delay(function (e) {
+                $('#div-data').empty();
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Library/SearchDocument",
+                    data: '{q: "' + $(this).val() + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    beforeSend: function () {
+                        $("#txt-search-name").css("background", "#FFF url(/app-assets/zimv2/images/loading-search.gif) no-repeat 165px");
+                        $("#txt-search-name").css("background-position", "right");
+                    },
+                    success: function (msg) {
+                        $('#div-data').append(msg.rs);
+                        $("#txt-search-name").css("background", "#FFF");
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error: GetProjectNote");
+                    }
+                });
+            }, 1000));
+            //Delay input
+            function delay(callback, ms) {
+                var timer = 0;
+                return function () {
+                    var context = this, args = arguments;
+                    clearTimeout(timer);
+                    timer = setTimeout(function () {
+                        callback.apply(context, args);
+                    }, ms || 0);
+                };
+            }
+        })
+        $('.edit-cate').click(function () {
+            $('#hdfID').val($(this).attr('data-id'));
+            $('#txt-edit-cate').val($(this).attr('data-name'));
+        })
+        $('.category-doc').click(function () {
+            var id = $(this).attr('data-id');
+            $('#hdfCateID').val(id);
+            loaddata(id);
+        })
+        function loaddata(id) {
+            $('#div-data').empty();
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Library/LoadDoc",
+                data: '{id: ' + id + '}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    $('#div-data').append(msg.rs);
+                    feather.replace();
+                    $('[data-toggle="tooltip"]').tooltip();
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error: .load-data");
+                }
+            });
+        }
+        $(document).on("click", ".delete", function () {
+            if (confirm('Xác nhận xóa tệp này?')) {
+                var e = $(this);
+                var id = $(this).attr('data-id');
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Library/DeleteDoc",
+                    data: '{id: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        if (msg.rs) {
+                            var r = $(e).closest('.col-6');
+                            r.remove();
+
+                            const html = "<span class=\"category-" + msg.cateID +"\">(" + msg.countDoc + ")</span>";
+                            $('.category-' + msg.cateID).html(html);
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Success',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-warning',
+                                timeout: 2000
+                            })
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("error: .btn-delete");
+                    }
+                });
+            }
+        })
+
+        //highlight khi click file
+        $('html').on('click', '.card-file-thumb', function () {
+            let cateID = $(this).attr('data-id');
+            $('.cate-' + cateID).addClass('active');
+            $('.category-doc').not($('.cate-' + cateID)).removeClass('active');
+        });
+
+    </script>
+}

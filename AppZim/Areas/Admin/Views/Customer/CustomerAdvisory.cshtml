@@ -1,0 +1,736 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@using PagedList.Mvc;
+@model List<get_list_of_customeradvisory_Result>
+@{
+    ViewBag.Title = "CustomerAdvisory";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+
+    List<tbl_SourceOfCustomer> sc = SourceOfCustomerTable.getall();
+    List<tbl_Job> jobs = JobTable.getall();
+    List<tbl_City> citys = LocationTable.getall();
+    List<tbl_Account> lsale = AccountTable.getbyrole(6).Where(n => n.Status == 2).OrderBy(n => n.FullName).ToList();
+    List<tbl_AcademicPurposes> mucdich = AcademicPurposesTable.getall();
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+
+}
+@section myStyles{
+    <style>
+    </style>
+}
+@using (Html.BeginForm("CustomerAdvisory", "Customer", FormMethod.Get, new { id = "form-search" }))
+{
+    <div class="d-xl-flex align-items-center justify-content-between ">
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mg-b-0">
+                        <li class="breadcrumb-item active" aria-current="page">Danh sách khách hàng cần tư vấn</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        @*<div>
+                <h4 class="mg-b-0 tx-spacing--1">Danh sách khách hàng</h4>
+            </div>*@
+        <div class="d-xl-block">
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="button" id="btn-search"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select name="sort" class="custom-select" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp --</option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Họ tên  a > z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Họ tên  a > z</option>
+                            }
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Họ tên z > a</option>
+                            }
+                            else
+                            {
+                                <option value="2">Họ tên z > a</option>
+                            }
+                            @*if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Tư vấn viên a > z</option>
+                            }
+                            else
+                            {
+                                <option value="3">Tư vấn viên a > z</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Tư vấn viên z > a</option>
+                            }
+                            else
+                            {
+                                <option value="4">Tư vấn viên z > a</option>
+                            }*@
+                        }
+                    </select>
+                </div>
+                @*<a href="#filterCollapse" class="btn btn-primary mg-l-5 mg-r-5 mg-sm-r-0 transparent" role="button" data-toggle="collapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i data-feather="filter"></i>
+                </a>*@
+            </div>
+        </div>
+    </div>
+    @*<div class="collapse mg-t-10" id="filterCollapse">
+        <div class="card">
+            <div class="card-body">
+                <div class="row flex-wrap">
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Tỉnh/TP:</label>
+                        <select class="form-control select2" name="location">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                foreach (var c in citys)
+                                {
+                                    if (ViewBag.CityID != null)
+                                    {
+                                        if (ViewBag.CityID == c.ID)
+                                        {
+                                            <option value="@c.ID" selected>@c.CityName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.ID">@c.CityName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.ID">@c.CityName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Nguồn:</label>
+                        <select class="form-control select2" name="source">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                foreach (var c in sc)
+                                {
+                                    if (ViewBag.SourceID != null)
+                                    {
+                                        if (ViewBag.SourceID == c.ID)
+                                        {
+                                            <option value="@c.ID" selected>@c.SourceOfCustomer</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.ID">@c.SourceOfCustomer</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.ID">@c.SourceOfCustomer</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Công việc:</label>
+                        <select class="form-control select2" name="jobs">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                foreach (var c in jobs)
+                                {
+                                    if (ViewBag.JobID != null)
+                                    {
+                                        if (ViewBag.JobID == c.ID)
+                                        {
+                                            <option value="@c.ID" selected>@c.JobName</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.ID">@c.JobName</option>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <option value="@c.ID">@c.JobName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Trạng thái:</label>
+                        <select class="form-control select2" name="status">
+                            <option value="0">-- Tất cả --</option>
+                            @{
+                                if (ViewBag.StatusID != null)
+                                {
+                                    if (ViewBag.StatusID == 1)
+                                    {
+                                        <option value="1" selected>Chưa kích hoạt</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="1">Chưa kích hoạt</option>
+                                    }
+                                    if (ViewBag.StatusID == 2)
+                                    {
+                                        <option value="2" selected>Hoạt động</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="2">Hoạt động</option>
+                                    }
+                                    if (ViewBag.StatusID == 3)
+                                    {
+                                        <option value="3" selected>Khóa</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="3">Khóa</option>
+                                    }
+                                }
+                                else
+                                {
+                                        <option value="1">Chưa kích hoạt</option>
+                                        <option value="2">Hoạt động</option>
+                                        <option value="3">Khóa</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Ngày thi từ:</label>
+                        <input type="text" name="from" class="form-control datetimepicker from-date date-only" value="@ViewBag.From" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-2">
+                        <label class="form-control-label">Đến:</label>
+                        <input type="text" name="to" class="form-control datetimepicker to-date date-only" value="@ViewBag.To" placeholder="DD / MM / YYYY" autocomplete="off" />
+                    </div>
+                    <div class="form-group col-md-4 col-6 col-xl-12 text-center mg-b-0">
+                        <button type="submit" class="btn btn-primary"><i data-feather="search"></i> Tìm kiếm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>*@
+}
+<div class="mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th></th>
+                    <th>Tỉnh/TP</th>
+                    <th>Họ và tên</th>
+                    <th>SĐT</th>
+                    <th>Email</th>
+                    <th class="no-wrap">Nguồn</th>
+                    <th class="no-wrap">Trạng thái</th>
+                    <th>Tư vấn viên</th>
+                    <th class="no-wrap text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    foreach (var item in Model)
+                    {
+                        get_list_of_customeradvisory_Result jtem = item;
+                        string Birthday = "";
+                        string IdentityCardDate = "";
+                        string DateExam = "";
+                        if (jtem.Birthday != null)
+                        {
+                            Birthday = jtem.Birthday.Value.ToString("dd/MM/yyyy");
+                        }
+                        if (jtem.IdentityCardDate != null)
+                        {
+                            IdentityCardDate = jtem.IdentityCardDate.Value.ToString("dd/MM/yyyy");
+                        }
+                        if (jtem.DateExam != null)
+                        {
+                            DateExam = jtem.DateExam.Value.ToString("dd/MM/yyyy");
+                        }
+
+                        <tr class="tr-row">
+                            <td><a href="javascript:;" class="collapse-toggle"><i class="fas fa-plus-square"></i></a></td>
+                            <td>@jtem.LocationName</td>
+                            <td>@jtem.FullName</td>
+                            <td class="no-wrap">@jtem.Phone</td>
+                            <td>@jtem.Email</td>
+                            <td class="no-wrap">@jtem.SourceName</td>
+                            <td class="no-wrap">@jtem.StatusName</td>
+                            <td>@jtem.SupportName</td>
+                            <td class="text-center">
+                                <a href="javascript:;" class="chk-done" data-id="@item.ID" data-toggle="tooltip" data-placement="top" title="Tư vấn xong"><i data-feather="check-circle"></i></a>
+                            </td>
+                        </tr>
+                        <tr class="collapse-row">
+                            <td colspan="9">
+                                <div class="collapse-content">
+                                    <div class="schedule-test-form mg-t-30">
+                                        <div class="row" id="test-register">
+                                            <div class="col-12 col-md-12">
+                                                <fieldset class="form-fieldset">
+                                                    <legend>Personal Information</legend>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Tài khoản:</label>
+                                                            <input type="text" class="form-control" id="ddl-username-@jtem.ID" value="@jtem.UserName" disabled>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Nguồn khách:</label>
+                                                            <select class="form-control select2" id="ddl-source-@jtem.ID">
+                                                                <option value="0">Tư Vấn Viên</option>
+                                                                @{
+                                                                    foreach (var s in sc)
+                                                                    {
+                                                                        if (jtem.SourceID != null)
+                                                                        {
+                                                                            if (jtem.SourceID == s.ID)
+                                                                            {
+                                                                                <option value="@s.ID" selected>@s.SourceOfCustomer</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@s.ID">@s.SourceOfCustomer</option>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="@s.ID">@s.SourceOfCustomer</option>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Hỗ trợ:</label>
+                                                            <select class="form-control select2" id="ddl-support-@jtem.ID">
+                                                                <option value="0">---</option>
+                                                                @{
+                                                                    foreach (var s in lsale)
+                                                                    {
+                                                                        if (jtem.SupportUID != null)
+                                                                        {
+                                                                            if (jtem.SupportUID == s.ID)
+                                                                            {
+                                                                                <option value="@s.ID" selected>@s.FullName</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@s.ID">@s.FullName</option>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="@s.ID">@s.FullName</option>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Tỉnh/TP:</label>
+                                                            <select class="form-control select2" id="ddl-city-@jtem.ID">
+                                                                <option value="0">---</option>
+                                                                @{
+                                                                    foreach (var c in citys)
+                                                                    {
+                                                                        var ldis = DistrictTable.getbycityid(c.ID);
+                                                                        if (ldis.Count > 0)
+                                                                        {
+                                                                            bool ck = true;
+                                                                            <optgroup label="@c.CityName">
+                                                                                @foreach (var d in ldis)
+                                                                                {
+                                                                                    if (jtem.DistrictID != null)
+                                                                                    {
+                                                                                        if (jtem.DistrictID == d.ID && jtem.LocationID == c.ID)
+                                                                                        {
+                                                                                            ck = false;
+                                                                                            <option value="@d.ID" selected>@d.DistrictName</option>
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <option value="@d.ID">@d.DistrictName</option>
+                                                                                        }
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        <option value="@d.ID">@d.DistrictName</option>
+                                                                                    }
+                                                                                }
+                                                                            </optgroup>
+                                                                            if (ck)
+                                                                            {
+                                                                                if (jtem.LocationID == c.ID)
+                                                                                {
+                                                                                    <option value="0-@c.ID" selected>@c.CityName</option>
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            if (jtem.LocationID != null)
+                                                                            {
+                                                                                if (jtem.LocationID == c.ID)
+                                                                                {
+                                                                                    <option value="0-@c.ID" selected>@c.CityName</option>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <option value="0-@c.ID">@c.CityName</option>
+                                                                                }
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="0-@c.ID">@c.CityName</option>
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Họ và tên:</label>
+                                                            <input type="text" class="form-control" id="txt-fullname-@jtem.ID" value="@jtem.FullName">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Số điện thoại:</label>
+                                                            <input type="number" class="form-control" id="txt-phone-@jtem.ID" value="@jtem.Phone">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Email:</label>
+                                                            <input type="email" class="form-control" id="txt-email-@jtem.ID" value="@jtem.Email">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Ngày sinh:</label>
+                                                            <input type="text" class="form-control datetimepicker date-only" id="txt-birthday-@jtem.ID" value="@Birthday">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-row">
+                                                        <div class="col-sm-12 form-group">
+                                                            <label for="address" class="">Địa chỉ:</label>
+                                                            <input type="text" class="form-control" id="txt-address-@jtem.ID" value="@jtem.Address">
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Số CMND:</label>
+                                                            <input type="number" class="form-control" id="txt-identity-@jtem.ID" value="@jtem.IdentityCard">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Nơi cấp:</label>
+                                                            <select class="form-control select2" id="ddl-city-identity-@jtem.ID">
+                                                                @{
+                                                                    foreach (var c in citys)
+                                                                    {
+                                                                        if (jtem.IdentityCardCityID != null)
+                                                                        {
+                                                                            if (jtem.IdentityCardCityID == c.ID)
+                                                                            {
+                                                                                <option value="@c.ID" selected>@c.CityName</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@c.ID">@c.CityName</option>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="@c.ID">@c.CityName</option>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Ngày cấp:</label>
+                                                            <input type="text" class="form-control datetimepicker date-only" id="txt-date-identity-@jtem.ID" value="@IdentityCardDate">
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Công việc:</label>
+                                                            <select class="form-control select2" id="ddl-job-@jtem.ID">
+                                                                @{
+                                                                    foreach (var j in jobs)
+                                                                    {
+                                                                        if (jtem.JobID != null)
+                                                                        {
+                                                                            if (jtem.JobID == j.ID)
+                                                                            {
+                                                                                <option value="@j.ID" selected>@j.JobName</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@j.ID">@j.JobName</option>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="@j.ID">@j.JobName</option>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-12 form-group">
+                                                            <label for="date_of_issued" class="">Đơn vị công tác/Học tập:</label>
+                                                            <input type="text" class="form-control" id="txt-work-place-@jtem.ID" value="@jtem.WorkPlace">
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Mục đích học tập:</label>
+                                                            <select class="form-control select2" id="ddl-muc-dich-@jtem.ID">
+                                                                <option value="0">---</option>
+                                                                @{
+                                                                    foreach (var ac in mucdich)
+                                                                    {
+                                                                        if (jtem.AcademicPurposesID != null)
+                                                                        {
+                                                                            if (jtem.AcademicPurposesID == ac.ID)
+                                                                            {
+                                                                                <option value="@ac.ID" selected>@ac.AcademicPurposesName</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@ac.ID">@ac.AcademicPurposesName</option>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="@ac.ID">@ac.AcademicPurposesName</option>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-9 form-group">
+                                                            <label for="date_of_issued" class="">Người nhà</label>
+                                                            <input type="text" class="form-control" id="txt-home-@jtem.ID" value="@jtem.NoteHome">
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row">
+                                                        <div class="col-sm-3 form-group">
+                                                            <label class="">Loại đào tạo:</label>
+                                                            <select class="form-control select2" id="ddl-academic-@jtem.ID">
+                                                                @{
+                                                                    if (!string.IsNullOrEmpty(jtem.TypeOfEducation))
+                                                                    {
+                                                                        if (jtem.TypeOfEducation.Contains("Academic"))
+                                                                        {
+                                                                            <option selected value="Academic">Academic</option>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="Academic">Academic</option>
+                                                                        }
+                                                                        if (jtem.TypeOfEducation.Contains("General"))
+                                                                        {
+                                                                            <option selected value="General">General</option>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="General">General</option>
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="Academic">Academic</option>
+                                                                        <option value="General">General</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-1 form-group">
+                                                            <label for="date_of_issued" class="">Đầu vào:</label>
+                                                            <input type="number" class="form-control" id="txt-in-scoure-@jtem.ID" value="@jtem.ScoreIn">
+                                                        </div>
+                                                        <div class="col-sm-1 form-group">
+                                                            <label for="date_of_issued" class="">Đầu ra:</label>
+                                                            <input type="number" class="form-control" id="txt-out-scoure-@jtem.ID" value="@jtem.ScoreOut">
+                                                        </div>
+                                                        <div class="col-sm-2 form-group">
+                                                            <label class="">Ngày thi:</label>
+                                                            <input type="text" class="form-control datetimepicker date-only" id="txt-exam-@jtem.ID" placeholder="DD / MM / YYYY" value="@DateExam">
+                                                        </div>
+                                                        <div class="col-sm-2 form-group">
+                                                            <label for="date_of_issued" class="">Trạng thái:</label>
+                                                            <select class="form-control" id="ddl-status-@jtem.ID">
+                                                                @{
+                                                                    if (jtem.Status == 1)
+                                                                    {
+                                                                        <option value="1" selected>Not activated</option>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="1">Not activated</option>
+                                                                    }
+                                                                    if (jtem.Status == 2)
+                                                                    {
+                                                                        <option value="2" selected>Active</option>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="2">Active</option>
+                                                                    }
+                                                                    if (jtem.Status == 3)
+                                                                    {
+                                                                        <option value="3" selected>Deactivated</option>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="3">Deactivated</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-sm-3 form-group">
+                                                            <label for="date_of_issued" class="">Mật khẩu mới:</label>
+                                                            <input type="password" class="form-control" id="txt-password-@jtem.ID" placeholder="*******">
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-row text-center">
+                                                        <a href="javascript:;" class="btn btn-primary update-customer" data-id="@jtem.ID" style="margin:0 auto;">Cập nhật</a>
+                                                    </div>
+                                                </fieldset>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination mg-b-0 justify-content-end mg-t-10">
+            <div class="pagination-container">
+                @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+            </div>
+        </ul>
+    </nav>
+</div>
+@section myScripts{
+    <script>
+        $(document).ready(function () {
+            $('.table').on('click', '.collapse-toggle', function () {
+                $(this).children().toggleClass('fa-plus-square').toggleClass('fa-minus-square');
+                $(this).toggleClass('active').closest('tr.tr-row').next().find('.collapse-content')
+                    .slideToggle(
+                        200);
+            })
+        });
+        $('input[name=search]').keyup(function (event) {
+            if (event.keyCode === 13) {
+                pagesearch();
+            }
+        });
+        $('#btn-search').click(function () {
+            pagesearch();
+        })
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+
+        $('.update-customer').click(function () {
+            var id = $(this).attr('data-id');
+
+            var sourceid = $('#ddl-source-' + id + '').val();
+            var citydis = $('#ddl-city-' + id + '').val();
+            var fullname = $('#txt-fullname-' + id + '').val();
+            var phone = $('#txt-phone-' + id + '').val();
+            var email = $('#txt-email-' + id + '').val();
+            var address = $('#txt-address-' + id + '').val();
+            var cmnd = $('#txt-identity-' + id + '').val();
+            var cmndcity = $('#ddl-city-identity-' + id + '').val();
+            var cmnddate = $('#txt-date-identity-' + id + '').val();
+            var birth = $('#txt-birthday-' + id + '').val();
+            var jobid = $('#ddl-job-' + id + '').val();
+            var workplace = $('#txt-work-place-' + id + '').val();
+            var mucdicid = $('#ddl-muc-dich-' + id + '').val();
+            var note = $('#txt-home-' + id + '').val();
+            var typeedu = $('#ddl-academic-' + id + '').val();
+            var scorein = $('#txt-in-scoure-' + id + '').val();
+            var scoreout = $('#txt-out-scoure-' + id + '').val();
+            var dateexam = $('#txt-exam-' + id + '').val();
+            var status = $('#ddl-status-' + id + '').val();
+            var supportid = $('#ddl-support-' + id + '').val();
+            var pass = $('#txt-password-' + id + '').val();
+
+            $.ajax({
+                type: "POST",
+                url: "/Admin/Customer/UpdateCusAjax",
+                data: '{id: ' + id + ', sourceid:' + sourceid + ', citydis:"' + citydis + '", fullname:"' + fullname + '", phone:"' + phone + '", email:"' + email + '", address:"' + address + '", cmnd:"' + cmnd + '", cmndcity:' + cmndcity + ', cmnddate:"' + cmnddate + '", birth:"' + birth + '", jobid:' + jobid + ', workplace:"' + workplace + '", mucdicid:' + mucdicid + ', note:"' + note + '", typeedu:"' + typeedu + '", scorein:"' + scorein + '", scoreout:"' + scoreout + '", dateexam:"' + dateexam + '", status:' + status + ', supportid:' + supportid + ', pass:"' + pass + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    console.log(msg.rs);
+                    if (msg.rs) {
+                        toast.create({
+                            title: 'Thông báo!',
+                            text: 'Cập nhật thành công',
+                            icon: 'notifications_active',
+                            classBackground: 'noti-success',
+                            timeout: 2500
+                        })
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    console.log("error view-info");
+                }
+            });
+        })
+
+        $('.chk-done').click(function () {
+            var e = $(this);
+            if (confirm('Đã tư vấn?')) {
+                var id = $(this).attr('data-id');
+                $.ajax({
+                    type: "POST",
+                    url: "/Admin/Customer/UpdateDoneAdvisory",
+                    data: '{id: ' + id + '}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                        console.log(msg.rs);
+                        if (msg.rs) {
+                            var tr = $(e).closest('tr');
+                            tr.remove();
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: 'Không thành công',
+                                icon: 'notifications_active',
+                                classBackground: 'noti-error',
+                                timeout: 2500
+                            })
+                        }
+                    },
+                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                        console.log("chk-done");
+                    }
+                });
+            }
+        })
+    </script>
+}

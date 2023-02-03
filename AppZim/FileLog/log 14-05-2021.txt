@@ -1,0 +1,5 @@
+PageError: CertificatceController    FunctionError: EditCertificatceCustomer    loginUID: 1    MessageError: Object reference not set to an instance of an object.    14/05/2021 09:49
+PageError: CertificatceController    FunctionError: EditCertificatceCustomer    loginUID: 1    MessageError: Object reference not set to an instance of an object.    14/05/2021 09:51
+PageError: CertificatceController    FunctionError: EditCertificatceCustomer    loginUID: 1    MessageError: Object reference not set to an instance of an object.    14/05/2021 11:37
+PageError: CertificatceController    FunctionError: EditCertificatceCustomer    loginUID: 1    MessageError: Object reference not set to an instance of an object.    14/05/2021 11:39
+PageError: CertificatceController    FunctionError: EditCertificatceCustomer    loginUID: 1    MessageError: Object reference not set to an instance of an object.    14/05/2021 11:41

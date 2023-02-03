@@ -1,0 +1,2 @@
+PageError: StudentSetController    FunctionError: StartTest    loginUID: 1240    MessageError: Object reference not set to an instance of an object.    27/04/2020 14:00
+PageError: StudentSetController    FunctionError: StartTest    loginUID: 1243    MessageError: Object reference not set to an instance of an object.    27/04/2020 14:18

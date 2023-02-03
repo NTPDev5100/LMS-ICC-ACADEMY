@@ -1,0 +1,100 @@
+﻿@using AppZim.TableSql
+@using AppZim.Models
+@using MB.Extensions
+@using System.Data.Entity;
+@model List<tbl_MoneyExchangeRate>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+}
+<!-- Button trigger modal -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Tỷ giá tiền tệ</li>
+    </ol>
+</nav>
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" onclick="SetDefault();">
+    Thêm mới
+</button>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Quốc gia</th>
+            <th>Đơn vị</th>
+            <th>Tỷ giá</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Code</td>
+                <td>@String.Format("{0:0,0}", item.ExchangeRate)</td>
+                <td>
+                    <a href="javasrcipt:;" data-toggle="modal" data-target="#exampleModal" onclick="Edit(@item.ID, '@item.Name', '@item.Code', @item.ExchangeRate)"><i class="fas fa-edit"></i></a>
+                    <a href="javascript:;" onclick="Delete(@item.ID);"><i class="fas fa-trash-alt"></i></a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="/Admin/MoneyExchangeRate/Insert" method="post">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Thêm mới</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input name="id" hidden/>
+                    <label>Tên quốc gia:</label>
+                    <input name="name" required class="form-control" />
+                    <label>Code:</label>
+                    <input name="code" required class="form-control" />
+                    <label>Tỷ giá:</label>
+                    <input name="rate" type="text" data-type="currency" required class="validate form-control" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $("table").DataTable();
+    })
+    function AddNew() {
+        SetDefault();
+        $("#exampleModalLabel").html("Thêm mới");
+        $("form").attr("action", "/Admin/MoneyExchangeRate/Insert");
+    }
+    function Edit(id, name, code, rate) {
+        SetDefault();
+        $("#exampleModalLabel").html("Chỉnh sửa");
+        $("form").attr("action", "/Admin/MoneyExchangeRate/Edit");
+        $("input[name=id]").val(id);
+        $("input[name=name]").val(name);
+        $("input[name=code]").val(code);
+        $("input[name=rate]").val(Intl.NumberFormat().format(rate));
+    }
+    function SetDefault() {
+        $("input[name=id]").val("");
+        $("input[name=name]").val("");
+        $("input[name=code]").val("");
+        $("input[name=rate]").val("");
+    }
+    function Delete(id) {
+        if (confirm("Bạn chắc muốn xóa?")) {
+            window.location.href = "/Admin/MoneyExchangeRate/Delete?id=" + id;
+        }
+    }
+</script>

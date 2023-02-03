@@ -1,0 +1,3212 @@
+﻿@using AppZim.Models;
+@using AppZim.TableSql;
+@using MB.Extensions;
+@{
+    ViewBag.Title = "DoingTest";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    List<tbl_ExerciseGroup> questiongroup = ExerciseGroupTable.getbysetdetail(Model.ID);
+    tbl_SetPackageDetail sd = SetPackageDetailTable.getbyid(Model.ID);
+    List<tbl_SetPackageStudentExercise> part1 = SetPackageStudentExerciseTable.getall(sd.SetPackageID.Value, aclog.ID).Where(n => n.PartNumber == 1).ToList();
+    List<tbl_SetPackageStudentExercise> part2 = SetPackageStudentExerciseTable.getall(sd.SetPackageID.Value, aclog.ID).Where(n => n.PartNumber == 2).ToList();
+    List<tbl_SetPackageStudentExercise> part3 = SetPackageStudentExerciseTable.getall(sd.SetPackageID.Value, aclog.ID).Where(n => n.PartNumber == 3).ToList();
+    List<tbl_SetPackageStudentExercise> taskone = SetPackageStudentExerciseTable.getall(sd.SetPackageID.Value, aclog.ID).Where(n => n.PartNumber == 4).ToList();
+    List<tbl_SetPackageStudentExercise> tasktwo = SetPackageStudentExerciseTable.getall(sd.SetPackageID.Value, aclog.ID).Where(n => n.PartNumber == 5).ToList();
+}
+<link href="~/app-assets/vendors/sweetalert/sweetalert.css" rel="stylesheet" />
+<style>
+    .drop-answer .dropwrap {
+        display: inline-block;
+        min-width: 100px;
+        background: #ebebeb;
+        min-height: 31px;
+        text-align: center;
+        padding: 5px;
+        vertical-align: middle;
+        cursor: pointer;
+        margin: 2px 5px 0px 5px;
+    }
+
+    .drop-container.hidden {
+        display: none;
+    }
+
+    .left-col.hidden {
+        display: none;
+    }
+
+    .typedetail-1 {
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+
+    li.q-nav.checked {
+        background: green;
+        border-radius: 20px;
+    }
+
+        li.q-nav.checked a {
+            color: white;
+        }
+
+
+    .row.hide {
+        display: none;
+    }
+
+    .testing .test__wrap .card-body .row > .left-col, .testing .test__wrap .card-body .row .right-col {
+        height: calc(100vh - 270px);
+        overflow-y: scroll;
+    }
+
+    .testing .test__wrap .card-body .row > .left-col, .testing .test__wrap .card-body .row .left-col {
+        height: calc(100vh - 270px);
+        overflow: auto;
+    }
+
+    .answer-area .answer-content {
+        width: 100%;
+        height: calc(100% - 21px);
+    }
+
+    .drop-answer .dropwrap {
+        min-width: 200px;
+    }
+
+    .dropwrap.question__wrap.question-each.draggable-dropzone--occupied {
+        min-width: 0px;
+    }
+
+    .dropwrap.question__wrap.question-each.draggable-dropzone--active.draggable-dropzone--occupied {
+        min-width: 200px;
+    }
+
+    .question-nav ul li a:hover {
+        color: #fff;
+        background: #a4bffb
+    }
+
+    .question-nav ul li a.checked {
+        border-radius: 50%;
+        background: #28b759;
+        color: #fff
+    }
+
+    .question-nav ul li a.active {
+        background: #3462c8;
+        color: #fff
+    }
+
+    .question-nav ul li a.flag {
+        color: #fff;
+        background: #f95858;
+        border-radius: 50%
+    }
+</style>
+<div class="exam__wrap">
+    <div class="card mg-b-10" id="exam__top">
+        <div class="card-body pd-y-10">
+            <div class="d-flex justify-content-between pos-relative flex-wrap align-items-center">
+                <div class="exam-info tx-primary tx-medium tx-18">
+                    <span class="name mg-r-10">@aclog.FullName</span> -
+                    <span class="candidate mg-l-10">@aclog.IdentityCard</span>
+                </div>
+                <div class="clock-time">
+                    <label for="js-toggleTime">
+                        <input type="checkbox" class="hidden" id="js-toggleTime">
+                        <div class="time-remain tx-16 d-flex align-items-center" id="time-clock"
+                             data-minute="30">
+                            <span class="clock mg-r-5"><i data-feather="clock"></i></span>
+                            <span class="hour">00</span><span class="minute">00</span><span class="second">00</span>
+                        </div>
+                    </label>
+                </div>
+                @{
+                    if (!string.IsNullOrEmpty(Model.LinkAudio))
+                    {
+                        <div class="audio-volumn">
+                            <div class="d-flex align-items-center">
+                                <span class="mg-r-5"> <i data-feather="volume-2" class="mg-r-5"></i></span>
+                                <input type="text" class="js-range-slider" name="volumn" value="" id="js-volumn-control" />
+                                <audio src="" id="test-audio-1"></audio>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <div class="ready-for-test">
+        <div class="card">
+            <div class="card-header">
+                <ul class="steps steps-lg  justify-content-center">
+                    <li class="step-item nav-item active">
+                        <a href="javascript:;" class="step-link active">
+                            <span class="step-number">1</span>
+                            <span class="step-title">
+                                <span>Thông tin học viên</span>
+                            </span>
+                        </a>
+                    </li>
+                    @if (Model.TypeDetail == 1)
+                    {
+                        <li class="step-item nav-item">
+                            <a href="javascript:;" class="step-link">
+                                <span class="step-number">2</span>
+                                <span class="step-title">
+                                    <span>Kiểm tra âm thanh</span>
+                                    <span></span>
+                                </span>
+                            </a>
+                        </li>
+                    }
+                    <li class="step-item nav-item">
+                        <a href="javascript:;" class="step-link">
+                            <span class="step-number">2</span>
+                            <span class="step-title">
+                                <span>Thông tin kiểm tra</span>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="js-step1" role="tabpanel"
+                         aria-labelledby="nav-step1">
+                        <div class="box-wrap wd-md-600 mg-x-auto pd-y-15">
+                            <h5 class="mg-b-15 tx-medium">
+                                <i class="far fa-address-card mg-r-5"></i> Xác nhận thông tin của bạn
+                            </h5>
+                            <div class="box pd-15 bd bd-dashed">
+                                <div class="row mg-b-5">
+                                    <div class="col-4">
+                                        <strong class="lb">Họ và tên:</strong>
+                                    </div>
+                                    <div class="col-8">
+                                        <span class="value">@aclog.FullName</span>
+                                    </div>
+                                </div>
+                                <div class="row mg-b-5">
+                                    <div class="col-4">
+                                        <strong class="lb">Ngày sinh:</strong>
+                                    </div>
+                                    <div class="col-8">
+                                        <span class="value">@aclog.Birthday.Value.ToString("dd/MM/yyyy")</span>
+                                    </div>
+                                </div>
+                                <div class="row mg-b-5">
+                                    <div class="col-4">
+                                        <strong class="lb">Email:</strong>
+                                    </div>
+                                    <div class="col-8">
+                                        <span class="value">@aclog.Email</span>
+                                    </div>
+                                </div>
+                                <div class="row mg-b-5">
+                                    <div class="col-4">
+                                        <strong class="lb">Trung tâm:</strong>
+                                    </div>
+                                    <div class="col-8">
+                                        <span class="value">197 Huỳnh Tấn Phát, P.Tân Thuận Đông, Q.7, Tp.HCM</span>
+                                    </div>
+                                </div>
+                                <div class="row mg-b-5">
+                                    <div class="col-4">
+                                        <strong class="lb">Mã số học viên:</strong>
+                                    </div>
+                                    <div class="col-8">
+                                        <span class="value">@aclog.IdentityCard</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="notice mg-t-15 tx-center tx-danger">
+                                <i data-feather="alert-circle"
+                                   class="mg-r-5"></i>
+                                Nếu chi tiết của bạn không chính xác, vui lòng báo cho người giám sát.
+                            </p>
+                            <p class="tx-center mg-b-0">
+                                <a href="javascript:;" class="btn btn-primary next-step"
+                                   data-tab="#js-step2">
+                                    Tiếp tục <i data-feather="arrow-right"
+                                                class="mg-l-5"></i>
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    @{
+                        if (Model.TypeDetail == 1)
+                        {
+                            <div class="tab-pane fade" id="js-step2" role="tabpanel" aria-labelledby="nav-step3">
+                                <div class="box-wrap wd-md-600 mg-x-auto pd-y-15">
+                                    <h5 class="mg-b-15 tx-medium"><i data-feather="headphones"></i> Kiểm tra tai nghe</h5>
+                                    <div class="box pd-15 bd bd-dashed">
+                                        <audio controls id="example-audio" class="d-none">
+                                            <source src="https://s3-eu-west-1.amazonaws.com/oep2stt/sample-listening-multiple-choice-one-answer/sample-audio.ogg"
+                                                    type="audio/mpeg">
+                                        </audio>
+                                        <p class="tx-center">
+                                            Đeo tai nghe của bạn vào và nhấn vào nút "Nghe thử" để kiểm tra âm thanh.
+                                        </p>
+                                        <p class="tx-center mg-b-0">
+                                            <a href="javascript:;"
+                                               class="sound-test btn btn-outline-info">
+                                                <i class="fas fa-play mg-r-5"></i> <span class="text">Nghe thử</span>
+                                            </a>
+                                        </p>
+                                    </div>
+
+                                    <p class="notice mg-t-15 tx-center tx-danger">
+                                        <i data-feather="alert-circle"
+                                           class="mg-r-5"></i>
+                                        Nếu bạn không thể nghe rõ âm thanh, vui lòng báo với người giám sát.
+                                    </p>
+                                    <p class="tx-center mg-b-0">
+                                        <a href="" class="btn btn-primary next-step "
+                                           data-tab="#js-step3">
+                                            Tiếp tục <i data-feather="arrow-right"
+                                                        class="mg-l-5"></i>
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="js-step3" role="tabpanel" aria-labelledby="nav-step3">
+                                <div class="test-infomation">
+                                    @Html.Raw(Model.Description)
+                                    <p class="tx-center tx-danger">
+                                        <i data-feather="alert-circle" class="mg-r-5"></i>Đừng nhấp vào nút "Bắt đầu" cho đến khi bạn được yêu cầu làm như vậy.
+                                    </p>
+                                    <p class="tx-center">
+                                        <a href="javascript:;" data-id="@Model.ID" class="start-test btn btn-primary">
+                                            Bắt đầu
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="tab-pane fade" id="js-step2" role="tabpanel" aria-labelledby="nav-step3">
+                                <div class="test-infomation">
+                                    @if (Model.TypeDetail == 4)
+                                    {
+                                        @Html.Raw(Model.Description)
+                                    }
+                                    else
+                                    {
+                                        @Html.Raw(Model.Description)
+                                    }
+                                    <p class="tx-center tx-danger">
+                                        <i data-feather="alert-circle" class="mg-r-5"></i>Đừng nhấp vào nút "Bắt đầu" cho đến khi bạn được yêu cầu làm như vậy.
+                                    </p>
+                                    <p class="tx-center">
+                                        <a href="javascript:;" data-id="@Model.ID" class="start-test btn btn-primary">
+                                            Bắt đầu
+                                        </a>
+                                    </p>
+
+                                </div>
+                            </div>
+                        }
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (sd.TypeDetail == 1 || sd.TypeDetail == 2)
+    {
+        <div class="test__wrap" id="test-container">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="title">@Model.PackageDetailName</h4>
+
+                </div>
+                <div class="card-body body-doing">
+                    @{
+                        string left = "show";
+                        string righ = "";
+                        if (sd.TypeDetail == 1)
+                        {
+                            left = "hidden";
+                            righ = "typedetail-1";
+                        }
+                        bool firstshow = false;
+                        string show = "";
+                        foreach (var item in questiongroup)
+                        {
+                            if (firstshow == true)
+                            {
+                                show = "hidden";
+                            }
+                            else
+                            {
+                                firstshow = true;
+                            }
+
+                            //custom lại nếu không có bài đọc thì cho câu hỏi sát bên trái
+                            if (item.ExerciseGroupID.Value == 0 || item.ExerciseGroupID == null)
+                            {
+                                if (item.SetPackageQuestion == "")
+                                {
+                                    left = "hidden";
+                                    righ = "typedetail-1";
+                                }
+                            }
+
+                            <div class="drop-container multipletype @show" data-group="@item.ID" group-id="@item.ID" type-multichoice="@item.TypeMultiChoice">
+                                <div class="row">
+                                    <div class="col-md-6 left-col @left" style="height:calc(100vh - 270px);">
+                                        <div class="question-para drop-answer question-record class-question" id="div-@item.ID" group-id="@item.ID" ex-group-id="@item.ExerciseGroupID">
+                                            @if (item.TypeMultiChoice != 3 && item.TypeMultiChoice != 2)
+                                            {
+                                                @Html.Raw(item.SetPackageQuestion)
+                                            }
+                                        </div>
+                                    </div>
+                                    @{
+                                        if (item.TypeMultiChoice == 1)//trắc nghiệm 1 câu
+                                        {
+                                            <div class="col-md-6 right-col @righ" style="height:calc(100vh - 270px)">
+                                                @Html.Raw(item.Introduction)
+                                                @{
+                                                    List<tbl_Exercise> lex = ExerciseTable.getbygroupid(item.ID);
+                                                    int index = 0;
+                                                    foreach (var exer in lex)
+                                                    {
+                                                        if (exer != null)
+                                                        {
+                                                            List<tbl_ExerciceMultiChoise> emc = ExerciceMultiChoiseTable.getbyexeid(exer.ID);
+                                                            index++;
+                                                            <div class="qz-wrap">
+                                                                <div class="qz-question" data-id="@exer.ID">
+                                                                    <span class="bold">
+                                                                        @Html.Raw(exer.ExerciseTitle)
+                                                                    </span>
+                                                                </div>
+                                                                <div class="qz-answer">
+                                                                    <ul class="qz-answer-ul circlestyle">
+                                                                        @foreach (var e in emc)
+                                                                        {
+                                                                            <li class="radi-item">
+                                                                                <label class="radiolb">
+                                                                                    <input type="radio" class="check-input" name="quest-id-@exer.ID" data-id="@e.ID"
+                                                                                           value="0">
+                                                                                    <span class="ip-avata"></span>
+                                                                                    <div class="val">
+                                                                                        <p>@e.AnswerTitle</p>
+                                                                                    </div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                        else if (item.TypeMultiChoice == 2)//DRAG
+                                        {
+                                            <div class="col-md-6 right-col @righ" style="height:calc(100vh - 270px)">
+                                                @Html.Raw(item.Introduction)
+                                                <div class="question-para drop-answer question-record-input">
+                                                    @Html.Raw(item.SetPackageQuestion)
+                                                </div>
+                                                <div class="dropwrap choose-answer" quest-group-id="quest-group-@( questiongroup.IndexOf(item) + 1)">
+                                                    @{
+                                                        List<tbl_Exercise> lex = ExerciseTable.getbygroupid(item.ID);
+                                                        //random1
+                                                        lex = lex.OrderBy(n => Guid.NewGuid()).ToList();
+                                                        List<tbl_ExerciceMultiChoise> lsrandom = new List<tbl_ExerciceMultiChoise>();
+                                                        foreach (var exer in lex)
+                                                        {
+                                                            if (exer != null)
+                                                            {
+                                                                List<tbl_ExerciceMultiChoise> emc = ExerciceMultiChoiseTable.getbyexeid(exer.ID);
+                                                                emc = emc.OrderBy(n => Guid.NewGuid()).ToList();
+                                                                lsrandom.AddRange(emc);
+                                                            }
+                                                        }
+                                                        lsrandom = lsrandom.OrderBy(n => Guid.NewGuid()).ToList();
+                                                        foreach (var e in lsrandom)
+                                                        {
+                                                            <div class="dropzone draggable-dropzone--occupied" data-id-ans="@e.ID" quest-group-id="quest-group-@( questiongroup.IndexOf(item) + 1)">
+                                                                <span class="select-word" style="user-select:none;-webkit-user-select:none">@e.AnswerTitle</span>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                        else if (item.TypeMultiChoice == 3)//Input
+                                        {
+                                            <div class="col-md-6 right-col input-test @righ" style="height:calc(100vh - 270px)">
+                                                @Html.Raw(item.Introduction)
+                                                <div class="question-para drop-answer question-record-input">
+                                                    @Html.Raw(item.SetPackageQuestion)
+                                                </div>
+                                            </div>
+                                            <script>
+                                                $(document).ready(function () {
+                                                    $('.input-test').find('.dropwrap').each(function (index, e) {
+                                                        $(e).prop("contenteditable", "true");
+                                                    });
+                                                });
+                                            </script>
+                                        }
+                                        else if (item.TypeMultiChoice == 4)//Multiple check
+                                        {
+                                            <div class="col-md-6 right-col @righ" style="height: calc(100vh - 270px)">
+                                                @Html.Raw(item.Introduction)
+                                                @{
+                                                    List<tbl_Exercise> lex = ExerciseTable.getbygroupid(item.ID);
+                                                    foreach (var exer in lex)
+                                                    {
+                                                        if (exer != null && (exer.ParentQuestionID == 0 || exer.ParentQuestionID == null))
+                                                        {
+                                                            List<tbl_ExerciceMultiChoise> emc = ExerciceMultiChoiseTable.getbyexeid(exer.ID);
+                                                            List<tbl_Exercise> lstChild = ExerciseTable.getListHasParent(exer.ID);
+                                                            foreach (var v in lstChild)
+                                                            {
+                                                                List<tbl_ExerciceMultiChoise> aws = ExerciceMultiChoiseTable.getbyexeid(v.ID);
+                                                                emc.AddRange(aws);
+                                                            }
+                                                            emc = emc.OrderBy(n => n.AnswerTitle).ToList();
+                                                            int socaudung = emc.Where(n => n.isTrue == true).ToList().Count;
+                                                            <div class="qz-wrap" data-max="@socaudung">
+                                                                <div class="qz-question" data-id="@exer.ID">
+                                                                    <span class="bold">
+                                                                        @Html.Raw(exer.ExerciseTitle)
+                                                                    </span>
+                                                                </div>
+                                                                <div class="qz-answer">
+                                                                    <ul class="qz-answer-ul">
+                                                                        @foreach (var e in emc)
+                                                                        {
+                                                                            <li class="checkbox-item">
+                                                                                <label class="checklb">
+                                                                                    <input class="check-input" data-id="@e.ID" type="checkbox" name="quest-id-@exer.ID" />
+                                                                                    <span class="ip-avata"></span>
+                                                                                    <div class="val">@e.AnswerTitle</div>
+                                                                                </label>
+                                                                            </li>
+                                                                        }
+                                                                    </ul>
+                                                                </div>
+
+
+                                                            </div>
+                                                        }
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                        else//Map
+                                        {
+                                            List<tbl_Exercise> lex = ExerciseTable.getbygroupid(item.ID);
+                                            List<tbl_ExerciceMultiChoise> lemc = new List<tbl_ExerciceMultiChoise>();
+                                            foreach (var exer in lex)
+                                            {
+                                                if (exer != null)
+                                                {
+                                                    tbl_ExerciceMultiChoise emc = ExerciceMultiChoiseTable.getbyexeid(exer.ID).FirstOrDefault();
+                                                    if (emc != null)
+                                                    {
+                                                        lemc.Add(emc);
+                                                    }
+                                                }
+                                            }
+                                            //ds cau noise
+                                            List<tbl_ExerciceMultiChoise> lnoise = ExerciceMultiChoiseTable.getnoisewordbyExGroupID(item.ID);
+                                            lemc.AddRange(lnoise);
+                                            lemc = lemc.OrderBy(n => n.AnswerTitle).ToList();
+                                            List<string> lemcstring = new List<string>();
+                                            lemcstring = lemc.Select(n => n.AnswerTitle).Distinct().ToList();
+
+                                            <div class="col-md-6 right-col @righ" style="height:calc(100vh - 270px)">
+                                                @Html.Raw(item.Introduction)
+                                                <div class="qz-wrap table-checked">
+                                                    <div class="qz-answer">
+                                                        <div class="table-responsive table-checkmark">
+                                                            <table class="table table-bordered table-center">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th></th>
+                                                                        @foreach (var ans in lemcstring)
+                                                                        {
+                                                                            <th>@ans</th>
+                                                                        }
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @{
+                                                                        int index = 0;
+                                                                    }
+                                                                    @foreach (var ques in lex)
+                                                                    {
+                                                                        index++;
+                                                                        <tr id="quest-id-@ques.ID" class="question-mark" data-id="@ques.ID">
+                                                                            <td>
+                                                                                <div class="d-flex align-items-baseline question">
+                                                                                    <span>@Html.Raw(ques.ExerciseTitle)</span>
+                                                                                </div>
+                                                                            </td>
+                                                                            @foreach (var emc in lemcstring)
+                                                                            {
+                                                                                List<tbl_ExerciceMultiChoise> lmc = lemc.Where(n => n.AnswerTitle == emc).ToList();
+                                                                                string listid = string.Join(",", lmc.Select(n => n.ID).ToList());
+                                                                                <td>
+                                                                                    <label class="tb-checkmark">
+                                                                                        <input type="radio" name="quest-id+@index+@item.ID.ToString()" data-id="@listid">
+                                                                                        <span></span>
+                                                                                    </label>
+                                                                                </td>
+                                                                            }
+                                                                        </tr>
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="card-footer">
+                    <div class="bar-time">
+                        <span style=""><span class="progress"></span></span>
+                    </div>
+                    <div class="test__footer d-flex justify-content-between align-items-center">
+                        <div class="check-flag">
+                            <label class="custom-checkbox">
+                                <input class="check-input " type="checkbox" name="checkFlag" value="0">
+                                <span class="ip-avata">Review</span>
+                            </label>
+                        </div>
+                        @{
+                            int dem = 0;
+                            <div class="question-nav d-flex align-items-center justify-content-center">
+                                <a href="javascript:;" class="btn btn-dark btn-prev">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                                <ul class="list-q-nav mg-x-10">
+                                    @foreach (var item in questiongroup)
+                                    {
+                                        if (item != null)
+                                        {
+                                            List<tbl_Exercise> le = ExerciseTable.getbygroupid(item.ID).Where(n => n.isHide != true).ToList();
+                                            foreach (var exercise in le)
+                                            {
+                                                if (item != null)
+                                                {
+                                                    dem++;
+                                                    int sodcaudung = ExerciceMultiChoiseTable.getbyexeid(exercise.ID).Where(n => n.isTrue == true).Count();
+                                                    if (item.TypeMultiChoice != 2 && item.TypeMultiChoice != 3)
+                                                    {
+                                                        <li class="q-nav" data-c="@sodcaudung" data-parent="quest-id-@exercise.ParentQuestionID" type-multichoise="@item.TypeMultiChoice" group-id="@item.ID" ex-group-id="@item.ExerciseGroupID">
+                                                            <a href="javascript:;" data-parent="quest-id-@exercise.ParentQuestionID" data-boxid="@exercise.ID" class="q-nav-link" data-id="quest-id-@exercise.ID">@dem</a>
+                                                        </li>
+                                                    }
+                                                    else
+                                                    {
+                                                        <li class="q-nav" data-c="@sodcaudung" data-parent="quest-id-@exercise.ParentQuestionID" type-multichoise="@item.TypeMultiChoice" group-id="@item.ID" ex-group-id="@item.ExerciseGroupID">
+                                                            <a href="javascript:;" class="q-nav-link" data-boxid="@exercise.ID" data-id="quest-id-@exercise.ExerciseTitle">@dem</a>
+                                                        </li>
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                </ul>
+                                <a href="javascript:;" class="btn btn-dark btn-next">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </div>
+                        }
+                        @using (Html.BeginForm("SubmitTest", "StudentSet", FormMethod.Post, new { id = "form-submit-test", @enctype = "multipart/form-data" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="hdfResult" />
+                            <div class="test-action">
+                                <a href="javascript:;" class="btn btn-submit-lr btn-submit-test btn-success tx-uppercase nowrap rounded-0">
+                                    Nộp bài
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        if (sd.TypeDetail == 3)
+        {
+            <div class="test__wrap body-doing" id="test-container">
+                <div class="card">
+                    <div class="tab-container">
+                        <div class="tab-question tab-pane" id="quest-id-1">
+                            <div class="card-header">
+                                <h4 class="title">Task One</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 left-col">
+                                        <div class="question-para">
+                                            @Html.Raw(taskone[0].ExerciseTitle)
+                                        </div>
+
+                                    </div>
+                                    <div class="col-md-6 right-col">
+                                        <div class="answer-area">
+                                            <textarea class="answer-content" contenteditable="true" data-id="@(taskone[0].ID)"></textarea>
+                                            <p class="work-count mg-t-10 tx-color-03 "><span class="tx-medium tx-color-02 word-counter">0</span>  <span class="word-name">chữ</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="tab-question tab-pane" id="quest-id-2">
+                            <div class="card-header">
+                                <h4 class="title">Task Two</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 left-col">
+                                        <div class="question-para">
+                                            @Html.Raw(tasktwo[0].ExerciseTitle)
+                                        </div>
+
+                                    </div>
+                                    <div class="col-md-6 right-col">
+                                        <div class="answer-area">
+                                            <textarea class="answer-content" contenteditable="true" data-id="@(tasktwo[0].ID)"></textarea>
+                                            <p class="work-count mg-t-10 tx-color-03 "><span class="tx-medium tx-color-02 word-counter">0</span> <span class="word-name">chữ</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="bar-time">
+                            <span><span class="progress"></span></span>
+                        </div>
+                        <div class="test__footer d-flex justify-content-between align-items-center">
+
+                            <div class="question-nav d-flex align-items-center justify-content-center">
+                                <a href="javascript:;" class="btn btn-dark btn-prev  ">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                                <ul class="list-q-nav mg-x-10">
+                                    <li class="q-nav ">
+                                        <a href="javascript:;" class="q-nav-link active" data-id="quest-id-1">1</a>
+                                    </li>
+                                    <li class="q-nav ">
+                                        <a href="javascript:;" class="q-nav-link " data-id="quest-id-2">2</a>
+                                    </li>
+                                </ul>
+                                <a href="javascript:;" class="btn btn-dark btn-next">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </div>
+                            <div class="test-action">
+                                <a href="javascript:;" class="btn btn-success tx-uppercase nowrap nopbaiviet rounded-0 ">
+                                    Submit
+                                    test
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        }
+        else
+        {
+            <div class="test__wrap body-doing" id="test-container">
+                <div class="card">
+                    <div class="card-header" id="card-header">
+                        <h4 class="title">Speaking</h4>
+                        <div class="description">
+                            <p class="mg-b-0">
+                                @sd.Description
+                            </p>
+                        </div>
+                    </div>
+                    <div class="tab-container">
+                        <div class="tab-question tab-pane part-1" id="quest-id-1" data-time="14">
+                            <div class="card-body">
+                                @{
+                                    int index = 0;
+                                    string show = "show";
+                                    foreach (var item in part1)
+                                    {
+                                        index++;
+                                        if (index > 1)
+                                        {
+                                            show = "hide";
+                                        }
+                                        <div class="row @show part-1 part" id="question-index-@index" data-id="@item.ID">
+                                            <div class="col-md-6 left-col">
+                                                <div class="group mg-b-30">
+                                                    <p class="group-from tx-16 tx-medium mg-b-0">Speaking part 1: @part1.Count câu</p>
+                                                </div>
+                                                <div class="qz-wrap">
+                                                    <div class="qz-question">
+                                                        <span class="bold">
+                                                            Câu @index
+                                                        </span>
+                                                    </div>
+                                                    <div class="qz-fill-word">
+                                                        <div class="article-cont">
+                                                            <div class="mona-content">
+                                                                @Html.Raw(item.ExerciseTitle)
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 right-col">
+                                                <div class="qz-wrap">
+                                                    <div class="qz-question">
+                                                        <span class="bold">Ghi lại câu trả lời</span>
+                                                    </div>
+                                                    <div class="qz-answer">
+                                                        <div class="record-block" data-index="@index">
+                                                            <div class="record-action">
+                                                                <button class="btn-record js-start btn btn-dark mg-r-5">
+                                                                    <i data-feather="mic"></i> <span class="record-time mg-l-5">
+                                                                        <span class="minutes">00</span>:<span class="seconds">00</span>
+                                                                    </span>
+                                                                </button>
+                                                                <button class="btn-record js-stop btn btn-danger mg-r-5">
+                                                                    <i data-feather="stop-circle"></i> Dừng lại
+                                                                </button>
+                                                            </div>
+                                                            <div class="record-list" data-questionid="@item.ID">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div class="tab-question tab-pane part-2" id="quest-id-2" data-time="3">
+                            @{
+                                int part2count = 0;
+                                <div class="card-body">
+                                    @foreach (var item in part2)
+                                    {
+                                        index++;
+                                        part2count++;
+                                        <div class="row @show part-2 part" id="question-index-@index" data-id="@item.ID">
+                                            <div class="col-md-6 left-col">
+                                                <div class="group mg-b-30">
+                                                    <p class="group-from tx-16 tx-medium mg-b-0">Speaking part 2: @part2.Count câu</p>
+                                                </div>
+                                                <div class="qz-wrap">
+                                                    <div class="qz-question">
+                                                        <span class="bold">
+                                                            Câu @part2count
+                                                        </span>
+                                                    </div>
+                                                    <div class="qz-fill-word">
+                                                        <div class="article-cont">
+                                                            <div class="mona-content">
+                                                                @Html.Raw(item.ExerciseTitle)
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 right-col">
+                                                <div class="qz-wrap">
+                                                    <div class="qz-question">
+                                                        <span class="bold">Ghi lại câu trả lời</span>
+                                                    </div>
+                                                    <div class="qz-answer">
+                                                        <div class="record-block" data-index="@index">
+                                                            <div class="record-action">
+                                                                <button class="btn-record js-start btn btn-dark mg-r-5">
+                                                                    <i data-feather="mic"></i> <span class="record-time mg-l-5">
+                                                                        <span class="minutes">00</span>:<span class="seconds">00</span>
+                                                                    </span>
+                                                                </button>
+                                                                <button class="btn-record js-stop btn btn-danger mg-r-5">
+                                                                    <i data-feather="stop-circle"></i> Dừng lại
+                                                                </button>
+                                                            </div>
+                                                            <div class="record-list" data-questionid="@item.ID">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="tab-question tab-pane part-3" id="quest-id-3" data-time="5">
+                            <div class="card-body">
+                                @{
+                                    int part3count = 0;
+                                    foreach (var item in part3)
+                                    {
+                                        index++;
+                                        part3count++;
+                                        <div class="row @show part-3 part" id="question-index-@index" data-id="@item.ID">
+                                            <div class="col-md-6 left-col">
+                                                <div class="group mg-b-30">
+                                                    <p class="group-from tx-16 tx-medium mg-b-0">Speaking part 3: @part3.Count câu</p>
+                                                </div>
+                                                <div class="qz-wrap">
+                                                    <div class="qz-question">
+                                                        <span class="bold">
+                                                            Câu @part3count
+                                                        </span>
+                                                    </div>
+                                                    <div class="qz-fill-word">
+                                                        <div class="article-cont">
+                                                            <div class="mona-content">
+                                                                @Html.Raw(item.ExerciseTitle)
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 right-col">
+                                                <div class="qz-wrap">
+                                                    <div class="qz-question">
+                                                        <span class="bold">Ghi lại câu trả lời</span>
+                                                    </div>
+
+                                                    <div class="qz-answer">
+                                                        <div class="record-block" data-index="@index">
+                                                            <div class="record-action">
+                                                                <button class="btn-record js-start btn btn-dark mg-r-5" data-index="@index">
+                                                                    <i data-feather="mic"></i> <span class="record-time mg-l-5">
+                                                                        <span class="minutes">00</span>:<span class="seconds">00</span>
+                                                                    </span>
+                                                                </button>
+                                                                <button class="btn-record js-stop btn btn-danger mg-r-5" data-index="@index">
+                                                                    <i data-feather="stop-circle"></i> Dừng lại
+                                                                </button>
+                                                            </div>
+                                                            <div class="record-list" data-questionid="@item.ID">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="bar-time">
+                            <span style=""><span class="progress"></span></span>
+                        </div>
+                        <div class="test__footer d-flex justify-content-between align-items-center">
+                            <div class="check-flag">
+                                <label class="custom-checkbox">
+                                    <input class="check-input " type="checkbox" name="checkFlag" value="0">
+                                    <span class="ip-avata">Review</span>
+                                </label>
+                            </div>
+                            <div class="question-nav d-flex align-items-center justify-content-center">
+                                <a href="javascript:;" class="btn btn-dark btn-prev  ">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+
+                                <ul class="list-q-nav mg-x-10">
+                                    @{
+                                        int dem = 0;
+                                        string firstshow = "active";
+
+                                        for (int i = 0; i < part1.Count; i++)
+                                        {
+                                            dem++;
+                                            if (dem > 1)
+                                            {
+                                                firstshow = "";
+                                            }
+                                            <li class="q-nav">
+                                                <a href="javascript:;" class="q-nav-link @firstshow" data-id="quest-id-1" data-index="@dem">@dem</a>
+                                            </li>
+
+                                        }
+                                        for (int i = 0; i < part2.Count; i++)
+                                        {
+                                            dem++;
+                                            <li class="q-nav ">
+                                                <a href="javascript:;" class="q-nav-link" data-id="quest-id-2" data-index="@dem">@dem</a>
+                                            </li>
+                                        }
+                                        for (int i = 0; i < part3.Count; i++)
+                                        {
+                                            dem++;
+                                            <li class="q-nav ">
+                                                <a href="javascript:;" class="q-nav-link" data-id="quest-id-3" data-index="@dem">@dem</a>
+                                            </li>
+                                        }
+
+                                    }
+
+                                </ul>
+                                <a href="javascript:;" class="btn btn-dark btn-next">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </div>
+                            <div class="test-action">
+                                <a href="javascript:;"
+                                   class="btn btn-success tx-uppercase nowrap rounded-0 next-part">
+                                    Nộp bài
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        }
+    }
+</div>
+<div class="context-menu" id="js-context-menu">
+    <ul class="menu-options" id="js-add-context">
+        <li class="menu-option" id="js-make-highlight"><i data-feather="edit-2"></i> Đánh dấu</li>
+        <li class="menu-option" id="js-make-note"><i data-feather="file-text"></i> Ghi chú</li>
+    </ul>
+    <ul class="menu-options" id="js-edit-context">
+        <li class="menu-option" id="js-add-note"><i data-feather="file-text"></i> Thêm ghi chú</li>
+        <li class="menu-option" id="js-clear-highlight"><i data-feather="trash"></i> Xóa</li>
+        <li class="menu-option" id="js-clear-all-highlight"><i data-feather="trash-2"></i> Xóa tất cả</li>
+    </ul>
+</div>
+<link rel="stylesheet" href="/app-assets/zimV2/lib/ion-rangeslider/css/ion.rangeSlider.min.css">
+@section myScripts{
+    <script src="/app-assets/zimV2/lib/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+    <script src="/app-assets/zimV2/assets/dev/dropable.js?v1"></script>
+
+    <script src="~/app-assets/zimv2/assets/js/sweetalert2@8.js"></script>
+    <script src="~/app-assets/zimv2/assets/js/make-note.js?v1"></script>
+    <script>
+        $(document).ready(function () {
+            $($('.list-q-nav .q-nav-link')[0]).trigger('click');
+        });
+        $('input[name="checkFlag"]').click(function () {
+            let currentLiActive = $('.list-q-nav .q-nav-link.active');
+            if (currentLiActive.length == 0) {
+                currentLiActive = $('.list-q-nav .q-nav-link')[0];
+            }
+            if ($(currentLiActive).hasClass('flag')) {
+                currentLiActive.removeClass('flag');
+            }
+            else {
+                currentLiActive.addClass('flag');
+            }
+        });
+        $('.btn-next').click(function () {
+            let currentLiActive = $('.list-q-nav .q-nav-link.active');
+            let nextElement;
+            if (currentLiActive.length == 0) {
+                nextElement = $('.list-q-nav .q-nav-link')[0];
+            } else {
+                nextElement = currentLiActive.closest('li.q-nav').next();
+            }
+
+            $(nextElement).trigger('click');
+        });;
+        $('.btn-prev').click(function () {
+            let currentLiActive = $('.list-q-nav .q-nav-link.active');
+
+            let nextElement;
+            if (currentLiActive.length == 0) {
+                nextElement = $('.list-q-nav .q-nav-link')[0];
+            } else {
+                nextElement = currentLiActive.closest('li.q-nav').prev();
+            }
+            $(nextElement).trigger('click');
+        });;
+    </script>
+    @if (sd.TypeDetail == 1 || sd.TypeDetail == 2)
+    {
+        <script>
+            let submited = false;
+            $(document).on('paste', '[contenteditable=true]', function (e) {
+                // cancel paste
+                e.preventDefault();
+
+                // get text representation of clipboard
+                var text = (e.originalEvent || e).clipboardData.getData('text/plain');
+
+                // insert text manually
+                document.execCommand("insertHTML", false, text.trim());
+            });
+            $(document).on('keyup', '[contenteditable=true]', function () {
+
+                let $this = this;
+                let id = this.id;
+                let group = $(this).closest('.drop-container.multipletype').attr('data-group');
+                let type = $(this).closest('.drop-container.multipletype').attr('type-multichoice');
+
+                $('li.q-nav[group-id="' + group + '"][type-multichoise="' + type + '"]').each(function (index, e) {
+                    if ($(e).children().attr('data-id') == id) {
+                        if ($($this).html() != "") {
+                            $(e).children().addClass('checked');
+                        } else {
+                            $(e).children().removeClass('checked');
+
+                        }
+                    }
+                });
+            });
+            $(document).ready(function () {
+                let isPlaying = false;
+                let soundVolumn = 1;
+                $('.next-step').on('click touchstart', function (e) {
+                    e.preventDefault();
+                    let $currentStep = $('.steps .step-item.active');
+                    $currentStep.addClass('complete');
+                    $currentStep.removeClass('active');
+                    $currentStep.next().addClass('active');
+                    let $tab = $($(this).attr('data-tab'));
+                    if ($tab) {
+                        $tab.addClass('show active');
+                        $tab.siblings().removeClass('show active');
+                    }
+                    try {
+                        if ($('#example-audio')) {
+                            $('#example-audio').get(0).pause();
+                        }
+                    } catch{
+
+                    }
+                });
+
+                const setVolumnAudio = (volumnNumb) => {
+                    let audios = document.getElementsByTagName('audio');
+                    if (audios.length > 0) {
+                        [...audios].forEach(function (audio) {
+                            audio.volume = volumnNumb;
+                        });
+                    }
+                    if (volumnNumb == 0) {
+                        $(".audio-volumn svg.feather").replaceWith(feather.icons["volume-x"].toSvg());
+                    } else {
+                        $(".audio-volumn svg.feather").replaceWith(feather.icons["volume-2"].toSvg());
+                    }
+                }
+
+                const volumnChange = ($data) => {
+                    soundVolumn = $data.input.val();
+                    setVolumnAudio(soundVolumn);
+                }
+                $("#js-volumn-control").ionRangeSlider({
+                    min: 0,
+                    max: 1,
+                    step: 0.01,
+                    from: 1,
+                    hide_min_max: true,
+                    hide_from_to: true,
+                    grid_margin: false,
+                    onChange: volumnChange
+                });
+                const pad = (n) => {
+                    return n < 10 ? '0' + n : n;
+                };
+                const startClock = () => {
+                    $.ajax({
+                        type: "POST",
+                        url: "/StudentSet/StartTest",
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (msg) {
+                            if (msg.rs) {
+                                console.log("time:" + msg.time);
+                                console.log("timestart:" + msg.timestart);
+                                if (msg.linkaudio != "") {
+                                    $('#test-audio-1').attr('src', msg.linkaudio);
+                                    $('#test-audio-1').get(0).play();
+                                }
+                                $('.clock-time').show();
+                                if ($('#time-clock').length > 0) {
+                                    let $clock = $('#time-clock');
+                                    let timeSet = msg.time;
+                                    let hour = $clock.find('.hour');
+                                    let min = $clock.find('.minute');
+                                    let second = $clock.find('.second');
+
+                                    const countDownTime = new Date().getTime() + (timeSet * 1000 * 60);
+                                    //const percent = (timeSet * 1000 * 60) * (0.30); //30% thoi gian lam bai
+                                    let timenow = new Date().getTime();
+                                    let fivemin = countDownTime - timenow - 300000;
+                                    let alertfiveminute = true;
+                                    let interval = setInterval(() => {
+                                        let now = new Date().getTime();
+                                        let distance = countDownTime - now;
+                                        let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                        let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                                        let s = Math.floor((distance % (1000 * 60)) / 1000);
+                                        hour.text(pad(h));
+                                        min.text(pad(m))
+                                        second.text(pad(s))
+                                        if (distance <= 60000) {
+                                            $clock.addClass('tx-danger');
+                                        }
+                                        if (alertfiveminute == true && distance > 300000) {
+                                            if (distance <= fivemin) {
+                                                $.ajax({
+                                                    async: false,
+                                                    type: "POST",
+                                                    url: "/StudentSet/CheckTimeUp",
+                                                    contentType: "application/json; charset=utf-8",
+                                                    dataType: "json",
+                                                    success: function (msg) {
+                                                        if (msg.rs) {
+                                                            alertfiveminute = false;
+                                                            alert("Remind! 5 minutes left");
+                                                        }
+                                                    },
+                                                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                        console.log("e: ");
+                                                    }
+                                                });
+                                            }
+                                        }
+                                        if (distance < 0) {
+                                            clearInterval(interval);
+                                            hour.text('00');
+                                            min.text('00');
+                                            second.text('00');
+                                            if (submited != true) {
+                                                $.ajax({
+                                                    async: false,
+                                                    type: "POST",
+                                                    url: "/StudentSet/CheckTimeUp",
+                                                    contentType: "application/json; charset=utf-8",
+                                                    dataType: "json",
+                                                    success: function (msg) {
+                                                        if (msg.rs) {
+                                                            $('.body-doing').css({ "pointer-events": "none" }, { "opacity": "0.4" });
+                                                            Nopbai();
+                                                        } else {
+                                                            console.log("error");
+                                                        }
+                                                    },
+                                                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                        console.log("e");
+                                                    }
+                                                });
+                                            }
+                                        }
+                                        let percentTime = (Math.abs(distance) / 1000) / (Math.abs(timeSet * 60)) * 100;
+                                        $('.bar-time > span').css('width', percentTime + '%');
+                                    }, 100);
+                                }
+
+                            } else {
+                                if (msg.type == 1) {
+                                    window.location.href = msg.link;
+                                    if (msg.message != undefined) {
+                                        toast.create({
+                                            title: 'Thông báo!',
+                                            text: '' + msg.message + '',
+                                            icon: 'error_outline',
+                                            classBackground: 'noti-error',
+                                            timeout: 3000
+                                        });
+                                    }
+                                } else {
+                                    toast.create({
+                                        title: 'Thông báo!',
+                                        text: '' + msg.message + '',
+                                        icon: 'error_outline',
+                                        classBackground: 'noti-error',
+                                        timeout: 3000
+                                    });
+                                }
+                            }
+                        },
+                        error: function (xmlhttprequest, textstatus, errorthrow) {
+
+                            console.log("e: ");
+                        }
+                    });
+                };
+
+                $('.start-test').on('click touchstart', function () {
+                    $('body').addClass('testing');
+                    $('.ready-for-test').hide();
+                    $('#test-container').show();
+                    startClock();
+                });
+                const soundTest = (playButton) => {
+                    const audioTest = document.getElementById('example-audio');
+                    audioTest.volume = soundVolumn;
+                    let playIcon = playButton.querySelector('.fas');
+                    let playText = playButton.querySelector('.text');
+                    audioTest.onplaying = function () {
+                        playIcon.classList.remove('fa-play');
+                        playIcon.classList.add('fa-stop');
+                        playText.textContent = 'Dừng lại';
+                        isPlaying = true;
+                    };
+                    audioTest.onpause = function () {
+                        playIcon.classList.add('fa-play');
+                        playIcon.classList.remove('fa-stop');
+                        playText.textContent = 'Nghe thử';
+                        isPlaying = false;
+                    }
+                    if (isPlaying) {
+                        audioTest.pause()
+                        audioTest.currentTime = 0;
+                    } else {
+                        audioTest.play();
+                    }
+                };
+
+                $('.sound-test').on('click touchstart', function () {
+                    soundTest(this);
+                });
+
+                //Js test
+
+                let containers = document.querySelectorAll('[type-multichoice="2"]');
+                console.log(containers);
+                if (containers == null) {
+                    return false;
+                }
+                if (containers.length === 0) {
+                    return false;
+                }
+
+                const initDrag = (dropContainer) => {
+
+                    const dropInstance = new Droppable.default(dropContainer, {
+                        draggable: '.dropzone',
+                        dropzone: '.dropwrap'
+                        //mirror: {
+                        //    constrainDimensions: true,
+                        //},
+                    });
+                    //Bắt đầu kéo
+                    dropInstance.on('drag:start', (evt) => {
+                        //  console.log(evt);
+                        dropContainer.style.userSelect = 'none';
+                        setTimeout(() => {
+                            let source = evt.data.source;
+                            console.log(source);
+                            let groupId = source.closest('.dropwrap').getAttribute('quest-group-id');
+                            let dropLists = dropContainer.querySelectorAll('.dropwrap');
+                            if (dropLists.length > 0) {
+                                [...dropLists].map(x => {
+                                    if (x.getAttribute('quest-group-id') !== groupId) {
+                                        x.classList.remove('draggable-dropzone--active');
+                                        x.classList.add('draggable-dropzone--wrong')
+                                    }
+                                });
+                            }
+                        }, 0)
+                    });
+
+                    //Kéo xong
+                    dropInstance.on('drag:stop', (evt) => {
+                        console.log('dragStop');
+                        let dropList = dropContainer.querySelectorAll('.dropwrap');
+                        [...dropList].map(x => x.classList.remove('draggable-dropzone--wrong'));
+                        dropContainer.style.userSelect = 'auto';
+                        [...dropContainer.querySelectorAll('.choose-answer')].map(x => x.classList.remove('draggable-dropzone--occupied'));
+                    });
+
+                    //Trước khi drop xuống
+                    dropInstance.on('droppable:stop', (evt) => {
+                        console.log(evt);
+                        let dropzone = evt.dropzone;
+                        let source = evt.dragEvent.data.source;
+                        let sourceWrap = source.closest('.dropwrap');
+                        if ([...dropzone.classList].indexOf('question__wrap') > -1) {
+                            const id = dropzone.id;
+                            const navQuestion = document.querySelector('[data-id="' + id + '"]');
+                            console.log(navQuestion)
+                            navQuestion.classList.add('checked');
+                        }
+                        setTimeout(() => {
+                            const emptyQuestions = [...dropContainer.querySelectorAll('.question__wrap')].filter((
+                                q) => {
+                                return q.childElementCount === 0;
+                            });
+                            emptyQuestions.forEach(function (question) {
+                                const qId = question.id;
+                                console.log({ question });
+                                document.querySelector('[data-id="' + qId + '"]').classList.remove(
+                                    'checked');
+
+                            });
+                        }, 0)
+                    });
+                    //Sau khi drop
+                    dropInstance.on('droppable:dropped', evt => {
+                        let dropzone = evt.dropzone;
+                        let source = evt.dragEvent.data.source;
+                        let sourceWrap = source.closest('.dropwrap');
+                        if (dropzone.getAttribute('quest-group-id') !== sourceWrap.getAttribute('quest-group-id')) {
+                            evt.cancel();
+                        }
+                    });
+                }
+
+                [...containers].map(container => initDrag(container)); //Init Dragaable
+
+                const $navQuestions = $('[data-id^=quest-id]').on('click', function (e) {
+                    let $this = $(this);
+                    let id = $(this).attr('data-id');
+                    let $question = $('.question__wrap');
+                    let $active = $('#' + id).addClass('active');
+                    $this.addClass('active');
+                    $navQuestions.not($this).removeClass('active');
+                    $question.not($active).removeClass('active');
+                });
+                $('[contenteditable=true]').on('keyup', function () {
+
+                    let $this = this;
+                    let id = this.id;
+                    let group = $(this).closest('.drop-container.multipletype').attr('data-group');
+                    let type = $(this).closest('.drop-container.multipletype').attr('type-multichoice');
+
+                    $('li.q-nav[group-id="' + group + '"][type-multichoise="' + type + '"]').each(function (index, e) {
+                        if ($(e).children().attr('data-id') == id) {
+                            if ($($this).html() != "") {
+                                $(e).children().addClass('checked');
+                            } else {
+                                $(e).children().removeClass('checked');
+
+                            }
+                        }
+                    });
+                });
+
+            });
+            var gid = 0;
+            let chacon = {}
+            $('li.q-nav').on('click', function () {
+                $('.has-note').popover("dispose");
+                let $this = this;
+                let typemulti = $($this).attr('type-multichoise');
+                $($this).children().addClass('active');
+                if ($($this).children().hasClass('flag')) {
+                    $('input[name="checkFlag"]').prop('checked', true);
+                } else {
+                    $('input[name="checkFlag"]').prop('checked', false);
+                }
+                $('li.q-nav').not($this).children().removeClass('active');
+                let groupID = $(this).attr('group-id');
+                let id = $($this).children().attr('data-id');
+                let fatherid = $($this).attr('ex-group-id');
+                $('.drop-container.multipletype').each(function (index, e) {
+                    if ($(e).attr('type-multichoice') == typemulti && $(e).attr('group-id') == groupID) {
+                        let $questionpara = $(e).find('.class-question');
+                        var gide = $questionpara.attr('group-id');
+                        var fgide = $questionpara.attr('ex-group-id');
+                        if (fgide != undefined && fgide != 0) {
+                            if (chacon[fgide] == undefined) {
+                                chacon[fgide] = fgide;
+                            }
+                            let currentselect = chacon[fgide];
+                            let fatherHTML = $('#div-' + currentselect).html();
+                            $('#div-' + gide).empty();
+                            $('#div-' + gide).append(fatherHTML);
+                            chacon[fgide] = gide;
+
+                        } else {
+                            if (chacon[gide] == undefined) {
+                                chacon[gide] = gide;
+                            }
+                            let currentselect = chacon[gide];
+                            if (currentselect != gide) {
+                                let fatherHTML = $('#div-' + currentselect).html();
+                                $('#div-' + gide).empty();
+                                $('#div-' + gide).append(fatherHTML);
+                            }
+                            chacon[gide] = gide;
+
+                        }
+                        $(e).removeClass("hidden");
+                        let ansBox = $(e).find('div.col-md-6.right-col');
+                        let listAns = ansBox.find('div.qz-wrap');
+                        if (typemulti == 3 || typemulti == 2) {
+                            $(e).find('.question__wrap ').each(function (index, ex) {
+                                if ($(ex).attr('id') == id || $(ex).attr('data-id') == id) {
+                                    $(ex).addClass('active');
+                                }
+                                else {
+                                    $(ex).removeClass('active');
+                                }
+                            });
+                        } else {
+                            if (typemulti != 5) {
+                                let elementScroll = $(listAns).find('div.qz-question[data-id="' + $($this).children().attr('data-boxid') + '"]').closest('.qz-wrap');
+                                let scrollHeight = 0;
+                                let elementIndex = $(listAns).index(elementScroll);
+                                scrollHeight = ansBox.scrollTop() + (elementScroll.offset().top - ansBox.offset().top)
+                                $(ansBox).scrollTop(scrollHeight);
+                            }
+                        }
+
+                    } else {
+                        $(e).addClass("hidden");
+                    }
+                    $('.has-note').popover({
+                        title: 'Ghi chú',
+                        trigger: 'click',
+                        placement: 'right',
+                        template: `<div class="popover note-popup" role="tooltip">
+                                                                    <div class="header-popup">
+                                                                    <a href="javascript:;" class="edit-note"><i class="far fa-window-close"></i></a>
+                                                                    <h3 class="popover-header"></h3>
+                                                                    </div>
+                                                                    <div class="popover-body"></div>
+                                                                 </div>`
+                    });
+                });
+            });
+            $('.btn-submit-lr').click(function () {
+                var rs = confirm("Xác nhận nộp bài kiểm tra này!");
+                if (rs) {
+                    $('.body-doing').css({ "pointer-events": "none" }, { "opacity": "0.4" });
+                    Nopbai();
+                }
+            });
+            function Nopbai() {
+                let data = [];
+                $('.drop-container.multipletype').each(function (index, e) {
+                    let objdata = {};
+                    let type = $(e).attr('type-multichoice');
+                    let questionrecord = $(e).find('.question-record').html();
+                    let group = $(e).attr('data-group');
+                    let listQA = [];
+                    if (type == 1) {
+                        $(e).find('.qz-wrap').each(function (index, qa) {
+                            let QA = {};
+                            let quesid = $(qa).find('.qz-question').attr('data-id');
+                            let ansid = 0;
+                            $(qa).find('input').each(function (index, x) {
+                                if ($(x).prop('checked')) {
+                                    ansid = $(x).attr('data-id');
+                                }
+                            });
+                            QA["QuesID"] = quesid;
+                            QA["AnsID"] = ansid;
+                            listQA.push(QA);
+                        });
+                    } else if (type == 2) {
+                        questionrecord = $(e).find('.question-record-input').html();
+                        $(e).find('.question-each').each(function () {
+                            let QA = {};
+                            let title = $(this).attr('data-question');
+                            let answer = $(this).children().attr('data-id-ans');
+                            if (answer == undefined) {
+                                answer = 0;
+                            }
+                            QA["QuesID"] = title;
+                            QA["AnsID"] = answer;
+                            listQA.push(QA);
+                        });
+                    }
+                    else if (type == 3) {
+                        questionrecord = $(e).find('.question-record-input').html();
+                        $(e).find('.right-col .question-each').each(function (index, e) {
+                            let QA = {};
+                            let title = $(e).attr('data-question');
+                            let answer = $(e).html();
+                            QA["QuesID"] = title;
+                            QA["AnsID"] = answer;
+                            listQA.push(QA);
+                        });
+                    } else if (type == 4) {
+                        $(e).find('.qz-wrap').each(function (index, qa) {
+                            let quesid = $(qa).find('.qz-question').attr('data-id');
+                            $(qa).find('input').each(function (index, x) {
+                                let ansid = 0;
+                                if ($(x).prop('checked')) {
+                                    let QA = {};
+                                    ansid = $(x).attr('data-id');
+                                    QA["QuesID"] = quesid;
+                                    QA["AnsID"] = ansid;
+                                    listQA.push(QA);
+                                }
+                                else {
+                                    let QA = {};
+                                    QA["QuesID"] = quesid;
+                                    QA["AnsID"] = 0;
+                                    listQA.push(QA);
+                                }
+                            });
+
+                        });
+                    }
+                    else if (type == 5) {
+                        $(e).find(".question-mark").each(function () {
+                            let QA = {};
+                            let $this = this;
+                            let quesid = $($this).attr('data-id');
+                            let ansid = 0;
+                            $($this).find('input').each(function (index, x) {
+                                if ($(x).prop('checked')) {
+                                    ansid = $(x).attr('data-id');
+                                }
+                            });
+                            QA["QuesID"] = quesid;
+                            QA["AnsID"] = ansid;
+                            listQA.push(QA);
+                        });
+                    }
+                    objdata["QuestionRecord"] = questionrecord.replace(/highlight-word has-note/g, "").replace(/highlight-word/g, "");
+                    objdata["Group"] = group;
+                    objdata["Type"] = type;
+                    objdata["ListQA"] = listQA;
+                    data.push(objdata);
+                });
+                console.log(data);
+                $('input[name="hdfResult"]').val(JSON.stringify(data));
+                $('.btn-submit-test').addClass('disabled');
+                $('#form-submit-test').submit();
+                submited = true;
+            };
+            $('.check-input').on('click', function () {
+                let max = $(this).closest('.qz-wrap').attr('data-max');
+                let selectcount = $(this).closest('.qz-wrap').find('input:checked').length;
+                if (selectcount == max) {
+                    $(this).closest('.qz-wrap').find('input:not(:checked)').prop('disabled', true);
+                    $(this).closest('.qz-wrap').find('input:not(:checked)').closest('.checklb').find('.ip-avata').css({ "background-color": "#e1e1e1;" });
+                } else {
+                    $(this).closest('.qz-wrap').find('input:not(:checked)').prop('disabled', false);
+                    $(this).closest('.qz-wrap').find('input:not(:checked)').closest('.checklb').find('.ip-avata').css({ "background-color": "#fbfbfb;" });
+                }
+
+                let name = $(this).attr('name');
+                //Mới click vô là remove checked hết nó + thêm mấy thằng con của nó
+                $('li.q-nav').each(function (index, e) {
+                    if ($(e).children().attr('data-id') == name) {
+                        $(e).children().removeClass('checked');
+                        let thisId = $(e).find('a.q-nav-link').attr('data-id');
+                        $('li.q-nav[data-parent=' + thisId + ']').each(function (index, x) {
+                            $(x).children().removeClass('checked');
+                        });
+                    }
+                });
+                //duyệt để tìm nó
+
+                $('li.q-nav').each(function (index, e) {
+                    //nếu đúng là nó
+                    if ($(e).children().attr('data-id') == name) {
+
+                        let max_e = $(e).attr('data-c');
+                        //nếu số lần bấm check >= 1 hoặc >= nó
+                        if (selectcount > 0) {
+                            if (selectcount >= parseInt(max_e)) {
+                                $(e).children().addClass('checked');
+                                selectcount = selectcount - parseInt(max_e);
+                                let thisId = $(e).find('a.q-nav-link').attr('data-id');
+                                $('li.q-nav[data-parent=' + thisId + ']').each(function (index, x) {
+                                    let max_c = $(x).attr('data-c');
+                                    if (selectcount >= parseInt(max_c)) {
+                                        selectcount = selectcount - parseInt(max_c);
+                                        $(x).children().addClass('checked');
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+            });
+            $('.tb-checkmark').on('click', function () {
+                let id = $(this).parent().parent().attr('id');
+                $('li.q-nav').each(function (index, e) {
+                    if ($(e).children().attr('data-id') == id) {
+                        $(e).children().addClass('checked');
+                    }
+                });
+            });
+            ////Context menu =========== //
+            //const menu = document.getElementById("js-context-menu");
+            //const noteOption = document.getElementById("js-make-note");
+            //const highlightOption = document.getElementById("js-make-highlight");
+            //const testContainer = document.getElementById('test-container');
+            //if (testContainer != undefined) {
+            //    const addContext = document.getElementById('js-add-context');
+            //    const editContext = document.getElementById('js-edit-context');
+            //    let selection;
+            //    let menuVisible = false;
+            //    let contextEditable = false;
+            //    let contextTarget;
+            //    const toggleMenu = command => {
+            //        menu.style.display = command === "show" ? "block" : "none";
+            //    };
+            //    const setPosition = ({ top, left }) => {
+            //        menu.style.left = `${left}px`;
+            //        menu.style.top = `${top}px`;
+            //        toggleMenu('show');
+            //    };
+            //    const hideMenu = () => {
+            //        toggleMenu("hide");
+            //    }
+            //    let wordId = 0;
+            //    const makeHighlight = (event, note) => {
+            //        event.preventDefault();
+            //        selection = window.getSelection();
+            //        //     console.log(selection.toString());
+            //        if (selection.toString().trim() == '') {
+            //            return false;
+            //        }
+            //        const span = document.createElement('span');
+            //        span.setAttribute('class', note === true ? 'highlight-word has-note' : 'highlight-word');
+            //        span.id = 'word-highlight-' + wordId;
+            //        span.dataset.content = '';
+            //        span.setAttribute('tabindex', '0');
+            //        if (selection.rangeCount) {
+            //            let range = selection.getRangeAt(0).cloneRange();
+            //            let docFragment = range.cloneContents();
+            //            if (docFragment.childElementCount > 0) return false;
+            //            range.surroundContents(span);
+            //            selection.removeAllRanges();
+            //            selection.addRange(range);
+            //        }
+            //        wordId++;
+            //    }
+
+
+            //    testContainer.addEventListener('contextmenu', e => {
+            //        e.preventDefault();
+            //        const origin = {
+            //            left: e.pageX,
+            //            top: e.pageY
+            //        };
+            //        editContext.style.display = 'none';
+            //        addContext.style.display = 'block';
+            //        setPosition(origin);
+            //        return false;
+            //    });
+
+
+
+            //    $.fn.setCursorToTextEnd = function () {
+            //        var $initialVal = this.val();
+            //        this.val($initialVal);
+            //    };
+
+            //    function placeCaretAtEnd(el) {
+            //        el.focus();
+            //        if (typeof window.getSelection != "undefined"
+            //            && typeof document.createRange != "undefined") {
+            //            var range = document.createRange();
+            //            range.selectNodeContents(el);
+            //            range.collapse(false);
+            //            var sel = window.getSelection();
+            //            sel.removeAllRanges();
+            //            sel.addRange(range);
+            //        } else if (typeof document.body.createTextRange != "undefined") {
+            //            var textRange = document.body.createTextRange();
+            //            textRange.moveToElementText(el);
+            //            textRange.collapse(false);
+            //            textRange.select();
+            //        }
+            //    }
+
+
+            //    noteOption.addEventListener('click', (e) => makeHighlight(e, true));
+            //    highlightOption.addEventListener('click', (e) => makeHighlight(e, false));
+            //    document.getElementsByTagName('body')[0].addEventListener('click', hideMenu);
+
+            //    let popBody, popNote, spanHandle, popupid;
+
+            //    $('body').on('click', '.edit-note', function () {
+            //        console.log('1');
+            //        popBody = $(this).closest('.header-popup').next();
+            //        popNote = popBody.closest('.note-popup');
+            //        popBody.attr('contenteditable', "true");
+            //        popBody.focus();
+            //        placeCaretAtEnd(popBody.get(0));
+            //    });
+
+            //    $('body').on('focusout', '.note-popup .popover-body', function () {
+            //        try {
+            //            popBody.attr('contenteditable', 'false');
+            //            popupid = popNote.attr('id');
+            //            spanHandle = document.querySelector('[aria-describedby="' + popupid + '"]');
+            //            spanHandle.dataset.content = $(this).text();
+            //        } catch (e) {
+            //            console.log(e);
+            //        }
+            //    });
+
+            //    $('body').popover({
+            //        selector: '.has-note',
+            //        title: 'Notes',
+            //        trigger: 'click',
+            //        placement: 'right',
+            //        template: `
+            //    <div class="popover note-popup" role="tooltip">
+            //                                <div class="arrow"></div>
+            //                                <div class="header-popup">
+            //                                <a href="javascript:;" class="edit-note"><i class="fas fa-edit"></i></a>
+            //                                <h3 class="popover-header"></h3>
+            //                                </div>
+            //                                <div class="popover-body" contenteditable="true" data-id="1"></div>
+            //                    </div>`
+            //    });
+            //    $('body').on('shown.bs.popover', '.has-note', function () {
+            //        console.log(this);
+            //        if (!popBody) {
+            //            popBody = $(`#${this.data.ariaDescribedby} .popover-body`);
+            //        }
+            //        popBody.attr('contenteditable', 'true');
+            //        popBody.focus();
+            //    });
+
+            //    const showEditContext = (e) => {
+            //        if (e.target.matches('.has-note')) {
+            //            $('#js-add-note').hide();
+            //        } else {
+            //            $('#js-add-note').show();
+            //        }
+            //        const origin = {
+            //            left: e.pageX,
+            //            top: e.pageY
+            //        };
+            //        setPosition(origin);
+            //        editContext.style.display = 'block';
+            //        addContext.style.display = 'none';
+            //        contextTarget = e.target;
+            //        return false;
+            //    }
+            //    $(testContainer).on('contextmenu', '.highlight-word', e => showEditContext(e));
+
+            //    const makeNoteElement = () => {
+            //        let target = contextTarget;
+            //        target.classList.add('has-note');
+            //    }
+            //    const clearHighlight = () => {
+            //        let target = contextTarget;
+            //        let text = target.textContent;
+            //        target.parentNode.replaceChild(document.createTextNode(text), target);
+            //        $(target).popover('dispose');
+            //    }
+            //    const clearHighlightAll = () => {
+            //        let highlights = document.querySelectorAll('.highlight-word');
+            //        [...highlights].map(x => {
+            //            let text = x.textContent;
+            //            x.parentNode.replaceChild(document.createTextNode(text), x);
+            //            $(x).popover('dispose');
+            //        });
+            //    }
+            //    document.getElementById('js-add-note').addEventListener('click', makeNoteElement);
+            //    document.getElementById('js-clear-highlight').addEventListener('click', clearHighlight);
+            //    document.getElementById('js-clear-all-highlight').addEventListener('click', clearHighlightAll);
+            //}
+        </script>
+
+    }
+    else
+    {
+        if (sd.TypeDetail == 3)
+        {
+            <script>
+                $(document).ready(function () {
+                    let isPlaying = false;
+                    let soundVolumn = 1;
+
+                    $('.next-step').on('click touchstart', function (e) {
+                        e.preventDefault();
+                        let $currentStep = $('.steps .step-item.active');
+                        $currentStep.addClass('complete');
+                        $currentStep.removeClass('active');
+                        $currentStep.next().addClass('active');
+                        let $tab = $($(this).attr('data-tab'));
+                        if ($tab) {
+                            $tab.addClass('show active');
+                            $tab.siblings().removeClass('show active');
+                        }
+                    });
+
+                    const setVolumnAudio = (volumnNumb) => {
+                        let audios = document.getElementsByTagName('audio');
+                        if (audios.length > 0) {
+                            [...audios].forEach(function (audio) {
+                                audio.volume = volumnNumb;
+                            });
+                        }
+                        if (volumnNumb == 0) {
+                            $(".audio-volumn svg.feather").replaceWith(feather.icons["volume-x"].toSvg());
+                        } else {
+                            $(".audio-volumn svg.feather").replaceWith(feather.icons["volume-2"].toSvg());
+                        }
+                    }
+
+                    const volumnChange = ($data) => {
+                        soundVolumn = $data.input.val();
+                        setVolumnAudio(soundVolumn);
+                    }
+                    $("#js-volumn-control").ionRangeSlider({
+                        min: 0,
+                        max: 1,
+                        step: 0.01,
+                        from: 1,
+                        hide_min_max: true,
+                        hide_from_to: true,
+                        grid_margin: false,
+                        onChange: volumnChange
+                    });
+
+                    const pad = (n) => {
+                        return n < 10 ? '0' + n : n;
+                    };
+
+
+                    const startClock = () => {
+                        $.ajax({
+                            type: "POST",
+                            url: "/StudentSet/StartTest",
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs) {
+                                    console.log("time:" + msg.time);
+                                    console.log("timestart:" + msg.timestart);
+                                    if (msg.linkaudio != "") {
+                                        $('#test-audio-1').attr('src', msg.linkaudio);
+                                        $('#test-audio-1').get(0).play();
+                                    }
+                                    $('.clock-time').show();
+                                    if ($('#time-clock').length > 0) {
+                                        let $clock = $('#time-clock');
+                                        let timeSet = msg.time;
+                                        let hour = $clock.find('.hour');
+                                        let min = $clock.find('.minute');
+                                        let second = $clock.find('.second');
+
+                                        const countDownTime = new Date().getTime() + (timeSet * 1000 * 60);
+                                        //const percent = (timeSet * 1000 * 60) * (0.30); //30% thoi gian lam bai
+                                        let timenow = new Date().getTime();
+                                        let fivemin = countDownTime - timenow - 300000;
+                                        let alertfiveminute = true;
+                                        let interval = setInterval(() => {
+                                            let now = new Date().getTime();
+                                            let distance = countDownTime - now;
+                                            let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                            let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                                            let s = Math.floor((distance % (1000 * 60)) / 1000);
+                                            hour.text(pad(h));
+                                            min.text(pad(m))
+                                            second.text(pad(s))
+                                            if (distance <= 60000) {
+                                                $clock.addClass('tx-danger');
+                                            }
+                                            if (alertfiveminute == true && distance > 300000) {
+                                                if (distance <= fivemin) {
+                                                    $.ajax({
+                                                        async: false,
+                                                        type: "POST",
+                                                        url: "/StudentSet/CheckTimeUp",
+                                                        contentType: "application/json; charset=utf-8",
+                                                        dataType: "json",
+                                                        success: function (msg) {
+                                                            if (msg.rs) {
+                                                                alertfiveminute = false;
+                                                                alert("Remind! 5 minutes left");
+                                                            }
+                                                        },
+                                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                            console.log("e: ");
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                            if (distance < 0) {
+                                                clearInterval(interval);
+                                                hour.text('00');
+                                                min.text('00');
+                                                second.text('00');
+                                                if (submited != true) {
+                                                    $.ajax({
+                                                        async: false,
+                                                        type: "POST",
+                                                        url: "/StudentSet/CheckTimeUp",
+                                                        contentType: "application/json; charset=utf-8",
+                                                        dataType: "json",
+                                                        success: function (msg) {
+                                                            if (msg.rs) {
+                                                                $('.body-doing').css({ "pointer-events": "none" }, { "opacity": "0.4" });
+                                                                $.ajax({
+                                                                    async: false,
+                                                                    type: "POST",
+                                                                    url: "/StudentSet/SubmitWriting",
+                                                                    data: JSON.stringify(data),
+                                                                    contentType: "application/json; charset=utf-8",
+                                                                    dataType: "json",
+                                                                    success: function (msg) {
+                                                                        if (msg.rs) {
+                                                                            toast.create({
+                                                                                title: 'Thông báo!',
+                                                                                text: msg.message,
+                                                                                icon: 'error_outline',
+                                                                                classBackground: 'noti-success',
+                                                                                timeout: 3000
+                                                                            });
+                                                                            window.location.href = msg.linkdone;
+                                                                        } else {
+                                                                            toast.create({
+                                                                                title: 'Thông báo!',
+                                                                                text: msg.message,
+                                                                                icon: 'error_outline',
+                                                                                classBackground: 'noti-error',
+                                                                                timeout: 3000
+                                                                            });
+                                                                        }
+                                                                    },
+                                                                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                                        console.log("some thing error");
+                                                                    }
+                                                                });
+                                                            } else {
+                                                                console.log("error");
+                                                            }
+                                                        },
+                                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                            console.log("e");
+                                                        }
+                                                    });
+                                                }
+
+                                            }
+                                            let percentTime = (Math.abs(distance) / 1000) / (Math.abs(timeSet * 60)) * 100;
+                                            $('.bar-time > span').css('width', percentTime + '%');
+                                        }, 100);
+                                    }
+
+                                } else {
+                                    if (msg.type == 1) {
+                                        window.location.href = msg.link;
+                                        if (msg.message != undefined) {
+                                            toast.create({
+                                                title: 'Thông báo!',
+                                                text: '' + msg.message + '',
+                                                icon: 'error_outline',
+                                                classBackground: 'noti-error',
+                                                timeout: 3000
+                                            });
+                                        }
+                                    } else {
+                                        toast.create({
+                                            title: 'Thông báo!',
+                                            text: '' + msg.message + '',
+                                            icon: 'error_outline',
+                                            classBackground: 'noti-error',
+                                            timeout: 3000
+                                        });
+                                    }
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+
+                                console.log("e: ");
+                            }
+                        });
+                    };
+
+                    $('.start-test').on('click touchstart', function () {
+                        $('body').addClass('testing');
+                        $('.ready-for-test').hide();
+                        $('#test-container').show();
+                        startClock();
+                    });
+
+
+                    //word count editor
+                    const wordCount = (editor) => {
+                        let childrens,
+                            wordCount = 0,
+                            content = editor.value.replace(/(?:\r\n|\r|\n)/g, " ").trim();
+                        if (content.length === 0) return 0;
+                        wordCount = content.split(/\s+/).length;
+                        return wordCount;
+                    }
+
+                    //Js test
+                    const $answerArea = $('.answer-content').on('keyup', function (event) {
+                        let counter, counterText;
+                        counterText = this.closest('.answer-area').querySelector('.word-counter');
+                        counter = wordCount(this);
+                        counterText.textContent = counter;
+                        if (counter > 1) {
+                            this.closest('.answer-area').querySelector('.word-name').textContent = "chữ";
+                        } else {
+                            this.closest('.answer-area').querySelector('.word-name').textContent = "chữ";
+                        }
+                    });
+                    $('.answer-content').on('paste', function (event) {
+                        event.preventDefault();
+                        let clipboardData = event.clipboardData || window.clipboardData || event.originalEvent.clipboardData;
+                        document.execCommand('inserttext', false, clipboardData.getData('text/plain'));
+                    });
+
+
+                    let questions = document.querySelectorAll('.tab-question');
+                    let tabLinks = document.querySelectorAll('.q-nav-link');
+                    let activeId;
+                    const showQuestion = (id) => {
+                        let questionShow = document.getElementById(id);
+                        questionShow.classList.add('show');
+                        [...questions].map(question => {
+                            if (question !== questionShow) question.classList.remove('show')
+                        });
+                    }
+                    $('.q-nav-link').on('click', function () {
+                        activeId = this.dataset.id;
+                        this.classList.add('active');
+                        [...tabLinks].map(tab => {
+                            if (tab !== this) tab.classList.remove('active')
+                        });
+                        showQuestion(activeId);
+                    });
+                    showQuestion(document.querySelector('.q-nav-link.active').dataset.id);
+                    $('.nopbaiviet').on('click', function () {
+                        //$('.nopbaiviet').addClass('disabled');
+                        let data = {}
+                        let res = [];
+                        $('.answer-content').each(function (index) {
+                            let questionid = $(this).attr('data-id');
+                            let answer = $(this).val().replace(/\n/g, '<br/>');
+                            console.log(answer);
+                            let qa = {
+                                TaskID: questionid,
+                                Answer: answer
+                            }
+                            res.push(qa);
+                        });
+                        data["result"] = JSON.stringify(res);
+                        let rs = confirm('Xác nhận gửi bài kiểm tra này!');
+                        if (rs) {
+                            $.ajax({
+                                async: false,
+                                type: "POST",
+                                url: "/StudentSet/SubmitWriting",
+                                data: JSON.stringify(data),
+                                contentType: "application/json; charset=utf-8",
+                                dataType: "json",
+                                success: function (msg) {
+                                    if (msg.rs) {
+                                        toast.create({
+                                            title: 'Thông báo!',
+                                            text: msg.message,
+                                            icon: 'error_outline',
+                                            classBackground: 'noti-success',
+                                            timeout: 3000
+                                        });
+                                        window.location.href = msg.linkdone;
+                                    } else {
+                                        toast.create({
+                                            title: 'Thông báo!',
+                                            text: msg.message,
+                                            icon: 'error_outline',
+                                            classBackground: 'noti-error',
+                                            timeout: 3000
+                                        });
+                                    }
+                                },
+                                error: function (xmlhttprequest, textstatus, errorthrow) {
+                                    console.log("some thing error");
+                                }
+                            });
+                        }
+                    });
+
+                });
+
+            </script>
+        }
+        else
+        {
+            <script>
+                let part1done = false;
+                let part2done = false;
+                let part3done = false;
+                let partstart = 1;
+                var chunks = [];
+                window.test = {};
+                window.test.speaking = {};
+                window.test.speaking.speakFnc = function () {
+                    var recorder;
+                    var recordButtons = document.querySelectorAll('.js-start');
+                    var stopButtons = document.querySelectorAll('.js-stop');
+                    //Start button click
+                    function startRecord(e) {
+                        recordButtons = document.querySelectorAll('.js-start');
+                        stopButtons = document.querySelectorAll('.js-stop');
+                        //start recording with 1 second time between receiving 'ondataavailable' events
+                        recordButtons.forEach(function (ele) {
+                            ele.disabled = true;
+                            ele.classList.add('disabled');
+                        });
+                        stopButtons.forEach(function (ele) {
+                            ele.disabled = false;
+                            ele.classList.remove('disabled');
+                        });
+                        recorder.start();
+                        recordTime('start', $(e.target).closest('.btn-record'));
+                        //   console.log(recorder);
+                    }
+                    var closestByClass = function (el, clazz) {
+                        // Traverse the DOM up with a while loop
+                        while (el.className != clazz) {
+                            // Increment the loop to the parent node
+                            el = el.parentNode;
+                            if (!el) {
+                                return null;
+                            }
+                        }
+                        // At this point, the while loop has stopped and `el` represents the element that has
+                        // the class you specified in the second parameter of the function `clazz`
+
+                        // Then return the matched element
+                        return el;
+                    }
+                    //Stop button click
+                    function stopRecord(e) {
+                        recordButtons = document.querySelectorAll('.js-start');
+                        stopButtons = document.querySelectorAll('.js-stop');
+                        // this will trigger one final 'ondataavailable' event and set recorder state to 'inactive'
+                        recordButtons.forEach(function (ele) {
+                            ele.disabled = false;
+                            ele.classList.remove('disabled');
+                        });
+                        stopButtons.forEach(function (ele) {
+                            ele.disabled = true;
+                            ele.classList.add('disabled');
+                        });
+
+                        recorder.stop();
+                        recorder.stopElementBtn = e.target;
+                        recordTime('stop', $(e.target).closest('.btn-record'));
+                        //  console.log(recorder.state);
+                    }
+                    // Add Audio js
+                    function replaceAudioElement(blobUrl, targetPr, indexof) {
+                        try {
+                            // while(targetPr.lastChild){
+                            // targetPr.removeChild(targetPr.lastChild);
+                            // }
+                            //  console.log(targetPr);
+                            targetPr = targetPr.querySelector('.record-list');
+
+                            const resultEl = document.createElement('div');
+                            resultEl.classList = 'audio-result mg-t-10';
+                            resultEl.setAttribute('data-index', '' + indexof + '');
+                            targetPr.appendChild(resultEl);
+                            const audioEl = document.createElement('audio');
+                            audioEl.controls = true;
+                            audioEl.setAttribute('controlsList', 'nodownload');
+                            audioEl.style = 'display:block; width:100%;';
+                            audioEl.classList = "valign-center";
+                            const sourceEl = document.createElement('source');
+                            sourceEl.src = blobUrl;
+                            sourceEl.type = 'audio/webm';
+                            targetPr.appendChild(sourceEl);
+                            audioEl.appendChild(sourceEl);
+                            const deleteEl = document.createElement('a');
+                            deleteEl.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                            deleteEl.style = 'display: inline-block; cursor:pointer;';
+                            deleteEl.classList = "mg-l-15";
+                            deleteEl.href = 'javascript:;';
+                            deleteEl.addEventListener('click', function () {
+                                let recordblock = $(this).parent().parent().parent();
+                                this.parentNode.parentNode.removeChild(this.parentNode);
+                                if ($(recordblock).find('.audio-result').length <= 0) {
+                                    $('.q-nav-link.active').removeClass('checked');
+                                }
+
+                            });
+                            resultEl.appendChild(audioEl);
+                            resultEl.appendChild(deleteEl);
+                        } catch (e) {
+                            console.log(e);
+                        }
+
+                    }
+                    if (window.MediaRecorder !== undefined) {
+                        recordButtons.forEach(function (ele) {
+                            ele.disabled = true;
+                        });
+                        // request permission to access audio stream
+                        // console.log('ok');
+                        navigator.mediaDevices.getUserMedia({
+                            audio: true
+                        }).then(stream => {
+                            recordButtons.forEach(function (ele) {
+                                ele.disabled = false;
+                                ele.classList.remove('disabled');
+                            });
+                            stopButtons.forEach(function (ele) {
+                                ele.disabled = true;
+                                ele.classList.add('disabled');
+                            });
+
+                            // for notice
+
+                            // store streaming data chunks in array
+
+
+                            // function to be called when data is received
+                            recordButtons.forEach(function (ele) {
+                                ele.addEventListener('click', startRecord);
+                            });
+                            stopButtons.forEach(function (ele) {
+                                ele.addEventListener('click', stopRecord);
+                            });
+                            // create media recorder instance to initialize recording
+                            recorder = new MediaRecorder(stream);
+                            var blobData = [];
+                            recorder.ondataavailable = (e) => {
+                                // add stream data to chunks
+                                chunks.push(e.data);
+                                blobData.push(e.data);
+                            };
+                            recorder.onstop = function (e) {
+                                // if recorder is 'inactive' then recording has finished
+                                if (recorder.state == 'inactive') {
+                                    // convert stream data chunks to a 'webm' audio format as a blob
+                                    const blob = new Blob(blobData, {
+                                        type: 'audio/webm'
+                                    });
+                                    // convert blob to URL so it can be assigned to a audio src attribute
+                                    //   console.log(recorder.stopElementBtn);
+                                    replaceAudioElement(URL.createObjectURL(blob), recorder
+                                        .stopElementBtn.parentElement.parentElement, chunks.length -
+                                        1);
+                                    blobData.length = 0;
+                                    $('.q-nav-link.active').addClass('checked');
+
+                                }
+                            }
+
+                        }).catch(function () {
+                            Swal.fire({
+                                title: 'Allow micro!',
+                                imageUrl: '/app-assets/zimv2/images/allow-micro.jpg',
+                                imageWidth: 350,
+                                imageAlt: 'Custom image',
+                                animation: false
+                            })
+                            //$('#js-question-match').modal('show');
+                            //return;
+                        });
+                    } else {
+                        // document.getElementById('status') = 'browser not support Media Recorder';
+                    }
+                    var startTime;
+
+                    function recordTime(action, ele) {
+                        var $parent = ele.parent().find('.record-time');
+                        var sec = 0;
+                        switch (action) {
+                            case 'start': {
+                                startTime = setInterval(function () {
+                                    $parent.find('.seconds').html(pad(++sec % 60));
+                                    $parent.find('.minutes').html(pad(parseInt(sec / 60, 10)));
+                                }, 1000);
+                                break;
+                            }
+                            case 'stop': {
+                                $parent.find('.seconds').text('00');
+                                $parent.find('.minutes').text('00');
+                                clearInterval(startTime);
+                                break;
+                            }
+                        }
+                    }
+                }
+                function pad(val) {
+                    return val > 9 ? val : "0" + val;
+                };
+
+                $(document).ready(function () {
+                    let isPlaying = false;
+                    let soundVolumn = 1;
+                    $('.next-step').on('click touchstart', function (e) {
+                        e.preventDefault();
+                        let $currentStep = $('.steps .step-item.active');
+                        $currentStep.addClass('complete');
+                        $currentStep.removeClass('active');
+                        $currentStep.next().addClass('active');
+                        let $tab = $($(this).attr('data-tab'));
+                        if ($tab) {
+                            $tab.addClass('show active');
+                            $tab.siblings().removeClass('show active');
+                        }
+
+                    });
+
+                    const setVolumnAudio = (volumnNumb) => {
+                        let audios = document.getElementsByTagName('audio');
+                        if (audios.length > 0) {
+                            [...audios].forEach(function (audio) {
+                                audio.volume = volumnNumb;
+                            });
+                        }
+                        if (volumnNumb == 0) {
+                            $(".audio-volumn svg.feather").replaceWith(feather.icons["volume-x"].toSvg());
+                        } else {
+                            $(".audio-volumn svg.feather").replaceWith(feather.icons["volume-2"].toSvg());
+                        }
+                    }
+                    //word count editor
+                    const wordCount = (editor) => {
+                        let childrens,
+                            wordCount = 0,
+                            content = editor.value.replace(/(?:\r\n|\r|\n)/g, " ").trim();
+                        if (content.length === 0) return 0;
+                        wordCount = content.split(/\s+/).length;
+                        return wordCount;
+                    }
+
+                    //Js test
+                    const $answerArea = $('.answer-content').on('keyup', function (event) {
+                        let counter, counterText;
+                        counterText = this.closest('.answer-area').querySelector('.word-counter');
+                        counter = wordCount(this);
+                        counterText.textContent = counter;
+                        if (counter > 1) {
+                            this.closest('.answer-area').querySelector('.word-name').textContent = "chữ";
+                        } else {
+                            this.closest('.answer-area').querySelector('.word-name').textContent = "chữ";
+                        }
+                    });
+
+                    $('.answer-content').on('paste', function (event) {
+                        event.preventDefault();
+                        let clipboardData = event.clipboardData || window.clipboardData || event.originalEvent.clipboardData;
+                        document.execCommand('inserttext', false, clipboardData.getData('text/plain'));
+                    });
+
+                    const soundTest = (playButton) => {
+                        const audioTest = document.getElementById('example-audio');
+                        audioTest.volume = soundVolumn;
+                        let playIcon = playButton.querySelector('.fas');
+                        let playText = playButton.querySelector('.text');
+                        audioTest.onplaying = function () {
+                            playIcon.classList.remove('fa-play');
+                            playIcon.classList.add('fa-stop');
+                            playText.textContent = 'Stop sound';
+                            isPlaying = true;
+                        };
+                        audioTest.onpause = function () {
+                            playIcon.classList.add('fa-play');
+                            playIcon.classList.remove('fa-stop');
+                            playText.textContent = 'Play sound';
+                            isPlaying = false;
+                        }
+                        if (isPlaying) {
+                            audioTest.pause()
+                            audioTest.currentTime = 0;
+                        } else {
+                            audioTest.play();
+                        }
+                    };
+
+                    const volumnChange = ($data) => {
+                        soundVolumn = $data.input.val();
+                        setVolumnAudio(soundVolumn);
+                    }
+                    console.log(partstart);
+                    let interval
+                    const startClock = () => {
+                        $.ajax({
+                            type: "POST",
+                            url: "/StudentSet/StartTest",
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            success: function (msg) {
+                                if (msg.rs) {
+                                    submited = false;
+                                    let part = msg.part;
+                                    partstart = part;
+                                    if (part == 1) {
+                                        $('#quest-id-1').addClass('show');
+                                        $('#quest-id-2').removeClass('show');
+                                        $('#quest-id-1').find('.row:first-child').removeClass('hide');
+                                        $('#quest-id-3').removeClass('show');
+                                        $('.q-nav-link.active').removeClass('active');
+                                        $($('a.q-nav-link[data-id="quest-id-1"]')[0]).addClass('active');
+                                    }
+                                    if (part == 2) {
+                                        part1done = true;
+                                        $('#quest-id-1').removeClass('show');
+                                        $('#quest-id-2').addClass('show');
+                                        $('#quest-id-2').find('.row:first-child').removeClass('hide');
+                                        $('#quest-id-3').removeClass('show');
+                                        $('.q-nav-link.active').removeClass('active');
+                                        $($('a.q-nav-link[data-id="quest-id-2"]')[0]).addClass('active');
+
+                                    }
+                                    if (part == 3) {
+                                        part2done = true;
+                                        $('#quest-id-1').removeClass('show');
+                                        $('#quest-id-2').removeClass('show');
+                                        $('#quest-id-3').find('.row:first-child').removeClass('hide');
+                                        $('#quest-id-3').addClass('show');
+                                        $('.q-nav-link.active').removeClass('active');
+                                        $($('a.q-nav-link[data-id="quest-id-3"]')[0]).addClass('active');
+                                    }
+                                    if (part == 4) {
+                                        part3done = true;
+                                        $('#quest-id-1').removeClass('show');
+                                        $('#quest-id-2').removeClass('show');
+                                        $('#quest-id-3').removeClass('show');
+                                        $('#quest-id-4').find('.row:first-child').removeClass('hide');
+                                        $('#quest-id-4').addClass('show');
+                                        $('.q-nav-link.active').removeClass('active');
+                                        $($('a.q-nav-link[data-id="quest-id-4"]')[0]).addClass('active');
+                                    }
+                                    $('.clock-time').show();
+                                    if ($('#time-clock').length > 0) {
+                                        let $clock = $('#time-clock');
+                                        let timeSet = msg.time;
+                                        console.log(timeSet);
+                                        let hour = $clock.find('.hour');
+                                        let min = $clock.find('.minute');
+                                        let second = $clock.find('.second');
+                                        const countDownTime = new Date().getTime() + (timeSet * 1000 * 60);
+                                        //const percent = (timeSet * 1000 * 60) * (0.30); //30% thoi gian lam bai
+                                        let timenow = new Date().getTime();
+                                        let fivemin = countDownTime - timenow - 120000;
+                                        let alertfiveminute = true;
+                                        interval = setInterval(() => {
+                                            let now = new Date().getTime();
+                                            let distance = countDownTime - now;
+                                            let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                            let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                                            let s = Math.floor((distance % (1000 * 60)) / 1000);
+                                            hour.text(pad(h));
+                                            min.text(pad(m))
+                                            second.text(pad(s))
+                                            if (distance <= 60000) {
+                                                $clock.addClass('tx-danger');
+                                            }
+                                            if (alertfiveminute == true && distance > 120000) {
+
+                                                if (distance <= fivemin) {
+                                                    $.ajax({
+                                                        async: false,
+                                                        type: "POST",
+                                                        url: "/StudentSet/CheckTimeUp",
+                                                        contentType: "application/json; charset=utf-8",
+                                                        dataType: "json",
+                                                        success: function (msg) {
+                                                            if (msg.rs) {
+                                                                alertfiveminute = false;
+                                                                alert("Remind! 2 minutes left");
+                                                            }
+                                                        },
+                                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                            console.log("e: ");
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                            if (distance < 0) {
+                                                clearInterval(interval);
+                                                hour.text('00');
+                                                min.text('00');
+                                                second.text('00');
+                                                if (submited != true) {
+                                                    $.ajax({
+                                                        async: false,
+                                                        type: "POST",
+                                                        url: "/StudentSet/CheckTimeUp",
+                                                        contentType: "application/json; charset=utf-8",
+                                                        dataType: "json",
+                                                        success: function (msg) {
+                                                            if (msg.rs) {
+                                                                $('.body-doing').css({ "pointer-events": "none" }, { "opacity": "0.4" });
+                                                                if (partstart == 1) {
+                                                                    partstart = 2;
+                                                                    part1done = true;
+                                                                    let data = {
+                                                                        part: 1,
+                                                                    }
+                                                                    let res = [];
+                                                                    $('.row.part-1').each(function (index, e) {
+
+                                                                        let QA = {};
+                                                                        let listRecord = [];
+                                                                        let $this = e;
+                                                                        let questionid = $($this).attr('data-id');
+                                                                        $($this).find('.record-list').find('.audio-result').each(function (index) {
+                                                                            var id = $(this).attr('data-index');
+                                                                            console.log(chunks[id]);
+                                                                            var formData = new FormData();
+                                                                            formData.append("FileUpload", chunks[id]);
+                                                                            $.ajax({
+                                                                                async: false,
+                                                                                type: 'POST',
+                                                                                url: '/StudentExrcise/UploadFileAudio',
+                                                                                data: formData,
+                                                                                dataType: 'json',
+                                                                                contentType: false,
+                                                                                processData: false,
+                                                                                success: function (msg) {
+                                                                                    listRecord.push(msg.l);
+                                                                                },
+                                                                                error: function (error) {
+                                                                                    console.log('error upload file audio');
+                                                                                }
+                                                                            });
+                                                                        });
+                                                                        QA["QuestionID"] = questionid;
+                                                                        QA["ListRecord"] = listRecord;
+                                                                        res.push(QA);
+                                                                    });
+                                                                    data["result"] = JSON.stringify(res);
+                                                                    $.ajax({
+                                                                        type: "POST",
+                                                                        url: "/StudentSet/SubmitPart",
+                                                                        data: JSON.stringify(data),
+                                                                        contentType: "application/json; charset=utf-8",
+                                                                        dataType: "json",
+                                                                        success: function (msg) {
+                                                                            if (msg.rs) {
+                                                                                toast.create({
+                                                                                    title: 'Thông báo!',
+                                                                                    text: msg.message,
+                                                                                    icon: 'error_outline',
+                                                                                    classBackground: 'noti-success',
+                                                                                    timeout: 3000
+                                                                                });
+                                                                                clearInterval(interval);
+                                                                                startClock();
+                                                                            } else {
+                                                                                toast.create({
+                                                                                    title: 'Thông báo!',
+                                                                                    text: msg.message,
+                                                                                    icon: 'error_outline',
+                                                                                    classBackground: 'noti-error',
+                                                                                    timeout: 3000
+                                                                                });
+                                                                            }
+                                                                        },
+                                                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                                            console.log("some thing error");
+                                                                        }
+                                                                    });
+                                                                    $('#quest-id-1').removeClass('show');
+                                                                    $('#quest-id-2').addClass('show');
+                                                                    $('#quest-id-2').find('.row:first-child').removeClass('hide');
+                                                                    $('#quest-id-3').removeClass('show');
+                                                                    $('.q-nav-link.active').removeClass('active');
+                                                                    $($('a.q-nav-link[data-id="quest-id-2"]')[0]).addClass('active');
+                                                                }
+                                                                else if (partstart == 2) {
+                                                                    partstart = 3;
+                                                                    part2done = true;
+                                                                    let data = {
+                                                                        part: 2,
+                                                                    }
+                                                                    let res = [];
+                                                                    $('.row.part-2').each(function (index, e) {
+
+                                                                        let QA = {};
+                                                                        let listRecord = [];
+                                                                        let $this = e;
+                                                                        let questionid = $($this).attr('data-id');
+                                                                        $($this).find('.record-list').find('.audio-result').each(function (index) {
+                                                                            var id = $(this).attr('data-index');
+                                                                            console.log(chunks[id]);
+                                                                            var formData = new FormData();
+                                                                            formData.append("FileUpload", chunks[id]);
+                                                                            $.ajax({
+                                                                                async: false,
+                                                                                type: 'POST',
+                                                                                url: '/StudentExrcise/UploadFileAudio',
+                                                                                data: formData,
+                                                                                dataType: 'json',
+                                                                                contentType: false,
+                                                                                processData: false,
+                                                                                success: function (msg) {
+                                                                                    listRecord.push(msg.l);
+                                                                                },
+                                                                                error: function (error) {
+                                                                                    console.log('error upload file audio');
+                                                                                }
+                                                                            });
+                                                                        });
+                                                                        QA["QuestionID"] = questionid;
+                                                                        QA["ListRecord"] = listRecord;
+                                                                        res.push(QA);
+                                                                    });
+                                                                    data["result"] = JSON.stringify(res);
+
+                                                                    $.ajax({
+                                                                        type: "POST",
+                                                                        url: "/StudentSet/SubmitPart",
+                                                                        data: JSON.stringify(data),
+                                                                        contentType: "application/json; charset=utf-8",
+                                                                        dataType: "json",
+                                                                        success: function (msg) {
+                                                                            if (msg.rs) {
+                                                                                toast.create({
+                                                                                    title: 'Thông báo!',
+                                                                                    text: msg.message,
+                                                                                    icon: 'error_outline',
+                                                                                    classBackground: 'noti-success',
+                                                                                    timeout: 3000
+                                                                                });
+                                                                                clearInterval(interval);
+                                                                                startClock();
+                                                                            } else {
+                                                                                toast.create({
+                                                                                    title: 'Thông báo!',
+                                                                                    text: msg.message,
+                                                                                    icon: 'error_outline',
+                                                                                    classBackground: 'noti-error',
+                                                                                    timeout: 3000
+                                                                                });
+                                                                            }
+                                                                        },
+                                                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                                            console.log("some thing error");
+                                                                        }
+                                                                    });
+                                                                    $('#quest-id-1').removeClass('show');
+                                                                    $('#quest-id-2').removeClass('show');
+                                                                    $('#quest-id-3').addClass('show');
+                                                                    $('#quest-id-3').find('.row:first-child').removeClass('hide');
+                                                                    $('.q-nav-link.active').removeClass('active');
+                                                                    $($('a.q-nav-link[data-id="quest-id-3"]')[0]).addClass('active');
+                                                                }
+                                                                else if (partstart == 3) {
+                                                                    partstart = 4;
+                                                                    part3done = true;
+                                                                    let data = {
+                                                                        part: 3,
+                                                                    }
+                                                                    let res = [];
+                                                                    $('.row.part-3').each(function (index, e) {
+
+                                                                        let QA = {};
+                                                                        let listRecord = [];
+                                                                        let $this = e;
+                                                                        let questionid = $($this).attr('data-id');
+                                                                        $($this).find('.record-list').find('.audio-result').each(function (index) {
+                                                                            var id = $(this).attr('data-index');
+                                                                            var formData = new FormData();
+                                                                            formData.append("FileUpload", chunks[id]);
+                                                                            $.ajax({
+                                                                                async: false,
+                                                                                type: 'POST',
+                                                                                url: '/StudentExrcise/UploadFileAudio',
+                                                                                data: formData,
+                                                                                dataType: 'json',
+                                                                                contentType: false,
+                                                                                processData: false,
+                                                                                success: function (msg) {
+                                                                                    listRecord.push(msg.l);
+                                                                                },
+                                                                                error: function (error) {
+                                                                                    console.log('error upload file audio');
+                                                                                }
+                                                                            });
+                                                                        });
+                                                                        QA["QuestionID"] = questionid;
+                                                                        QA["ListRecord"] = listRecord;
+                                                                        res.push(QA);
+                                                                    });
+                                                                    data["result"] = JSON.stringify(res);
+                                                                    $.ajax({
+                                                                        type: "POST",
+                                                                        url: "/StudentSet/SubmitPart",
+                                                                        data: JSON.stringify(data),
+                                                                        contentType: "application/json; charset=utf-8",
+                                                                        dataType: "json",
+                                                                        success: function (msg) {
+                                                                            if (msg.rs) {
+                                                                                if (msg.message = "Done") {
+                                                                                    location.reload();
+                                                                                } else {
+                                                                                    toast.create({
+                                                                                        title: 'Thông báo!',
+                                                                                        text: msg.message,
+                                                                                        icon: 'error_outline',
+                                                                                        classBackground: 'noti-success',
+                                                                                        timeout: 3000
+                                                                                    });
+                                                                                    clearInterval(interval);
+                                                                                    startClock();
+                                                                                }
+
+                                                                            } else {
+                                                                                toast.create({
+                                                                                    title: 'Thông báo!',
+                                                                                    text: msg.message,
+                                                                                    icon: 'error_outline',
+                                                                                    classBackground: 'noti-error',
+                                                                                    timeout: 3000
+                                                                                });
+                                                                            }
+                                                                        },
+                                                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                                            console.log("some thing error");
+                                                                        }
+                                                                    });
+                                                                }
+                                                                else if (partstart == 4) {
+                                                                    let data = {}
+                                                                    let res = [];
+                                                                    $('.answer-content').each(function (index) {
+                                                                        let questionid = $(this).attr('data-id');
+                                                                        let answer = $(this).val().replace(/\n/g, '<br/>');
+                                                                        let qa = {
+                                                                            TaskID: questionid,
+                                                                            Answer: answer
+                                                                        }
+                                                                        res.push(qa);
+                                                                    });
+                                                                    data["result"] = JSON.stringify(res);
+                                                                    $.ajax({
+                                                                        async: false,
+                                                                        type: "POST",
+                                                                        url: "/StudentSet/SubmitWriting",
+                                                                        data: JSON.stringify(data),
+                                                                        contentType: "application/json; charset=utf-8",
+                                                                        dataType: "json",
+                                                                        success: function (msg) {
+                                                                            if (msg.rs) {
+                                                                                toast.create({
+                                                                                    title: 'Thông báo!',
+                                                                                    text: msg.message,
+                                                                                    icon: 'error_outline',
+                                                                                    classBackground: 'noti-success',
+                                                                                    timeout: 3000
+                                                                                });
+                                                                                window.location.href = msg.linkdone;
+                                                                            } else {
+                                                                                toast.create({
+                                                                                    title: 'Thông báo!',
+                                                                                    text: msg.message,
+                                                                                    icon: 'error_outline',
+                                                                                    classBackground: 'noti-error',
+                                                                                    timeout: 3000
+                                                                                });
+                                                                            }
+                                                                        },
+                                                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                                            console.log("some thing error");
+                                                                        }
+                                                                    });
+
+                                                                }
+                                                                $('.body-doing').css({ "pointer-events": "auto" });
+                                                            }
+                                                            else {
+                                                                console.log("error");
+                                                            }
+                                                        },
+                                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                                            console.log("e");
+                                                        }
+                                                    });
+                                                }
+
+                                            }
+                                            let percentTime = (Math.abs(distance) / 1000) / (Math.abs(timeSet * 60)) * 100;
+                                            $('.bar-time > span').css('width', percentTime + '%');
+                                        }, 100);
+                                    }
+
+                                } else {
+                                    if (msg.type == 1) {
+                                        window.location.href = msg.link;
+                                        if (msg.message != undefined) {
+                                            toast.create({
+                                                title: 'Thông báo!',
+                                                text: '' + msg.message + '',
+                                                icon: 'error_outline',
+                                                classBackground: 'noti-error',
+                                                timeout: 3000
+                                            });
+                                        }
+                                    } else {
+                                        toast.create({
+                                            title: 'Thông báo!',
+                                            text: '' + msg.message + '',
+                                            icon: 'error_outline',
+                                            classBackground: 'noti-error',
+                                            timeout: 3000
+                                        });
+                                    }
+                                }
+                            },
+                            error: function (xmlhttprequest, textstatus, errorthrow) {
+
+                                console.log("e: ");
+                            }
+                        });
+                    };
+
+                    $("#js-volumn-control").ionRangeSlider({
+                        min: 0,
+                        max: 1,
+                        step: 0.01,
+                        from: 1,
+                        hide_min_max: true,
+                        hide_from_to: true,
+                        grid_margin: false,
+                        onChange: volumnChange
+                    });
+                    $('.start-test').on('click touchstart', function () {
+                        $('body').addClass('testing');
+                        $('.ready-for-test').hide();
+                        $('#test-container').show();
+                        startClock();
+                        setTimeout(function () {
+                        }, 3000);
+                    });
+
+                    $('.sound-test').on('click touchstart', function () {
+                        soundTest(this);
+                    });
+
+                    let questions = document.querySelectorAll('.tab-question');
+                    let tabLinks = document.querySelectorAll('.q-nav-link');
+                    let activeId, activeQuest;
+                    const showQuestion = (id) => {
+                        let questionShow = document.getElementById(id);
+                        questionShow.classList.add('show');
+                        [...questions].map(question => {
+                            if (question !== questionShow) question.classList.remove('show')
+                        });
+                    }
+
+                    $('.q-nav-link').on('click', function () {
+                        activeId = this.dataset.id;
+                        let id = $(this).attr('data-id');
+                        if (id == 'quest-id-2') {
+                            if (part1done == false) {
+                                alert('Vui lòng nộp bài phần này trước khi sang phần tiếp theo!');
+                                return false;
+                            }
+                        }
+                        if (id == 'quest-id-3') {
+                            if (part2done == false) {
+                                alert('Vui lòng nộp bài phần này trước khi sang phần tiếp theo!');
+                                return false;
+                            }
+                        }
+                        if (id == 'quest-id-4' || id == 'quest-id-5') {
+                            if (part3done == false) {
+                                alert('Vui lòng nộp bài phần này trước khi sang phần tiếp theo!');
+                                return false;
+                            }
+                        }
+                        let index = $(this).attr('data-index');
+                        $('.row.part').addClass('hide');
+                        $('#question-index-' + index + '').removeClass('hide');
+                        this.classList.add('active');
+                        [...tabLinks].map(tab => {
+                            if (tab !== this) tab.classList.remove('active')
+                        });
+                        showQuestion(activeId);
+                    });
+                    showQuestion(document.querySelector('.q-nav-link.active').dataset.id);
+
+                    $('.next-part').on('click', function () {
+                        if (partstart == undefined) {
+                            partstart = 1;
+                        }
+                        console.log(partstart);
+                        let rs = confirm('Bạn có chắc chắn gửi phần này!');
+                        if (rs) {
+                            if (partstart == 1) {
+                                partstart = 2;
+                                part1done = true;
+                                let data = {
+                                    part: 1,
+                                }
+                                let res = [];
+                                $('.row.part-1').each(function (index, e) {
+
+                                    let QA = {};
+                                    let listRecord = [];
+                                    let $this = e;
+                                    let questionid = $($this).attr('data-id');
+                                    $($this).find('.record-list').find('.audio-result').each(function (index) {
+                                        var id = $(this).attr('data-index');
+                                        console.log(chunks[id]);
+                                        var formData = new FormData();
+                                        formData.append("FileUpload", chunks[id]);
+                                        $.ajax({
+                                            async: false,
+                                            type: 'POST',
+                                            url: '/StudentExrcise/UploadFileAudio',
+                                            data: formData,
+                                            dataType: 'json',
+                                            contentType: false,
+                                            processData: false,
+                                            success: function (msg) {
+                                                listRecord.push(msg.l);
+                                            },
+                                            error: function (error) {
+                                                console.log('error upload file audio');
+                                            }
+                                        });
+                                    });
+                                    QA["QuestionID"] = questionid;
+                                    QA["ListRecord"] = listRecord;
+                                    res.push(QA);
+                                });
+                                data["result"] = JSON.stringify(res);
+
+                                $.ajax({
+                                    type: "POST",
+                                    url: "/StudentSet/SubmitPart",
+                                    data: JSON.stringify(data),
+                                    contentType: "application/json; charset=utf-8",
+                                    dataType: "json",
+                                    success: function (msg) {
+                                        if (msg.rs) {
+                                            toast.create({
+                                                title: 'Thông báo!',
+                                                text: msg.message,
+                                                icon: 'error_outline',
+                                                classBackground: 'noti-success',
+                                                timeout: 3000
+                                            });
+                                            clearInterval(interval);
+                                            startClock();
+                                        } else {
+                                            toast.create({
+                                                title: 'Thông báo!',
+                                                text: msg.message,
+                                                icon: 'error_outline',
+                                                classBackground: 'noti-error',
+                                                timeout: 3000
+                                            });
+                                        }
+                                    },
+                                    error: function (xmlhttprequest, textstatus, errorthrow) {
+                                        console.log("some thing error");
+                                    }
+                                });
+
+                            } else
+                                if (partstart == 2) {
+                                    partstart = 3;
+                                    part2done = true;
+                                    let data = {
+                                        part: 2,
+                                    }
+                                    let res = [];
+                                    $('.row.part-2').each(function (index, e) {
+
+                                        let QA = {};
+                                        let listRecord = [];
+                                        let $this = e;
+                                        let questionid = $($this).attr('data-id');
+                                        $($this).find('.record-list').find('.audio-result').each(function (index) {
+                                            var id = $(this).attr('data-index');
+                                            console.log(chunks[id]);
+                                            var formData = new FormData();
+                                            formData.append("FileUpload", chunks[id]);
+                                            $.ajax({
+                                                async: false,
+                                                type: 'POST',
+                                                url: '/StudentExrcise/UploadFileAudio',
+                                                data: formData,
+                                                dataType: 'json',
+                                                contentType: false,
+                                                processData: false,
+                                                success: function (msg) {
+                                                    listRecord.push(msg.l);
+                                                },
+                                                error: function (error) {
+                                                    console.log('error upload file audio');
+                                                }
+                                            });
+                                        });
+                                        QA["QuestionID"] = questionid;
+                                        QA["ListRecord"] = listRecord;
+                                        res.push(QA);
+                                    });
+                                    data["result"] = JSON.stringify(res);
+
+                                    $.ajax({
+                                        type: "POST",
+                                        url: "/StudentSet/SubmitPart",
+                                        data: JSON.stringify(data),
+                                        contentType: "application/json; charset=utf-8",
+                                        dataType: "json",
+                                        success: function (msg) {
+                                            if (msg.rs) {
+                                                toast.create({
+                                                    title: 'Thông báo!',
+                                                    text: msg.message,
+                                                    icon: 'error_outline',
+                                                    classBackground: 'noti-success',
+                                                    timeout: 3000
+                                                });
+                                                clearInterval(interval);
+                                                startClock();
+                                            } else {
+                                                toast.create({
+                                                    title: 'Thông báo!',
+                                                    text: msg.message,
+                                                    icon: 'error_outline',
+                                                    classBackground: 'noti-error',
+                                                    timeout: 3000
+                                                });
+                                            }
+                                        },
+                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                            console.log("some thing error");
+                                        }
+                                    });
+                                }
+                                else if (partstart == 3) {
+                                    partstart = 4;
+                                    part3done = true;
+                                    let data = {
+                                        part: 3,
+                                    }
+                                    let res = [];
+                                    $('.row.part-3').each(function (index, e) {
+                                        let QA = {};
+                                        let listRecord = [];
+                                        let $this = e;
+                                        let questionid = $($this).attr('data-id');
+                                        $($this).find('.record-list').find('.audio-result').each(function (index) {
+                                            var id = $(this).attr('data-index');
+                                            var formData = new FormData();
+                                            formData.append("FileUpload", chunks[id]);
+                                            $.ajax({
+                                                async: false,
+                                                type: 'POST',
+                                                url: '/StudentExrcise/UploadFileAudio',
+                                                data: formData,
+                                                dataType: 'json',
+                                                contentType: false,
+                                                processData: false,
+                                                success: function (msg) {
+                                                    listRecord.push(msg.l);
+                                                },
+                                                error: function (error) {
+                                                    console.log('error upload file audio');
+                                                }
+                                            });
+                                        });
+                                        QA["QuestionID"] = questionid;
+                                        QA["ListRecord"] = listRecord;
+                                        res.push(QA);
+                                    });
+                                    data["result"] = JSON.stringify(res);
+                                    $.ajax({
+                                        type: "POST",
+                                        url: "/StudentSet/SubmitPart",
+                                        data: JSON.stringify(data),
+                                        contentType: "application/json; charset=utf-8",
+                                        dataType: "json",
+                                        success: function (msg) {
+                                            if (msg.rs) {
+                                                toast.create({
+                                                    title: 'Thông báo!',
+                                                    text: msg.message,
+                                                    icon: 'error_outline',
+                                                    classBackground: 'noti-success',
+                                                    timeout: 3000
+                                                });
+                                                clearInterval(interval);
+                                                startClock();
+                                            } else {
+                                                toast.create({
+                                                    title: 'Thông báo!',
+                                                    text: msg.message,
+                                                    icon: 'error_outline',
+                                                    classBackground: 'noti-error',
+                                                    timeout: 3000
+                                                });
+                                            }
+                                        },
+                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                            console.log("some thing error");
+                                        }
+                                    });
+                                } else if (partstart == 4) {
+                                    let data = {}
+                                    let res = [];
+                                    $('.answer-content').each(function (index) {
+                                        let questionid = $(this).attr('data-id');
+                                        let answer = $(this).val().replace(/\n/g, '<br/>');
+                                        let qa = {
+                                            TaskID: questionid,
+                                            Answer: answer
+                                        }
+                                        res.push(qa);
+                                    });
+                                    data["result"] = JSON.stringify(res);
+                                    $.ajax({
+                                        async: false,
+                                        type: "POST",
+                                        url: "/StudentSet/SubmitWriting",
+                                        data: JSON.stringify(data),
+                                        contentType: "application/json; charset=utf-8",
+                                        dataType: "json",
+                                        success: function (msg) {
+                                            if (msg.rs) {
+                                                toast.create({
+                                                    title: 'Thông báo!',
+                                                    text: msg.message,
+                                                    icon: 'error_outline',
+                                                    classBackground: 'noti-success',
+                                                    timeout: 3000
+                                                });
+                                                window.location.href = msg.linkdone;
+                                            } else {
+                                                toast.create({
+                                                    title: 'Thông báo!',
+                                                    text: msg.message,
+                                                    icon: 'error_outline',
+                                                    classBackground: 'noti-error',
+                                                    timeout: 3000
+                                                });
+                                            }
+                                        },
+                                        error: function (xmlhttprequest, textstatus, errorthrow) {
+                                            console.log("some thing error");
+                                        }
+                                    });
+                                }
+                        }
+                    });
+                    window.test.speaking.speakFnc();
+                });
+
+            </script>
+        }
+    }
+}

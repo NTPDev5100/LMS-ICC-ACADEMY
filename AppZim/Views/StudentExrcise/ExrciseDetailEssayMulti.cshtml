@@ -1,0 +1,380 @@
+﻿@using AppZim.TableSql
+@using MB.Extensions
+@using AppZim.Models
+@{
+    ViewBag.Title = "ExrciseDetailEssayMulti";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    var l = ExerciseTable.getbygroupid(ViewBag.GroupExercise.ID);
+    var ck = ExerciseAddonStudentTable.checkworkexercise(aclog.ID, ViewBag.GroupExercise.ID);
+
+}
+@section myStyles{
+    <style>
+        .radi-item .radiolb .check-input.wrong + .ip-avata:before {
+            background: #707871;
+        }
+
+        .radi-item .radiolb .check-input.right + .ip-avata:before {
+            background: #11be26;
+        }
+
+        .quiz-index .index-link.wrong.checked svg {
+            display: inline-block;
+            color: #707871;
+            width: 20px;
+        }
+    </style> 
+}
+@using (Html.BeginForm("SubmitExrciseDetailEssayMulti", "StudentExrcise", FormMethod.Post, new { id = "submit-multi" }))
+{
+    <div class="row">
+
+        <input type="hidden" name="hdfdata" />
+        <input type="hidden" name="hdfgroupid" value="@ViewBag.GroupExercise.ID" />
+        <input type="hidden" name="hdfcourseid" value="@ViewBag.Course.ID" />
+
+        <div class="col-12 col-md-8">
+            <div class="list-question" data-spy="scroll" data-target="#quiz-index">
+                @{
+                    for (int i = 0; i < l.Count; i++)
+                    {
+                        int dem = i + 1;
+                        var item = l[i];
+                        var law = ExerciceMultiChoiseTable.getbyexeid(item.ID);
+
+                        if (!ck)
+                        {
+                            <div class="quiz-group" id="quiz-id-@item.ID" data-id="@item.ID">
+                                <div class="quiz-question">
+                                    <span class="bold">Câu @dem: @Html.Raw(item.ExerciseTitle)</span>
+                                </div>
+                                <div class="quiz-answer">
+                                    <ul class="quiz-answer-ul circlestyle">
+                                        <li class="radi-item">
+                                            <label class="radiolb">
+                                                <input type="radio" class="check-input right" data-id="@law[0].ID" name="group-@item.ID" value="0">
+                                                <span class="ip-avata"></span>
+                                                <label class="val">
+                                                    @law[0].AnswerTitle
+                                                </label>
+                                            </label>
+                                        </li>
+                                        <li class="radi-item">
+                                            <label class="radiolb">
+                                                <input type="radio" class="check-input right" data-id="@law[1].ID" name="group-@item.ID" value="0">
+                                                <span class="ip-avata"></span>
+                                                <label class="val">
+                                                    @law[1].AnswerTitle
+                                                </label>
+                                            </label>
+                                        </li>
+                                        <li class="radi-item">
+                                            <label class="radiolb">
+                                                <input type="radio" class="check-input right" data-id="@law[2].ID" name="group-@item.ID" value="0">
+                                                <span class="ip-avata"></span>
+                                                <label class="val">
+                                                    @law[2].AnswerTitle
+                                                </label>
+                                            </label>
+                                        </li>
+                                        <li class="radi-item">
+                                            <label class="radiolb">
+                                                <input type="radio" class="check-input right" data-id="@law[3].ID" name="group-@item.ID" value="0">
+                                                <span class="ip-avata"></span>
+                                                <label class="val">
+                                                    @law[3].AnswerTitle
+                                                </label>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            var exstu = ExerciseAddonStudentTable.getbyuidvsexeid(aclog.ID, item.ID);
+                            if (exstu == null)
+                            {
+                                continue;
+                            }
+                            var awatrue = ExerciceMultiChoiseTable.getbyanwertrue(item.ID);
+                            if (awatrue == null)
+                            {
+                                continue;
+                            }
+                            <div class="quiz-group" id="quiz-id-@item.ID" data-id="@item.ID">
+                                <div class="quiz-question">
+                                    <span class="bold">Câu @dem: @Html.Raw(item.ExerciseTitle)</span>
+                                </div>
+                                <div class="quiz-answer">
+                                    <ul class="quiz-answer-ul circlestyle">
+                                        <li class="radi-item">
+                                            <label class="radiolb">
+                                                @{
+                                                    if (awatrue.ID == law[0].ID)
+                                                    {
+                                                        <input type="radio" class="check-input right" disabled checked value="0">
+                                                    }
+                                                    else
+                                                    {
+                                                        if (exstu.ExerciseMultipleChoiseID == law[0].ID)
+                                                        {
+                                                            <input class="check-input wrong" disabled checked type="radio" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <input class="with-gap" disabled type="radio" />
+                                                        }
+                                                    }
+                                                }
+
+                                                <span class="ip-avata"></span>
+                                                <label class="val">
+                                                    @law[0].AnswerTitle
+                                                </label>
+                                            </label>
+                                        </li>
+                                        <li class="radi-item">
+                                            <label class="radiolb">
+                                                @{
+                                                    if (awatrue.ID == law[1].ID)
+                                                    {
+                                                        <input type="radio" class="check-input right" disabled checked value="0">
+                                                    }
+                                                    else
+                                                    {
+                                                        if (exstu.ExerciseMultipleChoiseID == law[1].ID)
+                                                        {
+                                                            <input class="check-input wrong" disabled checked type="radio" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <input class="with-gap" disabled type="radio" />
+                                                        }
+                                                    }
+                                                }
+                                                <span class="ip-avata"></span>
+                                                <label class="val">
+                                                    @law[1].AnswerTitle
+                                                </label>
+                                            </label>
+                                        </li>
+                                        <li class="radi-item">
+                                            <label class="radiolb">
+                                                @{
+                                                    if (awatrue.ID == law[2].ID)
+                                                    {
+                                                        <input type="radio" class="check-input right" disabled checked value="0">
+                                                    }
+                                                    else
+                                                    {
+                                                        if (exstu.ExerciseMultipleChoiseID == law[2].ID)
+                                                        {
+                                                            <input class="check-input wrong" disabled checked type="radio" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <input class="with-gap" disabled type="radio" />
+                                                        }
+                                                    }
+                                                }
+                                                <span class="ip-avata"></span>
+                                                <label class="val">
+                                                    @law[2].AnswerTitle
+                                                </label>
+                                            </label>
+                                        </li>
+                                        <li class="radi-item">
+                                            <label class="radiolb">
+                                                @{
+                                                    if (awatrue.ID == law[3].ID)
+                                                    {
+                                                        <input type="radio" class="check-input right" disabled checked value="0">
+                                                    }
+                                                    else
+                                                    {
+                                                        if (exstu.ExerciseMultipleChoiseID == law[3].ID)
+                                                        {
+                                                            <input class="check-input wrong" disabled checked type="radio" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <input class="with-gap" disabled type="radio" />
+                                                        }
+                                                    }
+                                                }
+                                                <span class="ip-avata"></span>
+                                                <label class="val">
+                                                    @law[3].AnswerTitle
+                                                </label>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                                @{
+                                    if (!string.IsNullOrEmpty(item.DescribeAnswer))
+                                    {
+                                        <div class="pd-15">
+                                            <p class="bold">
+                                                Xem thêm: @item.DescribeAnswer
+                                            </p>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                    }
+                }
+
+
+            </div>
+
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="left-sticky">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mg-b-0">Thông tin chi tiết</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="information-block">
+                            <div class="student-info">
+                                <div class="student-course">
+                                    <p class="txt"><span class="lb">Trung tâm:</span> <span class="value">@ViewBag.Course.SchoolName</span></p>
+                                    <p class="txt"><span class="lb">Khóa học:</span> <span class="value">@ViewBag.Course.ClassName</span></p>
+
+                                    <p class="txt"><span class="lb">Học viên:</span> <span class="value">@ViewBag.FullName</span></p>
+                                    <p class="txt"><span class="lb">Bài tập: </span> <span class="value">@ViewBag.GroupExercise.ExerciseGroupName</span></p>
+                                </div>
+                                @{
+                                    if (!ck)
+                                    {
+                                        <div class="w-100 mg-t-10">
+                                            <a href="javascript:;" class="btn btn-primary mg-md-r-10 check-multi">Nộp bài</a>
+                                        </div>
+                                    }
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mg-t-10">
+                    <div class="card-header">
+                        <h6 class="mg-b-0 d-flex align-items-end justify-content-between"><span>@l.Count câu hỏi</span></h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="question-nav">
+                            <nav class="quiz-index nav nav-pills flex-wrap" id="quiz-index">
+                                @{
+                                    for (int i = 0; i < l.Count; i++)
+                                    {
+                                        int dem = i + 1;
+                                        var item = l[i];
+                                        List<tbl_ExerciceMultiChoise> law = ExerciceMultiChoiseTable.getbyexeid(item.ID);
+                                        if (!ck)
+                                        {
+                                            <a href="#quiz-id-@item.ID" class="index-link">Câu @dem <i data-feather="check-circle"></i></a>
+                                        }
+                                        else
+                                        {
+                                            tbl_ExerciseAddonStudent exstu = ExerciseAddonStudentTable.getbyuidvsexeid(aclog.ID, item.ID);
+                                            if (exstu == null)
+                                            {
+                                                continue;
+                                            }
+                                            tbl_ExerciceMultiChoise awatrue = ExerciceMultiChoiseTable.getbyanwertrue(item.ID);
+                                            if (awatrue == null)
+                                            {
+                                                continue;
+                                            }
+                                            bool check = false;
+                                            for (int j = 0; j < 4; j++)
+                                            {
+                                                if (exstu.ExerciseMultipleChoiseID == law[j].ID && law[j].isTrue.Value)
+                                                {
+                                                    check = true;
+                                                }
+                                            }
+                                            if (check)
+                                            {
+                                                <a href="#quiz-id-@item.ID" class="index-link checked">Câu @dem <i style="margin-left: 5px;" data-feather="check-circle"></i></a>
+                                            }
+                                            else
+                                            {
+                                                <a href="#quiz-id-@item.ID" class="index-link wrong checked">Câu @dem<i style="color:red; margin-left: 5px;" data-feather="x-circle"></i></a>
+                                            }
+                                        }
+                                    }
+                                }
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+@section myScripts{
+    <script src="~/app-assets/zimv2/lib/jqueryui/jquery-ui.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.quiz-group').each(function () {
+                let $this = $(this);
+                let quizId = $(this).attr('id');
+
+                $this.on('change', 'input', function (input) {
+                    $this.find('input').each(function (i, el) {
+                        $('#quiz-index').find('.index-link[href="#' + quizId + '"]').addClass('checked');
+                    });
+                });
+            });
+
+            $("a[href*='#']:not([href='#])").click(function () {
+                let target = $(this).attr("href");
+                $('html,body').stop().animate({
+                    scrollTop: $(target).offset().top - ($(target).height() / 2)
+                }, 1000);
+                event.preventDefault();
+            });
+        });
+        $('.check-multi').click(function () {
+            var d = '';
+            var i = 0;
+            $('.quiz-group').each(function (index) {
+                var q = $(this).attr('data-id');
+                var s = $(this).find('input');
+
+                $.each(s, function (index, e) {
+                    if ($(e).prop('checked')) {
+                        var a = $(e).attr('data-id');
+                        console.log(q);
+                        console.log(a);
+                        d += q + '-' + a + '|';
+                        i += 1;
+                    }
+                });
+            });
+            console.log(d);
+            if (i < @l.Count) {               
+                toast.create({
+                    title: 'Thông báo!',
+                    text: 'Vui lòng hoàn thành bài trước khi nộp',
+                    icon: 'notifications_active',
+                    classBackground: 'noti-warning',
+                    timeout: 2500
+                })
+                return;
+            }
+            else {
+                console.log('Dung');
+                $('input[name=hdfdata]').val(d);
+                $('#submit-multi').submit();
+            }
+        })
+    </script>
+}
+

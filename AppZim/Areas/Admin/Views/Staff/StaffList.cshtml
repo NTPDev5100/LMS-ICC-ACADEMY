@@ -1,0 +1,599 @@
+﻿@using AppZim.TableSql
+@using AppZim.ZIM
+@using MB.Extensions
+@using System.Configuration
+@using AppZim.Models
+@model List<get_list_of_staff_Result>
+@{
+    ViewBag.Title = "StaffList";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdminNew.cshtml";
+
+    var schools = SchoolTable.getall();
+    var aclog = AccountTable.getbyID(Session["UID"].ToString().ToInt(0));
+    string[] strText = new string[4] { "Trang đầu", "Trang cuối", "Trang sau", "Trang trước" };
+    var position = SalarySettingTable.getall();
+}
+<style>
+    .zoom {
+        transition: transform .2s;
+        width: 30px;
+        height: 30px;
+        margin: 0 auto;
+        object-fit: contain;
+    }
+
+        .zoom:hover {
+            -ms-transform: scale(10); /* IE 9 */
+            -webkit-transform: scale(10); /* Safari 3-8 */
+            transform: scale(10);
+            z-index: 999;
+            position: relative;
+        }
+</style>
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-style1 mg-b-30">
+        <li class="breadcrumb-item active" aria-current="page">Danh sách nhân viên</li>
+    </ol>
+</nav>
+<!-- End breadcrumb -->
+<div class="d-xl-flex align-items-center justify-content-between ">
+    <div>
+        <a href="javascript:;" class="btn btn-primary" data-toggle="modal" data-target="#modal-create-center"><i class="fas fa-plus-circle"></i> Thêm</a>
+    </div>
+    <div class="d-xl-block">
+        @using (Html.BeginForm("StaffList", "Staff", FormMethod.Get, new { id = "form-search" }))
+        {
+            <div class="d-flex justify-content-xl-center mg-t-20 mg-xl-t-0 flex-wrap">
+                <div class="search-form mg-l-5 mg-r-5">
+                    <input type="search" class="form-control" name="search" placeholder="Tìm kiếm..." value="@ViewBag.Search">
+                    <button class="btn" type="submit"><i data-feather="search"></i></button>
+                </div>
+                <div class="sort-by mg-l-5 mg-r-5">
+                    <select class="custom-select" name="sort" onchange="pagesearch()">
+                        <option value="0">-- Sắp xếp -- </option>
+                        @{
+                            if (ViewBag.Sort == 1)
+                            {
+                                <option value="1" selected>Trung tâm A > Z</option>
+                            }
+                            else
+                            {
+                                <option value="1">Trung tâm A > Z</option>
+                            }
+
+                            if (ViewBag.Sort == 2)
+                            {
+                                <option value="2" selected>Trung tâm Z > A</option>
+                            }
+                            else
+                            {
+                                <option value="2">Trung tâm Z > A</option>
+                            }
+                            if (ViewBag.Sort == 3)
+                            {
+                                <option value="3" selected>Họ tên A > Z</option>
+                            }
+                            else
+                            {
+                                <option value="3">Họ tên A > Z</option>
+                            }
+                            if (ViewBag.Sort == 4)
+                            {
+                                <option value="4" selected>Họ tên Z > A</option>
+                            }
+                            else
+                            {
+                                <option value="4">Họ tên Z > A</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="mg-b-15 mg-l-5">
+                    <a href="javascript:;" data-toggle="tooltip" title="Import Excel"
+                       class=" add-product btn btn-warning import-excel"><i class="fas fa-file-excel"></i> </a>
+                    <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" style="display:none" class="hiden import-product-excel" />
+                </div>
+                <div class="mg-b-15 mg-l-5">
+                    <a href="@(ConfigurationManager.AppSettings["FileMauUploadStaff"].ToString())" target="_blank"
+                       class=" add-product btn btn-info" data-toggle="tooltip" title="File mẫu"><i class="fas fa-file-import"></i></a>
+                </div>
+                <div class="">
+                    <a href="javascript:;" class="btn btn-success export-excel" data-toggle="tooltip" title="Xuất Excel"><i class="far fa-file-excel"></i></a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<div class="customer-table mg-t-30">
+    <div class="table-responsive">
+        <table class="table table-striped table-vcenter">
+            <thead class="thead-light">
+                <tr>
+                    <th>Trung tâm</th>
+                    <th>Ảnh đại diện</th>
+                    <th>Họ và tên</th>
+                    <th>Số điện thoại</th>
+                    <th>Email</th>
+                    <th>Chức vụ</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th>Ngày nhận việc</th>
+                    <th class="text-center">@ViewBag.Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="no-wrap">@item.SchoolName</td>
+                        <td class="no-wrap text-center"><img class="zoom" src="@item.Avatar" onerror="this.onerror = null; this.src = '/app-assets/zimv2/images/invis-user.png';" alt="avatar" /></td>
+                        <td class="truncate">
+                            <span data-toggle="tooltip" data-placement="right" title="@item.FullName">@item.FullName</span>
+                        </td>
+                        <td>@item.Phone</td>
+                        <td>@item.Email</td>
+                        <td>@item.RoleName</td>
+                        <td class="text-center">
+                            @switch (item.Status)
+                            {
+                                case 1:
+                                    <span class="badge badge-warning">@item.StatusName</span>
+                                    break;
+                                case 2:
+                                    <span class="badge badge-success">@item.StatusName</span>
+                                    break;
+                                case 3:
+                                    <span class="badge badge-danger">@item.StatusName</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @{
+                                if (item.DateStartWork != null)
+                                {
+                                    <span>@AssetCRM.DateToText(item.DateStartWork.Value, DateTime.Now)</span>
+                                }
+                            }
+                        </td>
+                        <td class="text-center text-nowrap">
+                            <a href="/Admin/Staff/StaffDetail/@item.ID" class="btn btn-primary btn-icon btn-sm edit-center" data-toggle="tooltip" data-placement="left" title="Chi tiết">
+                                <i class="fas fa-user-shield"></i>
+                            </a>
+                            @{
+                                if (aclog.RoleID == 1)
+                                {
+                                    if (item.RoleID == 3)
+                                    {
+                                        <a href="/Admin/Staff/ListMember?LeaderID=@item.ID" class="btn btn-primary btn-icon btn-sm edit-center" data-toggle="tooltip" data-placement="left" title="Thành viên trong nhóm">
+                                            <i class="fas fa-clipboard-list"></i>
+                                        </a>
+                                    }
+                                    if (item.RoleID == 2)
+                                    {
+                                        <a href="/Admin/Staff/ListMemberInRoom?LeaderID=@item.ID" class="btn btn-primary btn-icon btn-sm edit-center" style="color:#ffeb00" data-toggle="tooltip" data-placement="left" title="Thành viên trong phòng">
+                                            <i class="fas fa-clipboard-list"></i>
+                                        </a>
+                                    }
+                                }
+                                else if (aclog.RoleID == 2)
+                                {
+                                    if (item.RoleID == 3)
+                                    {
+                                        <a href="/Admin/Staff/ListMember?LeaderID=@item.ID" class="btn btn-primary btn-icon btn-sm edit-center" data-toggle="tooltip" data-placement="left" title="Thành viên trong nhóm">
+                                            <i class="fas fa-clipboard-list"></i>
+                                        </a>
+                                    }
+                                    if (item.RoleID == 2 && item.ID == aclog.ID)
+                                    {
+                                        <a href="/Admin/Staff/ListMemberInRoom?LeaderID=@item.ID" class="btn btn-primary btn-icon btn-sm edit-center" style="color:#ffeb00" data-toggle="tooltip" data-placement="left" title="Thành viên trong phòng">
+                                            <i class="fas fa-clipboard-list"></i>
+                                        </a>
+                                    }
+                                }
+                                else if (aclog.RoleID == 3)
+                                {
+
+                                }
+                            }
+
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<nav aria-label="Page navigation">
+    <ul class="pagination mg-b-0 justify-content-end">
+        <div class="pagination-container">
+            @PhanTrang.PhanTrangCustom(10, ViewBag.Page, ViewBag.PageCount, Request.RawUrl, strText)
+        </div>
+    </ul>
+</nav>
+<div class="modal fade" id="modal-create-center" tabindex="-1" role="dialog" aria-labelledby="addStaffTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered wd-sm-400" role="document">
+        <div class="modal-content">
+            @using (Html.BeginForm("AddStaff", "Staff", FormMethod.Post, new { id = "add-form" }))
+            {
+                @Html.AntiForgeryToken()
+                <div class="modal-body pd-20 pd-sm-40">
+                    <a href="" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <div>
+                        <h4>Tạo mới nhân viên</h4>
+                        <input id="hdtt" name="hdtt" type="hidden" />
+                        <input id="hdct" name="hdct" type="hidden" />
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Trung tâm</label>
+                                    <select name="ddl-school" required class="select2 form-control">
+                                        @{
+                                            foreach (var item in schools)
+                                            {
+                                                <option value="@item.ID">@item.SchoolName</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="hdfRole">Chức vụ:</label>
+                                    <select name="hdfRole" class="form-control" required id="hdfRole" onchange="ShowPosition()">
+                                        <option value="0">---</option>
+                                        @{
+                                            if (aclog.RoleID == 1)
+                                            {
+                                                <option value="1">Admin</option>
+                                                <option value="2">Trưởng phòng</option>
+                                                <option value="3">Trưởng nhóm</option>
+                                                <option value="6">Nhân viên(Tư vấn viên)</option>
+                                                <option value="7">Quản lý lớp - học vụ</option>
+                                                <option value="9">Kế toán</option>
+                                            }
+                                            else if (aclog.RoleID == 2)
+                                            {
+                                                <option value="3">Trưởng nhóm</option>
+                                                <option value="6">Nhân viên(Tư vấn viên)</option>
+                                            }
+                                            else if (aclog.RoleID == 3)
+                                            {
+                                                <option value="6">Nhân viên(Tư vấn viên)</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="div-position" class="form-group" style="display:none;">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Cấp bậc</label>
+                                    <select name="ddl-position" required class="form-control select2">
+                                        <option value="0">---</option>
+                                        @foreach (var i in position)
+                                        {
+                                            <option value="@i.ID">@i.PositionName</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label>Doanh thu cũ</label>
+                                    <input id="txt-revenue" name="txt-revenue" type="text" class="validate form-control" oninput="moneyfm(this)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-email">Họ và tên:</label>
+                                    <input id="txt-full-name" name="txt-full-name" type="text" class="validate form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-phone">Số điện thoại:</label>
+                                    <input id="txt-phone" name="txt-phone" type="text" class="validate form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-email">Email:</label>
+                                    <input id="txt-email" name="txt-email" type="email" class="validate form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label class="required" for="txt-bank">Thông tin ngân hàng</label>
+                                    <textarea id="txt-bank" name="txt-bank" required rows="1" type="text" class="validate form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-address">Địa chỉ</label>
+                                    <textarea id="txt-address" name="txt-address" rows="1" type="text" class="validate form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-fb">Link FB</label>
+                                    <textarea id="txt-fb" name="txt-fb" rows="1" type="text" class="validate form-control"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label for="txt-dw">Ngày nhận việc</label>
+                                    <input id="txt-dw" name="txt-dw" type="text" class="validate form-control datetimepicker date-only" />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="LoadEmail()" data-dismiss="modal" data-toggle="modal" data-target="#div-mail" class="btn btn-primary btn-block">Lưu lại</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal fade show" id="div-mail" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header pd-y-20 pd-x-20 pd-sm-x-30">
+                <a href="javascript:;" role="button" class="close pos-absolute t-15 r-15" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <div class="media align-items-center">
+                    <div class="media-body">
+                        <h4 class="tx-18 tx-sm-20 mg-b-2">Mẫu Email</h4>
+                    </div>
+                </div><!-- media -->
+            </div><!-- modal-header -->
+            <div class="modal-body pd-sm-b-40 pd-sm-x-30">
+                <div class="personal-info">
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Tiêu đề:</label>
+                            <input type="text" name="txt-title" id="txt-title" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col-sm-12 form-group">
+                            <label class="">Nội dung:</label>
+                            <textarea id="txt-content" name="txt-content" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- modal-body -->
+            <div class="modal-footer pd-x-20 pd-y-15">
+                <button type="button" class="btn btn-primary add-done">Xác nhận</button>
+                <button type="button" class="btn btn-white" data-dismiss="modal">Cancel</button>
+            </div>
+        </div><!-- modal-content -->
+    </div><!-- modal-dialog -->
+</div><!-- modal -->
+@section myScripts
+{
+    <script src="~/app-assets/tinymce/tinymce.min.js"></script>
+    <script>
+        function pagesearch() {
+            $('#form-search').submit();
+        }
+        $(document).ready(function () {
+            $('.btn-delete').on('click', function () {
+                let id = $(this).attr('data-id');
+                let fullname = $(this).attr('data-name');
+                let $this = $(this);
+                if (confirm("Bạn có chắc chắn muốn xóa nhân viên " + fullname + "?")) {
+                    $.ajax({
+                        method: 'POST',
+                        url: '/Staff/DeleteUser?id=' + id,
+                        success: function (msg) {
+                            if (msg.rs) {
+                                $this.closest('tr').remove();
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: 'Thành công',
+                                    icon: 'check',
+                                    classBackground: 'noti-success',
+                                    timeout: 3000
+                                })
+                            }
+                            else {
+                                toast.create({
+                                    title: 'Thông báo!',
+                                    text: msg.message,
+                                    icon: 'error_outline',
+                                    classBackground: 'noti-error',
+                                    timeout: 3000
+                                })
+                            }
+                        }
+                    })
+
+                }
+                else {
+                    return false;
+                }
+            });
+        })
+
+        $('.import-excel').click(function () {
+            $('.import-product-excel').click();
+        });
+        $('body').on('change', '.import-product-excel', function (event) {
+            let input, files;
+            input = event.target;
+            files = input.files;
+
+            Array.from(files).map((file, index) => {
+                var formData = new FormData();
+                formData.append("FileUpload1", file);
+                $.ajax({
+                    async: false,
+                    type: 'POST',
+                    url: '/Staff/ImportExcelStaff',
+                    data: formData,
+                    dataType: 'json',
+                    contentType: false,
+                    processData: false,
+                    success: function (msg) {
+                        if (msg.rs) {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.message,
+                                icon: 'check',
+                                classBackground: 'noti-success',
+                                timeout: 3000
+                            });
+                            window.location.reload();
+                        }
+                        else {
+                            toast.create({
+                                title: 'Thông báo!',
+                                text: msg.message,
+                                icon: 'error_outline',
+                                classBackground: 'noti-error',
+                                timeout: 3000
+                            });
+                        }
+                    },
+                    error: function (error) {
+                        console.log('e');
+                    }
+                });
+            });
+        });
+
+        //Xuất excel
+        $('.export-excel').click(function () {
+            var search = $('input[name=search]').val();
+            var sort = $('select[name=sort]').val();
+            $.ajax({
+                type: "POST",
+                url: "/Staff/ExportExcelStaff",
+                data: '{search: "' + search + '",sort:"' + sort + '"}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        fnExcelReport(msg.data, msg.f); //hàm này ở layout
+                    }
+                    else {
+                        alert(msg.noti);
+                    }
+                },
+                error: function (xmlhttprequest, textstatus, errorthrow) {
+                    alert('Lỗi tải dữ liệu, liên hệ người quản trị');
+                }
+            });
+        });
+        $(document).ready(function () {
+            function uploadImage() {
+                var editor = tinymce.activeEditor;
+                // create input element, call modal dialog w
+                var fileInput = document.createElement('input');
+                fileInput.setAttribute('type', 'file');
+                fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon');
+                // if file is submitted run our key code
+                fileInput.addEventListener('change', () => {
+
+                    if (fileInput.files != null && fileInput.files[0] != null) {
+                        // create instance of FileReader()
+                        var formData = new FormData();
+                        formData.append("FileUpload", fileInput.files[0]);
+                        $.ajax({
+                            async: false,
+                            type: 'POST',
+                            url: '/Admin/Notification/UploadFileImageNoti',
+                            data: formData,
+                            dataType: 'json',
+                            contentType: false,
+                            processData: false,
+                            success: function (msg) {
+                                editor.insertContent('<img src="' + msg.l + '"/>');
+                            },
+                            error: function (error) {
+                                console.log('error upload file audio');
+                            }
+                        });
+                    }
+                });
+                fileInput.click()
+            }
+            tinymce.init({
+                selector: '#txt-content',
+                height: 250,
+                images_dataimg_filter: function (img) {
+                    return img.hasAttribute('internal-blob');
+                },
+                plugins: 'print preview fullpage searchreplace autolink directionality fullscreen image link media table charmap hr toc insertdatetime advlist lists  wordcount  imagetools  textpattern',
+                menubar: 'file edit insert view format table tools help',
+                toolbar1: 'formatselect | fontselect  | bold italic strikethrough forecolor backcolor | link | alignleft aligncenter alignright alignjustify  | numlist bullist outdent indent  | table UploadImage link media | removeformat',
+                setup: (editor) => {
+                    editor.ui.registry.addButton('UploadImage', {
+                        text: 'Image',
+                        icon: 'image',
+                        onAction: uploadImage
+                    });
+                },
+                content_css: ['https://fonts.googleapis.com/css?family=Gugi'],
+                font_formats:
+                    "Open Sans=open sans; Roboto=roboto; Sans Serif=sans-serif;Serif = serif; Roboto Condensed=roboto condensed; Andale Mono=andale mono,times; Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats"
+            });
+        });
+
+        function LoadEmail() {
+            var id = 7;
+            $.ajax({
+                url: "/Admin/Staff/LoadEmail",
+                method: "post",
+                data: '{id: ' + id + ',language: 2}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    if (msg.rs) {
+                        $('#txt-title').val(msg.tt);
+                        msg.ct = msg.ct.replace('[ten-nhan-vien]', $('#txt-full-name').val());
+                        msg.ct = msg.ct.replace('[tai-khoan]', $('#txt-email').val());
+                        msg.ct = msg.ct.replace('[mat-khau]', 'iccacademy');
+                        tinymce.get('txt-content').getBody().innerHTML = msg.ct;
+                        $('#div-mail').modal('show');
+                    }
+                },
+                error: function (xmlhttprequest) {
+                    console.log(xmlhttprequest);
+                }
+            });
+        }
+        $('.add-done').on('click', function () {
+            $('#hdtt').val($('#txt-title').val());
+            $('#hdct').val(tinymce.get('txt-content').contentDocument.activeElement.innerHTML);
+            $('#add-form').submit();
+        });
+        function ShowPosition() {
+            let role = $('select[name=hdfRole]').val();
+            if (role == '2' || role == '3' || role == '6') {
+                $('#div-position').css('display', 'block');
+            } else {
+                $('#div-position').css('display', 'none');
+            }
+        }
+    </script>
+}
